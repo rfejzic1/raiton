@@ -83,3 +83,51 @@ func TestStringLexing(t *testing.T) {
 		{EOF, ``},
 	})
 }
+
+func TestSkippingSpaces(t *testing.T) {
+	test := newTest(t, "TestSkippingSpaces")
+	source := `  println  123.1 "Raiton"  `
+
+	test.expect(source, []token{
+		{IDENTIFIER, `println`},
+		{NUMBER, `123.1`},
+		{STRING, `Raiton`},
+		{EOF, ``},
+	})
+}
+
+func TestSkippingNewlines(t *testing.T) {
+	test := newTest(t, "TestSkippingNewlines")
+	source := `  println
+	123.1 
+	   "Raiton"  
+	`
+
+	test.expect(source, []token{
+		{IDENTIFIER, `println`},
+		{NUMBER, `123.1`},
+		{STRING, `Raiton`},
+		{EOF, ``},
+	})
+}
+
+func TestSkippingComments(t *testing.T) {
+	test := newTest(t, "TestSkippingComments")
+	source := `
+	# comment 1
+	ident # comment 2
+	123  
+	   # comment 3
+	   "Raiton"  
+	# comment 4
+	3.14
+	`
+
+	test.expect(source, []token{
+		{IDENTIFIER, `println`},
+		{NUMBER, `123.1`},
+		{STRING, `Raiton`},
+		{EOF, ``},
+	})
+}
+

@@ -19,6 +19,8 @@ func New(source []rune) lexer {
 }
 
 func (l *lexer) Next() Token {
+	l.skipWhitespace()
+
 	char, ok := l.current()
 
 	if !ok {
@@ -32,7 +34,7 @@ func (l *lexer) Next() Token {
 	} else if char == '"' {
 		return l.stringToken()
 	} else {
-		return l.token(EOF, "")
+		return l.token(UNKNOWN, string(char))
 	}
 }
 
@@ -99,6 +101,11 @@ func (l *lexer) stringToken() Token {
 	return l.longToken(STRING, lexeme)
 }
 
+func (l *lexer) skipWhitespace() {
+	for char, ok := l.current(); ok && isWhitespace(char); char, ok = l.next() {
+	}
+}
+
 func (l *lexer) token(tokenType TokenType, literal string) Token {
 	return Token{
 		Literal: literal,
@@ -137,7 +144,7 @@ func (l *lexer) ok() bool {
 }
 
 func isWhitespace(c rune) bool {
-	return !isLineBreak(c) && unicode.IsSpace(c)
+	return isLineBreak(c) || unicode.IsSpace(c)
 }
 
 func isLineBreak(c rune) bool {
