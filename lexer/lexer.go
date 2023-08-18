@@ -27,6 +27,8 @@ func (l *lexer) Next() Token {
 
 	if unicode.IsLetter(char) {
 		return l.identifierToken()
+	} else if unicode.IsDigit(char) {
+		return l.numberToken()
 	} else {
 		return l.token(EOF, "")
 	}
@@ -34,10 +36,29 @@ func (l *lexer) Next() Token {
 
 func (l *lexer) identifierToken() Token {
 	literal := ""
-	for char, ok := l.current(); ok && unicode.IsLetter(char); char, ok = l.next() {
+	for char, ok := l.current(); ok && (unicode.IsLetter(char) || char == '_'); char, ok = l.next() {
 		literal += string(char)
 	}
 	return l.token(IDENTIFIER, literal)
+}
+
+func (l *lexer) numberToken() Token {
+	lexeme := ""
+
+	for char, ok := l.current(); ok && unicode.IsDigit(char); char, ok = l.next() {
+		lexeme += string(char)
+	}
+
+	if char, ok := l.current(); ok && char == '.' {
+		lexeme += "."
+		l.next()
+
+		for char, ok := l.current(); ok && unicode.IsDigit(char); char, ok = l.next() {
+			lexeme += string(char)
+		}
+	}
+
+	return l.longToken(NUMBER, lexeme)
 }
 
 func (l *lexer) token(tokenType TokenType, literal string) Token {

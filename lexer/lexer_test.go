@@ -16,6 +16,48 @@ func TestIdentifierParsing(t *testing.T) {
 	test.expect(t, source)
 }
 
+func TestNumberParsing(t *testing.T) {
+	source := "123"
+
+	test := tokenSequenceTest{
+		name: "NumberParsing",
+		expected: []tokenExpect{
+			{NUMBER, "123"},
+			{EOF, ""},
+		},
+	}
+
+	test.expect(t, source)
+}
+
+func TestNumberParsingWithDecimal(t *testing.T) {
+	source := "123.4"
+
+	test := tokenSequenceTest{
+		name: "NumberParsingWithDecimal",
+		expected: []tokenExpect{
+			{NUMBER, "123.4"},
+			{EOF, ""},
+		},
+	}
+
+	test.expect(t, source)
+}
+
+func TestNumberParsingWithTrailingDecimal(t *testing.T) {
+	source := "123."
+
+	test := tokenSequenceTest{
+		name: "NumberParsingWithTrailingDecimal",
+		expected: []tokenExpect{
+			{NUMBER, "123."},
+			{EOF, ""},
+		},
+	}
+
+	test.expect(t, source)
+}
+
 type tokenSequenceTest struct {
 	name     string
 	expected []tokenExpect
