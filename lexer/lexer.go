@@ -43,7 +43,7 @@ func (l *lexer) identifierToken() Token {
 	for char, ok := l.current(); ok && (unicode.IsLetter(char) || char == '_'); char, ok = l.next() {
 		literal += string(char)
 	}
-	return l.token(IDENTIFIER, literal)
+	return l.longToken(IDENTIFIER, literal)
 }
 
 func (l *lexer) numberToken() Token {
@@ -94,11 +94,13 @@ func (l *lexer) stringToken() Token {
 		}
 	}
 
+	token := l.longToken(STRING, lexeme)
+
 	if char, ok := l.current(); ok && char == '"' {
 		l.next() // consume quote
 	}
 
-	return l.longToken(STRING, lexeme)
+	return token
 }
 
 func (l *lexer) specialToken() Token {
@@ -117,11 +119,15 @@ func (l *lexer) specialToken() Token {
 		return l.longToken(tokenType, lexeme)
 	}
 
-	return l.token(UNKNOWN, lexeme)
+	return l.longToken(UNKNOWN, lexeme)
 }
 
 func (l *lexer) skipWhitespace() {
 	for char, ok := l.current(); ok && isWhitespace(char); char, ok = l.next() {
+		if isLineBreak(char) {
+			l.line += 1
+			l.column = 0
+		}
 	}
 }
 
@@ -147,6 +153,7 @@ func (l *lexer) next() (rune, bool) {
 	if l.ok() {
 		l.consumeComment()
 		l.position += 1
+		l.column += 1
 		return l.current()
 	}
 	return 0, false
