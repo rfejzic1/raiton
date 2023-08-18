@@ -3,13 +3,13 @@ package lexer
 import "testing"
 
 func TestIdentifierParsing(t *testing.T) {
-	source := "println"
+	source := `println`
 
 	test := tokenSequenceTest{
 		name: "IdentifierParsing",
 		expected: []tokenExpect{
-			{IDENTIFIER, "println"},
-			{EOF, ""},
+			{IDENTIFIER, `println`},
+			{EOF, ``},
 		},
 	}
 
@@ -17,13 +17,13 @@ func TestIdentifierParsing(t *testing.T) {
 }
 
 func TestNumberParsing(t *testing.T) {
-	source := "123"
+	source := `123`
 
 	test := tokenSequenceTest{
 		name: "NumberParsing",
 		expected: []tokenExpect{
-			{NUMBER, "123"},
-			{EOF, ""},
+			{NUMBER, `123`},
+			{EOF, ``},
 		},
 	}
 
@@ -31,13 +31,13 @@ func TestNumberParsing(t *testing.T) {
 }
 
 func TestNumberParsingWithDecimal(t *testing.T) {
-	source := "123.4"
+	source := `123.4`
 
 	test := tokenSequenceTest{
 		name: "NumberParsingWithDecimal",
 		expected: []tokenExpect{
-			{NUMBER, "123.4"},
-			{EOF, ""},
+			{NUMBER, `123.4`},
+			{EOF, ``},
 		},
 	}
 
@@ -45,13 +45,27 @@ func TestNumberParsingWithDecimal(t *testing.T) {
 }
 
 func TestNumberParsingWithTrailingDecimal(t *testing.T) {
-	source := "123."
+	source := `123.`
 
 	test := tokenSequenceTest{
 		name: "NumberParsingWithTrailingDecimal",
 		expected: []tokenExpect{
 			{NUMBER, "123."},
-			{EOF, ""},
+			{EOF, ``},
+		},
+	}
+
+	test.expect(t, source)
+}
+
+func TestStringParsing(t *testing.T) {
+	source := `"Hello, Raiton!"`
+
+	test := tokenSequenceTest{
+		name: "StringParsin",
+		expected: []tokenExpect{
+			{STRING, `Hello, Raiton!`},
+			{EOF, ``},
 		},
 	}
 
