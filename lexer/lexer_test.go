@@ -124,10 +124,10 @@ func TestSkippingComments(t *testing.T) {
 	`
 
 	test.expect(source, []token{
-		{IDENTIFIER, `println`},
-		{NUMBER, `123.1`},
+		{IDENTIFIER, `ident`},
+		{NUMBER, `123`},
 		{STRING, `Raiton`},
+		{NUMBER, `3.14`},
 		{EOF, ``},
 	})
 }
-

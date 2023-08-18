@@ -126,6 +126,7 @@ func (l *lexer) longToken(tokenType TokenType, literal string) Token {
 
 func (l *lexer) next() (rune, bool) {
 	if l.ok() {
+		l.consumeComment()
 		l.position += 1
 		return l.current()
 	}
@@ -134,9 +135,18 @@ func (l *lexer) next() (rune, bool) {
 
 func (l *lexer) current() (rune, bool) {
 	if l.ok() {
+		l.consumeComment()
 		return l.source[l.position], true
 	}
 	return 0, false
+}
+
+func (l *lexer) consumeComment() {
+	if isCommentSymbol(l.source[l.position]) {
+		for !isLineBreak(l.source[l.position]) {
+			l.position += 1
+		}
+	}
 }
 
 func (l *lexer) ok() bool {
