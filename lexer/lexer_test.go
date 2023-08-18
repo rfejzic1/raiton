@@ -2,101 +2,84 @@ package lexer
 
 import "testing"
 
-func TestIdentifierParsing(t *testing.T) {
-	source := `println`
-
-	test := tokenSequenceTest{
-		name: "IdentifierParsing",
-		expected: []tokenExpect{
-			{IDENTIFIER, `println`},
-			{EOF, ``},
-		},
-	}
-
-	test.expect(t, source)
+type test struct {
+	name string
+	t    *testing.T
 }
 
-func TestNumberParsing(t *testing.T) {
-	source := `123`
-
-	test := tokenSequenceTest{
-		name: "NumberParsing",
-		expected: []tokenExpect{
-			{NUMBER, `123`},
-			{EOF, ``},
-		},
-	}
-
-	test.expect(t, source)
-}
-
-func TestNumberParsingWithDecimal(t *testing.T) {
-	source := `123.4`
-
-	test := tokenSequenceTest{
-		name: "NumberParsingWithDecimal",
-		expected: []tokenExpect{
-			{NUMBER, `123.4`},
-			{EOF, ``},
-		},
-	}
-
-	test.expect(t, source)
-}
-
-func TestNumberParsingWithTrailingDecimal(t *testing.T) {
-	source := `123.`
-
-	test := tokenSequenceTest{
-		name: "NumberParsingWithTrailingDecimal",
-		expected: []tokenExpect{
-			{NUMBER, "123."},
-			{EOF, ``},
-		},
-	}
-
-	test.expect(t, source)
-}
-
-func TestStringParsing(t *testing.T) {
-	source := `"Hello, Raiton!"`
-
-	test := tokenSequenceTest{
-		name: "StringParsin",
-		expected: []tokenExpect{
-			{STRING, `Hello, Raiton!`},
-			{EOF, ``},
-		},
-	}
-
-	test.expect(t, source)
-}
-
-type tokenSequenceTest struct {
-	name     string
-	expected []tokenExpect
-}
-
-type tokenExpect struct {
+type token struct {
 	Type    TokenType
 	Literal string
 }
 
-func (tst *tokenSequenceTest) expect(t *testing.T, source string) {
+func newTest(t *testing.T, name string) test {
+	return test{t: t, name: name}
+}
+
+func (t *test) expect(source string, sequence []token) {
 	src := []rune(source)
 
 	l := New(src)
 
-	for i, et := range tst.expected {
+	for i, et := range sequence {
 		token := l.Next()
 
 		if token.Type != et.Type {
-			t.Fatalf("%s[%d] - wrong token type; expected `%s`, but got `%s` at line %d", tst.name, i, et.Type, token.Type, token.Line)
+			t.t.Fatalf("%s[%d] - wrong token type; expected `%s`, but got `%s` at line %d", t.name, i, et.Type, token.Type, token.Line)
 		}
 
 		if token.Literal != et.Literal {
-			t.Fatalf("%s[%d] - wrong token literal; expected `%s`, but got `%s` at line %d", tst.name, i, string(et.Literal), string(token.Literal), token.Line)
+			t.t.Fatalf("%s[%d] - wrong token literal; expected `%s`, but got `%s` at line %d", t.name, i, string(et.Literal), string(token.Literal), token.Line)
 		}
 	}
+}
 
+func TestIdentifierLexing(t *testing.T) {
+	test := newTest(t, "IdentifierLexing")
+	source := `println`
+
+	test.expect(source, []token{
+		{IDENTIFIER, `println`},
+		{EOF, ``},
+	})
+}
+
+func TestNumberLexing(t *testing.T) {
+	test := newTest(t, "NumberLexing")
+	source := `123`
+
+	test.expect(source, []token{
+		{NUMBER, `123`},
+		{EOF, ``},
+	})
+}
+
+func TestNumberLexingWithDecimal(t *testing.T) {
+	test := newTest(t, "NumberLexingWithDecimal")
+	source := `123.4`
+
+	test.expect(source, []token{
+		{NUMBER, `123.4`},
+		{EOF, ``},
+	})
+}
+
+func TestNumberLexingWithTrailingDecimal(t *testing.T) {
+	test := newTest(t, "NumberLexingWithTrailingDecimal")
+	source := `123.`
+
+	test.expect(source, []token{
+		{NUMBER, "123."},
+		{EOF, ``},
+	})
+}
+
+func TestStringLexing(t *testing.T) {
+	test := newTest(t, "StringLexing")
+	source := `"Hello, Raiton!"`
+
+	test.expect(source, []token{
+		{STRING, `Hello, Raiton!`},
+		{EOF, ``},
+	})
 }
