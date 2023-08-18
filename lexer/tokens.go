@@ -16,9 +16,13 @@ func (t *Token) Print() {
 }
 
 var SYMBOLS = map[string]TokenType{
-	"(":  LEFT_PAREN,
-	")":  RIGHT_PAREN,
-	":":  COLON,
+	"(": LEFT_PAREN,
+	")": RIGHT_PAREN,
+	"[": LEFT_BRACKET,
+	"]": RIGHT_BRACKET,
+	"{": LEFT_BRACE,
+	"}": RIGHT_BRACE,
+	":": COLON,
 }
 
 const (
@@ -27,6 +31,10 @@ const (
 	NUMBER        = "number"
 	LEFT_PAREN    = "left_paren"
 	RIGHT_PAREN   = "right_paren"
+	LEFT_BRACKET  = "left_bracket"
+	RIGHT_BRACKET = "right_bracket"
+	LEFT_BRACE    = "left_brace"
+	RIGHT_BRACE   = "right_brace"
 	COLON         = "colon"
 
 	EOF     = "eof"

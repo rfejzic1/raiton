@@ -131,3 +131,18 @@ func TestSkippingComments(t *testing.T) {
 		{EOF, ``},
 	})
 }
+
+func TestParenBracketBraceLexing(t *testing.T) {
+	test := newTest(t, "TestParenthesesLexing")
+	source := `()[]{}`
+
+	test.expect(source, []token{
+		{LEFT_PAREN, `(`},
+		{RIGHT_PAREN, `)`},
+		{LEFT_BRACKET, `[`},
+		{RIGHT_BRACKET, `]`},
+		{LEFT_BRACE, `{`},
+		{RIGHT_BRACE, `}`},
+		{EOF, ``},
+	})
+}

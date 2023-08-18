@@ -34,7 +34,7 @@ func (l *lexer) Next() Token {
 	} else if char == '"' {
 		return l.stringToken()
 	} else {
-		return l.token(UNKNOWN, string(char))
+		return l.specialToken()
 	}
 }
 
@@ -99,6 +99,25 @@ func (l *lexer) stringToken() Token {
 	}
 
 	return l.longToken(STRING, lexeme)
+}
+
+func (l *lexer) specialToken() Token {
+	char, _ := l.current()
+	lexeme := string(char)
+	l.next()
+
+	if char, ok := l.current(); ok {
+		extended := lexeme + string(char)
+		if tokenType, ok := SYMBOLS[extended]; ok {
+			l.next()
+			return l.longToken(tokenType, extended)
+		}
+	}
+	if tokenType, ok := SYMBOLS[lexeme]; ok {
+		return l.longToken(tokenType, lexeme)
+	}
+
+	return l.token(UNKNOWN, lexeme)
 }
 
 func (l *lexer) skipWhitespace() {
