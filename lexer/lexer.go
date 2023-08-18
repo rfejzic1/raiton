@@ -1,15 +1,13 @@
 package lexer
 
-import "unicode"
-
 type lexer struct {
-	source   []rune
+	source   string
 	position int
 	line     int
 	column   int
 }
 
-func New(source []rune) lexer {
+func New(source string) lexer {
 	return lexer{
 		source:   source,
 		line:     1,
@@ -27,9 +25,9 @@ func (l *lexer) Next() Token {
 		return l.token(EOF, "")
 	}
 
-	if unicode.IsLetter(char) {
+	if isAlpha(char) {
 		return l.identifierToken()
-	} else if unicode.IsDigit(char) {
+	} else if isDigit(char) {
 		return l.numberToken()
 	} else if char == '"' {
 		return l.stringToken()
@@ -40,7 +38,7 @@ func (l *lexer) Next() Token {
 
 func (l *lexer) identifierToken() Token {
 	literal := ""
-	for char, ok := l.current(); ok && (unicode.IsLetter(char) || char == '_'); char, ok = l.next() {
+	for char, ok := l.current(); ok && (isAlpha(char) || char == '_'); char, ok = l.next() {
 		literal += string(char)
 	}
 	return l.longToken(IDENTIFIER, literal)
@@ -49,7 +47,7 @@ func (l *lexer) identifierToken() Token {
 func (l *lexer) numberToken() Token {
 	lexeme := ""
 
-	for char, ok := l.current(); ok && unicode.IsDigit(char); char, ok = l.next() {
+	for char, ok := l.current(); ok && isDigit(char); char, ok = l.next() {
 		lexeme += string(char)
 	}
 
@@ -57,7 +55,7 @@ func (l *lexer) numberToken() Token {
 		lexeme += "."
 		l.next()
 
-		for char, ok := l.current(); ok && unicode.IsDigit(char); char, ok = l.next() {
+		for char, ok := l.current(); ok && isDigit(char); char, ok = l.next() {
 			lexeme += string(char)
 		}
 	}
@@ -149,7 +147,7 @@ func (l *lexer) longToken(tokenType TokenType, literal string) Token {
 	}
 }
 
-func (l *lexer) next() (rune, bool) {
+func (l *lexer) next() (byte, bool) {
 	if l.ok() {
 		l.consumeComment()
 		l.position += 1
@@ -159,7 +157,7 @@ func (l *lexer) next() (rune, bool) {
 	return 0, false
 }
 
-func (l *lexer) current() (rune, bool) {
+func (l *lexer) current() (byte, bool) {
 	if l.ok() {
 		l.consumeComment()
 		return l.source[l.position], true
@@ -179,14 +177,22 @@ func (l *lexer) ok() bool {
 	return l.position < len(l.source)
 }
 
-func isWhitespace(c rune) bool {
-	return isLineBreak(c) || unicode.IsSpace(c)
+func isAlpha(c byte) bool {
+	return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
 }
 
-func isLineBreak(c rune) bool {
+func isDigit(c byte) bool {
+	return c > '0' && c < '9'
+}
+
+func isWhitespace(c byte) bool {
+	return isLineBreak(c) || c == ' ' || c == '\t'
+}
+
+func isLineBreak(c byte) bool {
 	return c == '\n'
 }
 
-func isCommentSymbol(c rune) bool {
+func isCommentSymbol(c byte) bool {
 	return c == '#'
 }

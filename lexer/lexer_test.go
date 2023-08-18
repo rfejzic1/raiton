@@ -17,9 +17,7 @@ func newTest(t *testing.T, name string) test {
 }
 
 func (t *test) expect(source string, sequence []token) {
-	src := []rune(source)
-
-	l := New(src)
+	l := New(source)
 
 	for i, et := range sequence {
 		token := l.Next()

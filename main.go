@@ -18,7 +18,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	l := lexer.New([]rune(string(data)))
+	l := lexer.New(string(data))
 
 	for token := l.Next(); token.Type != lexer.EOF; token = l.Next() {
 		token.Print()
