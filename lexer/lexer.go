@@ -41,7 +41,18 @@ func (l *lexer) identifierToken() Token {
 	for char, ok := l.current(); ok && (isAlpha(char) || char == '_'); char, ok = l.next() {
 		literal += string(char)
 	}
-	return l.longToken(IDENTIFIER, literal)
+
+	if char, ok := l.current(); ok && char == '!' {
+		literal += string(char)
+		l.next()
+	}
+
+	tokenType, ok := KEYWORDS[literal]
+	if !ok {
+		tokenType = IDENTIFIER
+	}
+
+	return l.longToken(tokenType, literal)
 }
 
 func (l *lexer) numberToken() Token {
