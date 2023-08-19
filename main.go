@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/rfejzic1/raiton/lexer"
+	"github.com/rfejzic1/raiton/token"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 
 	l := lexer.New(string(data))
 
-	for token := l.Next(); token.Type != lexer.EOF; token = l.Next() {
-		token.Print(os.Stdout)
+	for t := l.Next(); t.Matches(token.EOF); t = l.Next() {
+		t.Print(os.Stdout)
 	}
 }

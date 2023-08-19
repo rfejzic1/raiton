@@ -1,14 +1,18 @@
 package lexer
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/rfejzic1/raiton/token"
+)
 
 type test struct {
 	name string
 	t    *testing.T
 }
 
-type token struct {
-	Type    TokenType
+type tokenExpect struct {
+	Type    token.TokenType
 	Literal string
 }
 
@@ -16,7 +20,7 @@ func newTest(t *testing.T, name string) test {
 	return test{t: t, name: name}
 }
 
-func (t *test) expect(source string, sequence []token) {
+func (t *test) expect(source string, sequence []tokenExpect) {
 	l := New(source)
 
 	for i, et := range sequence {
@@ -36,16 +40,16 @@ func TestEmptySource(t *testing.T) {
 	test := newTest(t, "TestEmptySource")
 	source := ``
 
-	test.expect(source, []token{})
+	test.expect(source, []tokenExpect{})
 }
 
 func TestIdentifierLexing(t *testing.T) {
 	test := newTest(t, "IdentifierLexing")
 	source := `println`
 
-	test.expect(source, []token{
-		{IDENTIFIER, `println`},
-		{EOF, ``},
+	test.expect(source, []tokenExpect{
+		{token.IDENTIFIER, `println`},
+		{token.EOF, ``},
 	})
 }
 
@@ -53,9 +57,9 @@ func TestNumberLexing(t *testing.T) {
 	test := newTest(t, "NumberLexing")
 	source := `123`
 
-	test.expect(source, []token{
-		{NUMBER, `123`},
-		{EOF, ``},
+	test.expect(source, []tokenExpect{
+		{token.NUMBER, `123`},
+		{token.EOF, ``},
 	})
 }
 
@@ -63,9 +67,9 @@ func TestNumberLexingWithDecimal(t *testing.T) {
 	test := newTest(t, "NumberLexingWithDecimal")
 	source := `123.4`
 
-	test.expect(source, []token{
-		{NUMBER, `123.4`},
-		{EOF, ``},
+	test.expect(source, []tokenExpect{
+		{token.NUMBER, `123.4`},
+		{token.EOF, ``},
 	})
 }
 
@@ -73,9 +77,9 @@ func TestNumberLexingWithTrailingDecimal(t *testing.T) {
 	test := newTest(t, "NumberLexingWithTrailingDecimal")
 	source := `123.`
 
-	test.expect(source, []token{
-		{NUMBER, "123."},
-		{EOF, ``},
+	test.expect(source, []tokenExpect{
+		{token.NUMBER, "123."},
+		{token.EOF, ``},
 	})
 }
 
@@ -83,11 +87,11 @@ func TestStringLexing(t *testing.T) {
 	test := newTest(t, "StringLexing")
 	source := `"Hello, Raiton!"`
 
-	test.expect(source, []token{
-		{DOUBLE_QUOTE, `"`},
-		{STRING, `Hello, Raiton!`},
-		{DOUBLE_QUOTE, `"`},
-		{EOF, ``},
+	test.expect(source, []tokenExpect{
+		{token.DOUBLE_QUOTE, `"`},
+		{token.STRING, `Hello, Raiton!`},
+		{token.DOUBLE_QUOTE, `"`},
+		{token.EOF, ``},
 	})
 }
 
@@ -95,13 +99,13 @@ func TestSkippingSpaces(t *testing.T) {
 	test := newTest(t, "TestSkippingSpaces")
 	source := `  println  123.1 "Raiton"  `
 
-	test.expect(source, []token{
-		{IDENTIFIER, `println`},
-		{NUMBER, `123.1`},
-		{DOUBLE_QUOTE, `"`},
-		{STRING, `Raiton`},
-		{DOUBLE_QUOTE, `"`},
-		{EOF, ``},
+	test.expect(source, []tokenExpect{
+		{token.IDENTIFIER, `println`},
+		{token.NUMBER, `123.1`},
+		{token.DOUBLE_QUOTE, `"`},
+		{token.STRING, `Raiton`},
+		{token.DOUBLE_QUOTE, `"`},
+		{token.EOF, ``},
 	})
 }
 
@@ -112,13 +116,13 @@ func TestSkippingNewlines(t *testing.T) {
 	   "Raiton"  
 	`
 
-	test.expect(source, []token{
-		{IDENTIFIER, `println`},
-		{NUMBER, `123.1`},
-		{DOUBLE_QUOTE, `"`},
-		{STRING, `Raiton`},
-		{DOUBLE_QUOTE, `"`},
-		{EOF, ``},
+	test.expect(source, []tokenExpect{
+		{token.IDENTIFIER, `println`},
+		{token.NUMBER, `123.1`},
+		{token.DOUBLE_QUOTE, `"`},
+		{token.STRING, `Raiton`},
+		{token.DOUBLE_QUOTE, `"`},
+		{token.EOF, ``},
 	})
 }
 
@@ -134,14 +138,14 @@ func TestSkippingComments(t *testing.T) {
 	3.14
 	`
 
-	test.expect(source, []token{
-		{IDENTIFIER, `ident`},
-		{NUMBER, `123`},
-		{DOUBLE_QUOTE, `"`},
-		{STRING, `Raiton`},
-		{DOUBLE_QUOTE, `"`},
-		{NUMBER, `3.14`},
-		{EOF, ``},
+	test.expect(source, []tokenExpect{
+		{token.IDENTIFIER, `ident`},
+		{token.NUMBER, `123`},
+		{token.DOUBLE_QUOTE, `"`},
+		{token.STRING, `Raiton`},
+		{token.DOUBLE_QUOTE, `"`},
+		{token.NUMBER, `3.14`},
+		{token.EOF, ``},
 	})
 }
 
@@ -149,16 +153,16 @@ func TestParenBracketBraceAngleLexing(t *testing.T) {
 	test := newTest(t, "TestParenBracketBraceAngleLexing")
 	source := `()[]{}<>`
 
-	test.expect(source, []token{
-		{OPEN_PAREN, `(`},
-		{CLOSED_PAREN, `)`},
-		{OPEN_BRACKET, `[`},
-		{CLOSED_BRACKET, `]`},
-		{OPEN_BRACE, `{`},
-		{CLOSED_BRACE, `}`},
-		{OPEN_ANGLE, `<`},
-		{CLOSED_ANGLE, `>`},
-		{EOF, ``},
+	test.expect(source, []tokenExpect{
+		{token.OPEN_PAREN, `(`},
+		{token.CLOSED_PAREN, `)`},
+		{token.OPEN_BRACKET, `[`},
+		{token.CLOSED_BRACKET, `]`},
+		{token.OPEN_BRACE, `{`},
+		{token.CLOSED_BRACE, `}`},
+		{token.OPEN_ANGLE, `<`},
+		{token.CLOSED_ANGLE, `>`},
+		{token.EOF, ``},
 	})
 }
 
@@ -172,22 +176,22 @@ func TestQuoteLexing(t *testing.T) {
 	'single escape \''
 	`
 
-	test.expect(source, []token{
-		{DOUBLE_QUOTE, `"`},
-		{STRING, `'single'`},
-		{DOUBLE_QUOTE, `"`},
+	test.expect(source, []tokenExpect{
+		{token.DOUBLE_QUOTE, `"`},
+		{token.STRING, `'single'`},
+		{token.DOUBLE_QUOTE, `"`},
 
-		{SINGLE_QUOTE, `'`},
-		{STRING, `"double"`},
-		{SINGLE_QUOTE, `'`},
+		{token.SINGLE_QUOTE, `'`},
+		{token.STRING, `"double"`},
+		{token.SINGLE_QUOTE, `'`},
 
-		{DOUBLE_QUOTE, `"`},
-		{STRING, `double escape "`},
-		{DOUBLE_QUOTE, `"`},
+		{token.DOUBLE_QUOTE, `"`},
+		{token.STRING, `double escape "`},
+		{token.DOUBLE_QUOTE, `"`},
 
-		{SINGLE_QUOTE, `'`},
-		{STRING, `single escape '`},
-		{SINGLE_QUOTE, `'`},
+		{token.SINGLE_QUOTE, `'`},
+		{token.STRING, `single escape '`},
+		{token.SINGLE_QUOTE, `'`},
 	})
 }
 
@@ -197,22 +201,22 @@ func TestLambdaLexing(t *testing.T) {
 	(map [1 2 3] \x: (square x))
 	`
 
-	test.expect(source, []token{
-		{OPEN_PAREN, `(`},
-		{IDENTIFIER, `map`},
-		{OPEN_BRACKET, `[`},
-		{NUMBER, `1`},
-		{NUMBER, `2`},
-		{NUMBER, `3`},
-		{CLOSED_BRACKET, `]`},
-		{BACKSLASH, `\`},
-		{IDENTIFIER, `x`},
-		{COLON, `:`},
-		{OPEN_PAREN, `(`},
-		{IDENTIFIER, `square`},
-		{IDENTIFIER, `x`},
-		{CLOSED_PAREN, `)`},
-		{CLOSED_PAREN, `)`},
+	test.expect(source, []tokenExpect{
+		{token.OPEN_PAREN, `(`},
+		{token.IDENTIFIER, `map`},
+		{token.OPEN_BRACKET, `[`},
+		{token.NUMBER, `1`},
+		{token.NUMBER, `2`},
+		{token.NUMBER, `3`},
+		{token.CLOSED_BRACKET, `]`},
+		{token.BACKSLASH, `\`},
+		{token.IDENTIFIER, `x`},
+		{token.COLON, `:`},
+		{token.OPEN_PAREN, `(`},
+		{token.IDENTIFIER, `square`},
+		{token.IDENTIFIER, `x`},
+		{token.CLOSED_PAREN, `)`},
+		{token.CLOSED_PAREN, `)`},
 	})
 }
 
@@ -223,23 +227,23 @@ func TestTypeDefinitionLexing(t *testing.T) {
 	add_numbers a b: (add a b)
 	`
 
-	test.expect(source, []token{
-		{OPEN_ANGLE, `<`},
-		{IDENTIFIER, `number`},
-		{RIGHT_ARROW, `->`},
-		{IDENTIFIER, `number`},
-		{RIGHT_ARROW, `->`},
-		{IDENTIFIER, `number`},
-		{CLOSED_ANGLE, `>`},
-		{IDENTIFIER, `add_numbers`},
-		{IDENTIFIER, `a`},
-		{IDENTIFIER, `b`},
-		{COLON, `:`},
-		{OPEN_PAREN, `(`},
-		{IDENTIFIER, `add`},
-		{IDENTIFIER, `a`},
-		{IDENTIFIER, `b`},
-		{CLOSED_PAREN, `)`},
+	test.expect(source, []tokenExpect{
+		{token.OPEN_ANGLE, `<`},
+		{token.IDENTIFIER, `number`},
+		{token.RIGHT_ARROW, `->`},
+		{token.IDENTIFIER, `number`},
+		{token.RIGHT_ARROW, `->`},
+		{token.IDENTIFIER, `number`},
+		{token.CLOSED_ANGLE, `>`},
+		{token.IDENTIFIER, `add_numbers`},
+		{token.IDENTIFIER, `a`},
+		{token.IDENTIFIER, `b`},
+		{token.COLON, `:`},
+		{token.OPEN_PAREN, `(`},
+		{token.IDENTIFIER, `add`},
+		{token.IDENTIFIER, `a`},
+		{token.IDENTIFIER, `b`},
+		{token.CLOSED_PAREN, `)`},
 	})
 }
 
@@ -255,26 +259,26 @@ func TestTypeDeclarationLexing(t *testing.T) {
 	type num_list: [number]
 	`
 
-	test.expect(source, []token{
-		{TYPE, `type`},
-		{IDENTIFIER, `name`},
-		{COLON, `:`},
-		{IDENTIFIER, `string`},
+	test.expect(source, []tokenExpect{
+		{token.TYPE, `type`},
+		{token.IDENTIFIER, `name`},
+		{token.COLON, `:`},
+		{token.IDENTIFIER, `string`},
 
-		{TYPE, `type`},
-		{IDENTIFIER, `person`},
-		{COLON, `:`},
-		{OPEN_BRACE, `{`},
-		{IDENTIFIER, `name`},
-		{COLON, `:`},
-		{IDENTIFIER, `string`},
-		{CLOSED_BRACE, `}`},
+		{token.TYPE, `type`},
+		{token.IDENTIFIER, `person`},
+		{token.COLON, `:`},
+		{token.OPEN_BRACE, `{`},
+		{token.IDENTIFIER, `name`},
+		{token.COLON, `:`},
+		{token.IDENTIFIER, `string`},
+		{token.CLOSED_BRACE, `}`},
 
-		{TYPE, `type`},
-		{IDENTIFIER, `num_list`},
-		{COLON, `:`},
-		{OPEN_BRACKET, `[`},
-		{IDENTIFIER, `number`},
-		{CLOSED_BRACKET, `]`},
+		{token.TYPE, `type`},
+		{token.IDENTIFIER, `num_list`},
+		{token.COLON, `:`},
+		{token.OPEN_BRACKET, `[`},
+		{token.IDENTIFIER, `number`},
+		{token.CLOSED_BRACKET, `]`},
 	})
 }

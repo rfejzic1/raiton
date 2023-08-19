@@ -1,4 +1,4 @@
-package lexer
+package token
 
 import (
 	"fmt"
@@ -20,6 +20,10 @@ func (t *Token) Print(w io.Writer) {
 		format = "(%3d, %3d) %12s `%s`\n"
 	}
 	fmt.Fprintf(w, format, t.Line, t.Column, t.Type, t.Literal)
+}
+
+func (t *Token) Matches(tokenType TokenType) bool {
+	return t.Type == tokenType
 }
 
 var KEYWORDS = map[string]TokenType{
@@ -52,13 +56,13 @@ const (
 
 	TYPE = "type"
 
-	OPEN_PAREN    = "left_paren"
+	OPEN_PAREN     = "left_paren"
 	CLOSED_PAREN   = "right_paren"
-	OPEN_BRACKET  = "left_bracket"
+	OPEN_BRACKET   = "left_bracket"
 	CLOSED_BRACKET = "right_bracket"
-	OPEN_BRACE    = "left_brace"
+	OPEN_BRACE     = "left_brace"
 	CLOSED_BRACE   = "right_brace"
-	OPEN_ANGLE    = "left_angle"
+	OPEN_ANGLE     = "left_angle"
 	CLOSED_ANGLE   = "right_angle"
 
 	SINGLE_QUOTE = "single_quote"

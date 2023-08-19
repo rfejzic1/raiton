@@ -1,5 +1,7 @@
 package lexer
 
+import "github.com/rfejzic1/raiton/token"
+
 type lexMode uint
 
 const (
@@ -27,24 +29,24 @@ func New(source string) lexer {
 	}
 }
 
-func (l *lexer) Next() Token {
+func (l *lexer) Next() token.Token {
 	switch l.mode {
 	case NORMAL_MODE:
 		return l.normalMode()
 	case SEQUENCE_MODE:
 		return l.sequenceMode()
 	default:
-		return l.token(ILLEGAL, "")
+		return l.token(token.ILLEGAL, "")
 	}
 }
 
-func (l *lexer) normalMode() Token {
+func (l *lexer) normalMode() token.Token {
 	l.skipWhitespace()
 
 	char, ok := l.current()
 
 	if !ok {
-		return l.token(EOF, "")
+		return l.token(token.EOF, "")
 	}
 
 	if isAlpha(char) {
@@ -61,11 +63,11 @@ func (l *lexer) normalMode() Token {
 	}
 }
 
-func (l *lexer) sequenceMode() Token {
+func (l *lexer) sequenceMode() token.Token {
 	char, ok := l.current()
 
 	if !ok {
-		return l.token(EOF, "")
+		return l.token(token.EOF, "")
 	}
 
 	if char == l.modeChar {
@@ -77,7 +79,7 @@ func (l *lexer) sequenceMode() Token {
 	return l.stringToken()
 }
 
-func (l *lexer) identifierToken() Token {
+func (l *lexer) identifierToken() token.Token {
 	literal := ""
 	for char, ok := l.current(); ok && (isAlpha(char) || char == '_'); char, ok = l.next() {
 		literal += string(char)
@@ -88,15 +90,15 @@ func (l *lexer) identifierToken() Token {
 		l.next()
 	}
 
-	tokenType, ok := KEYWORDS[literal]
+	tokenType, ok := token.KEYWORDS[literal]
 	if !ok {
-		tokenType = IDENTIFIER
+		tokenType = token.IDENTIFIER
 	}
 
 	return l.longToken(tokenType, literal)
 }
 
-func (l *lexer) numberToken() Token {
+func (l *lexer) numberToken() token.Token {
 	lexeme := ""
 
 	for char, ok := l.current(); ok && isDigit(char); char, ok = l.next() {
@@ -112,17 +114,17 @@ func (l *lexer) numberToken() Token {
 		}
 	}
 
-	return l.longToken(NUMBER, lexeme)
+	return l.longToken(token.NUMBER, lexeme)
 }
 
-func (l *lexer) stringToken() Token {
+func (l *lexer) stringToken() token.Token {
 	lexeme := ""
 
 	for char, ok := l.current(); ok; char, ok = l.next() {
 		if char == '\\' {
 			char, ok := l.next()
 			if !ok {
-				return l.token(EOF, "")
+				return l.token(token.EOF, "")
 			}
 
 			if char == '"' {
@@ -144,26 +146,26 @@ func (l *lexer) stringToken() Token {
 		}
 	}
 
-	return l.longToken(STRING, lexeme)
+	return l.longToken(token.STRING, lexeme)
 }
 
-func (l *lexer) specialToken() Token {
+func (l *lexer) specialToken() token.Token {
 	char, _ := l.current()
 	lexeme := string(char)
 	l.next()
 
 	if char, ok := l.current(); ok {
 		extended := lexeme + string(char)
-		if tokenType, ok := SYMBOLS[extended]; ok {
+		if tokenType, ok := token.SYMBOLS[extended]; ok {
 			l.next()
 			return l.longToken(tokenType, extended)
 		}
 	}
-	if tokenType, ok := SYMBOLS[lexeme]; ok {
+	if tokenType, ok := token.SYMBOLS[lexeme]; ok {
 		return l.longToken(tokenType, lexeme)
 	}
 
-	return l.longToken(ILLEGAL, lexeme)
+	return l.longToken(token.ILLEGAL, lexeme)
 }
 
 func (l *lexer) skipWhitespace() {
@@ -175,8 +177,8 @@ func (l *lexer) skipWhitespace() {
 	}
 }
 
-func (l *lexer) token(tokenType TokenType, literal string) Token {
-	return Token{
+func (l *lexer) token(tokenType token.TokenType, literal string) token.Token {
+	return token.Token{
 		Literal: literal,
 		Type:    tokenType,
 		Line:    l.line,
@@ -184,8 +186,8 @@ func (l *lexer) token(tokenType TokenType, literal string) Token {
 	}
 }
 
-func (l *lexer) longToken(tokenType TokenType, literal string) Token {
-	return Token{
+func (l *lexer) longToken(tokenType token.TokenType, literal string) token.Token {
+	return token.Token{
 		Literal: literal,
 		Type:    tokenType,
 		Line:    l.line,
