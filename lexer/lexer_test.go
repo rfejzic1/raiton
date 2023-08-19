@@ -77,7 +77,9 @@ func TestStringLexing(t *testing.T) {
 	source := `"Hello, Raiton!"`
 
 	test.expect(source, []token{
+		{DOUBLE_QUOTE, `"`},
 		{STRING, `Hello, Raiton!`},
+		{DOUBLE_QUOTE, `"`},
 		{EOF, ``},
 	})
 }
@@ -89,7 +91,9 @@ func TestSkippingSpaces(t *testing.T) {
 	test.expect(source, []token{
 		{IDENTIFIER, `println`},
 		{NUMBER, `123.1`},
+		{DOUBLE_QUOTE, `"`},
 		{STRING, `Raiton`},
+		{DOUBLE_QUOTE, `"`},
 		{EOF, ``},
 	})
 }
@@ -104,7 +108,9 @@ func TestSkippingNewlines(t *testing.T) {
 	test.expect(source, []token{
 		{IDENTIFIER, `println`},
 		{NUMBER, `123.1`},
+		{DOUBLE_QUOTE, `"`},
 		{STRING, `Raiton`},
+		{DOUBLE_QUOTE, `"`},
 		{EOF, ``},
 	})
 }
@@ -124,15 +130,17 @@ func TestSkippingComments(t *testing.T) {
 	test.expect(source, []token{
 		{IDENTIFIER, `ident`},
 		{NUMBER, `123`},
+		{DOUBLE_QUOTE, `"`},
 		{STRING, `Raiton`},
+		{DOUBLE_QUOTE, `"`},
 		{NUMBER, `3.14`},
 		{EOF, ``},
 	})
 }
 
-func TestParenBracketBraceLexing(t *testing.T) {
-	test := newTest(t, "TestParenthesesLexing")
-	source := `()[]{}`
+func TestParenBracketBraceAngleLexing(t *testing.T) {
+	test := newTest(t, "TestParenBracketBraceAngleLexing")
+	source := `()[]{}<>`
 
 	test.expect(source, []token{
 		{LEFT_PAREN, `(`},
@@ -141,6 +149,8 @@ func TestParenBracketBraceLexing(t *testing.T) {
 		{RIGHT_BRACKET, `]`},
 		{LEFT_BRACE, `{`},
 		{RIGHT_BRACE, `}`},
+		{LEFT_ANGLE, `<`},
+		{RIGHT_ANGLE, `>`},
 		{EOF, ``},
 	})
 }

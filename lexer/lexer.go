@@ -1,10 +1,19 @@
 package lexer
 
+type lexMode uint
+
+const (
+	NORMAL_MODE lexMode = iota
+	SEQUENCE_MODE
+)
+
 type lexer struct {
 	source   string
 	position int
 	line     int
 	column   int
+	mode     lexMode
+	modeChar byte
 }
 
 func New(source string) lexer {
@@ -13,10 +22,23 @@ func New(source string) lexer {
 		line:     1,
 		column:   1,
 		position: 0,
+		mode:     NORMAL_MODE,
+		modeChar: 0,
 	}
 }
 
 func (l *lexer) Next() Token {
+	switch l.mode {
+	case NORMAL_MODE:
+		return l.normalMode()
+	case SEQUENCE_MODE:
+		return l.sequenceMode()
+	default:
+		return l.token(ILLEGAL, "")
+	}
+}
+
+func (l *lexer) normalMode() Token {
 	l.skipWhitespace()
 
 	char, ok := l.current()
@@ -29,11 +51,30 @@ func (l *lexer) Next() Token {
 		return l.identifierToken()
 	} else if isDigit(char) {
 		return l.numberToken()
-	} else if char == '"' {
-		return l.stringToken()
+	} else if isQuote(char) {
+		token := l.specialToken()
+		l.mode = SEQUENCE_MODE
+		l.modeChar = char
+		return token
 	} else {
 		return l.specialToken()
 	}
+}
+
+func (l *lexer) sequenceMode() Token {
+	char, ok := l.current()
+
+	if !ok {
+		return l.token(EOF, "")
+	}
+
+	if char == l.modeChar {
+		token := l.specialToken()
+		l.mode = NORMAL_MODE
+		return token
+	}
+
+	return l.stringToken()
 }
 
 func (l *lexer) identifierToken() Token {
@@ -77,8 +118,6 @@ func (l *lexer) numberToken() Token {
 func (l *lexer) stringToken() Token {
 	lexeme := ""
 
-	l.next() // consume quote
-
 	for char, ok := l.current(); ok; char, ok = l.next() {
 		if char == '\\' {
 			char, ok := l.next()
@@ -88,6 +127,8 @@ func (l *lexer) stringToken() Token {
 
 			if char == '"' {
 				lexeme += `"`
+			} else if char == '\'' {
+				lexeme += `'`
 			} else if char == 'n' {
 				lexeme += "\n"
 			} else if char == 't' {
@@ -96,20 +137,14 @@ func (l *lexer) stringToken() Token {
 				lexeme += "\\"
 				lexeme += string(char)
 			}
-		} else if char == '"' {
+		} else if char == l.modeChar {
 			break
 		} else {
 			lexeme += string(char)
 		}
 	}
 
-	token := l.longToken(STRING, lexeme)
-
-	if char, ok := l.current(); ok && char == '"' {
-		l.next() // consume quote
-	}
-
-	return token
+	return l.longToken(STRING, lexeme)
 }
 
 func (l *lexer) specialToken() Token {
@@ -194,6 +229,10 @@ func isAlpha(c byte) bool {
 
 func isDigit(c byte) bool {
 	return c > '0' && c < '9'
+}
+
+func isQuote(c byte) bool {
+	return c == '"' || c == '\''
 }
 
 func isWhitespace(c byte) bool {

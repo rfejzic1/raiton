@@ -1,6 +1,9 @@
 package lexer
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+)
 
 type TokenType string
 
@@ -11,8 +14,12 @@ type Token struct {
 	Type    TokenType
 }
 
-func (t *Token) Print() {
-	fmt.Printf("(%3d, %3d) %12s '%s'\n", t.Line, t.Column, t.Type, t.Literal)
+func (t *Token) Print(w io.Writer) {
+	format := "(%3d, %3d) %12s %s\n"
+	if t.Type == STRING {
+		format = "(%3d, %3d) %12s `%s`\n"
+	}
+	fmt.Fprintf(w, format, t.Line, t.Column, t.Type, t.Literal)
 }
 
 var KEYWORDS = map[string]TokenType{
@@ -28,6 +35,8 @@ var SYMBOLS = map[string]TokenType{
 	"}":  RIGHT_BRACE,
 	"<":  LEFT_ANGLE,
 	">":  RIGHT_ANGLE,
+	"'":  SINGLE_QUOTE,
+	"\"": DOUBLE_QUOTE,
 	".":  DOT,
 	",":  COMMA,
 	":":  COLON,
@@ -52,12 +61,14 @@ const (
 	LEFT_ANGLE    = "left_angle"
 	RIGHT_ANGLE   = "right_angle"
 
-	DOT         = "dot"
-	COMMA       = "comma"
-	COLON       = "colon"
-	PIPE        = "pipe"
-	BACKSLASH   = "backslash"
-	RIGHT_ARROW = "right_arrow"
+	SINGLE_QUOTE = "single_quote"
+	DOUBLE_QUOTE = "double_quote"
+	DOT          = "dot"
+	COMMA        = "comma"
+	COLON        = "colon"
+	PIPE         = "pipe"
+	BACKSLASH    = "backslash"
+	RIGHT_ARROW  = "right_arrow"
 
 	EOF     = "eof"
 	ILLEGAL = "illegal"
