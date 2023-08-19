@@ -32,6 +32,13 @@ func (t *test) expect(source string, sequence []token) {
 	}
 }
 
+func TestEmptySource(t *testing.T) {
+	test := newTest(t, "TestEmptySource")
+	source := ``
+
+	test.expect(source, []token{})
+}
+
 func TestIdentifierLexing(t *testing.T) {
 	test := newTest(t, "IdentifierLexing")
 	source := `println`
@@ -152,5 +159,122 @@ func TestParenBracketBraceAngleLexing(t *testing.T) {
 		{LEFT_ANGLE, `<`},
 		{RIGHT_ANGLE, `>`},
 		{EOF, ``},
+	})
+}
+
+func TestQuoteLexing(t *testing.T) {
+	test := newTest(t, "TestQuoteLexing")
+	source := `
+	# should parse quotes correctly
+	"'single'"
+	'"double"'
+	"double escape \""
+	'single escape \''
+	`
+
+	test.expect(source, []token{
+		{DOUBLE_QUOTE, `"`},
+		{STRING, `'single'`},
+		{DOUBLE_QUOTE, `"`},
+
+		{SINGLE_QUOTE, `'`},
+		{STRING, `"double"`},
+		{SINGLE_QUOTE, `'`},
+
+		{DOUBLE_QUOTE, `"`},
+		{STRING, `double escape "`},
+		{DOUBLE_QUOTE, `"`},
+
+		{SINGLE_QUOTE, `'`},
+		{STRING, `single escape '`},
+		{SINGLE_QUOTE, `'`},
+	})
+}
+
+func TestLambdaLexing(t *testing.T) {
+	test := newTest(t, "TestLambdaLexing")
+	source := `
+	(map [1 2 3] \x: (square x))
+	`
+
+	test.expect(source, []token{
+		{LEFT_PAREN, `(`},
+		{IDENTIFIER, `map`},
+		{LEFT_BRACKET, `[`},
+		{NUMBER, `1`},
+		{NUMBER, `2`},
+		{NUMBER, `3`},
+		{RIGHT_BRACKET, `]`},
+		{BACKSLASH, `\`},
+		{IDENTIFIER, `x`},
+		{COLON, `:`},
+		{LEFT_PAREN, `(`},
+		{IDENTIFIER, `square`},
+		{IDENTIFIER, `x`},
+		{RIGHT_PAREN, `)`},
+		{RIGHT_PAREN, `)`},
+	})
+}
+
+func TestTypeDefinitionLexing(t *testing.T) {
+	test := newTest(t, "TestTypeDefinitionLexing")
+	source := `
+	<number -> number -> number>
+	add_numbers a b: (add a b)
+	`
+
+	test.expect(source, []token{
+		{LEFT_ANGLE, `<`},
+		{IDENTIFIER, `number`},
+		{RIGHT_ARROW, `->`},
+		{IDENTIFIER, `number`},
+		{RIGHT_ARROW, `->`},
+		{IDENTIFIER, `number`},
+		{RIGHT_ANGLE, `>`},
+		{IDENTIFIER, `add_numbers`},
+		{IDENTIFIER, `a`},
+		{IDENTIFIER, `b`},
+		{COLON, `:`},
+		{LEFT_PAREN, `(`},
+		{IDENTIFIER, `add`},
+		{IDENTIFIER, `a`},
+		{IDENTIFIER, `b`},
+		{RIGHT_PAREN, `)`},
+	})
+}
+
+func TestTypeDeclarationLexing(t *testing.T) {
+	test := newTest(t, "TestTypeDeclarationLexing")
+	source := `
+	type name: string
+
+	type person: {
+		name: string
+	}
+
+	type num_list: [number]
+	`
+
+	test.expect(source, []token{
+		{TYPE, `type`},
+		{IDENTIFIER, `name`},
+		{COLON, `:`},
+		{IDENTIFIER, `string`},
+
+		{TYPE, `type`},
+		{IDENTIFIER, `person`},
+		{COLON, `:`},
+		{LEFT_BRACE, `{`},
+		{IDENTIFIER, `name`},
+		{COLON, `:`},
+		{IDENTIFIER, `string`},
+		{RIGHT_BRACE, `}`},
+
+		{TYPE, `type`},
+		{IDENTIFIER, `num_list`},
+		{COLON, `:`},
+		{LEFT_BRACKET, `[`},
+		{IDENTIFIER, `number`},
+		{RIGHT_BRACKET, `]`},
 	})
 }
