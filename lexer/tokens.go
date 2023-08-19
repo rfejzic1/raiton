@@ -27,14 +27,14 @@ var KEYWORDS = map[string]TokenType{
 }
 
 var SYMBOLS = map[string]TokenType{
-	"(":  LEFT_PAREN,
-	")":  RIGHT_PAREN,
-	"[":  LEFT_BRACKET,
-	"]":  RIGHT_BRACKET,
-	"{":  LEFT_BRACE,
-	"}":  RIGHT_BRACE,
-	"<":  LEFT_ANGLE,
-	">":  RIGHT_ANGLE,
+	"(":  OPEN_PAREN,
+	")":  CLOSED_PAREN,
+	"[":  OPEN_BRACKET,
+	"]":  CLOSED_BRACKET,
+	"{":  OPEN_BRACE,
+	"}":  CLOSED_BRACE,
+	"<":  OPEN_ANGLE,
+	">":  CLOSED_ANGLE,
 	"'":  SINGLE_QUOTE,
 	"\"": DOUBLE_QUOTE,
 	".":  DOT,
@@ -52,14 +52,14 @@ const (
 
 	TYPE = "type"
 
-	LEFT_PAREN    = "left_paren"
-	RIGHT_PAREN   = "right_paren"
-	LEFT_BRACKET  = "left_bracket"
-	RIGHT_BRACKET = "right_bracket"
-	LEFT_BRACE    = "left_brace"
-	RIGHT_BRACE   = "right_brace"
-	LEFT_ANGLE    = "left_angle"
-	RIGHT_ANGLE   = "right_angle"
+	OPEN_PAREN    = "left_paren"
+	CLOSED_PAREN   = "right_paren"
+	OPEN_BRACKET  = "left_bracket"
+	CLOSED_BRACKET = "right_bracket"
+	OPEN_BRACE    = "left_brace"
+	CLOSED_BRACE   = "right_brace"
+	OPEN_ANGLE    = "left_angle"
+	CLOSED_ANGLE   = "right_angle"
 
 	SINGLE_QUOTE = "single_quote"
 	DOUBLE_QUOTE = "double_quote"

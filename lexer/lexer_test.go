@@ -150,14 +150,14 @@ func TestParenBracketBraceAngleLexing(t *testing.T) {
 	source := `()[]{}<>`
 
 	test.expect(source, []token{
-		{LEFT_PAREN, `(`},
-		{RIGHT_PAREN, `)`},
-		{LEFT_BRACKET, `[`},
-		{RIGHT_BRACKET, `]`},
-		{LEFT_BRACE, `{`},
-		{RIGHT_BRACE, `}`},
-		{LEFT_ANGLE, `<`},
-		{RIGHT_ANGLE, `>`},
+		{OPEN_PAREN, `(`},
+		{CLOSED_PAREN, `)`},
+		{OPEN_BRACKET, `[`},
+		{CLOSED_BRACKET, `]`},
+		{OPEN_BRACE, `{`},
+		{CLOSED_BRACE, `}`},
+		{OPEN_ANGLE, `<`},
+		{CLOSED_ANGLE, `>`},
 		{EOF, ``},
 	})
 }
@@ -198,21 +198,21 @@ func TestLambdaLexing(t *testing.T) {
 	`
 
 	test.expect(source, []token{
-		{LEFT_PAREN, `(`},
+		{OPEN_PAREN, `(`},
 		{IDENTIFIER, `map`},
-		{LEFT_BRACKET, `[`},
+		{OPEN_BRACKET, `[`},
 		{NUMBER, `1`},
 		{NUMBER, `2`},
 		{NUMBER, `3`},
-		{RIGHT_BRACKET, `]`},
+		{CLOSED_BRACKET, `]`},
 		{BACKSLASH, `\`},
 		{IDENTIFIER, `x`},
 		{COLON, `:`},
-		{LEFT_PAREN, `(`},
+		{OPEN_PAREN, `(`},
 		{IDENTIFIER, `square`},
 		{IDENTIFIER, `x`},
-		{RIGHT_PAREN, `)`},
-		{RIGHT_PAREN, `)`},
+		{CLOSED_PAREN, `)`},
+		{CLOSED_PAREN, `)`},
 	})
 }
 
@@ -224,22 +224,22 @@ func TestTypeDefinitionLexing(t *testing.T) {
 	`
 
 	test.expect(source, []token{
-		{LEFT_ANGLE, `<`},
+		{OPEN_ANGLE, `<`},
 		{IDENTIFIER, `number`},
 		{RIGHT_ARROW, `->`},
 		{IDENTIFIER, `number`},
 		{RIGHT_ARROW, `->`},
 		{IDENTIFIER, `number`},
-		{RIGHT_ANGLE, `>`},
+		{CLOSED_ANGLE, `>`},
 		{IDENTIFIER, `add_numbers`},
 		{IDENTIFIER, `a`},
 		{IDENTIFIER, `b`},
 		{COLON, `:`},
-		{LEFT_PAREN, `(`},
+		{OPEN_PAREN, `(`},
 		{IDENTIFIER, `add`},
 		{IDENTIFIER, `a`},
 		{IDENTIFIER, `b`},
-		{RIGHT_PAREN, `)`},
+		{CLOSED_PAREN, `)`},
 	})
 }
 
@@ -264,17 +264,17 @@ func TestTypeDeclarationLexing(t *testing.T) {
 		{TYPE, `type`},
 		{IDENTIFIER, `person`},
 		{COLON, `:`},
-		{LEFT_BRACE, `{`},
+		{OPEN_BRACE, `{`},
 		{IDENTIFIER, `name`},
 		{COLON, `:`},
 		{IDENTIFIER, `string`},
-		{RIGHT_BRACE, `}`},
+		{CLOSED_BRACE, `}`},
 
 		{TYPE, `type`},
 		{IDENTIFIER, `num_list`},
 		{COLON, `:`},
-		{LEFT_BRACKET, `[`},
+		{OPEN_BRACKET, `[`},
 		{IDENTIFIER, `number`},
-		{RIGHT_BRACKET, `]`},
+		{CLOSED_BRACKET, `]`},
 	})
 }
