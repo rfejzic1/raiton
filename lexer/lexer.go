@@ -9,7 +9,7 @@ const (
 	SEQUENCE_MODE
 )
 
-type lexer struct {
+type Lexer struct {
 	source   string
 	position int
 	line     int
@@ -18,8 +18,8 @@ type lexer struct {
 	modeChar byte
 }
 
-func New(source string) lexer {
-	return lexer{
+func New(source string) Lexer {
+	return Lexer{
 		source:   source,
 		line:     1,
 		column:   1,
@@ -29,7 +29,7 @@ func New(source string) lexer {
 	}
 }
 
-func (l *lexer) Next() token.Token {
+func (l *Lexer) Next() token.Token {
 	switch l.mode {
 	case NORMAL_MODE:
 		return l.normalMode()
@@ -40,7 +40,7 @@ func (l *lexer) Next() token.Token {
 	}
 }
 
-func (l *lexer) normalMode() token.Token {
+func (l *Lexer) normalMode() token.Token {
 	l.skipWhitespace()
 
 	char, ok := l.current()
@@ -63,7 +63,7 @@ func (l *lexer) normalMode() token.Token {
 	}
 }
 
-func (l *lexer) sequenceMode() token.Token {
+func (l *Lexer) sequenceMode() token.Token {
 	char, ok := l.current()
 
 	if !ok {
@@ -79,7 +79,7 @@ func (l *lexer) sequenceMode() token.Token {
 	return l.stringToken()
 }
 
-func (l *lexer) identifierToken() token.Token {
+func (l *Lexer) identifierToken() token.Token {
 	literal := ""
 	for char, ok := l.current(); ok && (isAlpha(char) || char == '_'); char, ok = l.next() {
 		literal += string(char)
@@ -98,7 +98,7 @@ func (l *lexer) identifierToken() token.Token {
 	return l.longToken(tokenType, literal)
 }
 
-func (l *lexer) numberToken() token.Token {
+func (l *Lexer) numberToken() token.Token {
 	lexeme := ""
 
 	for char, ok := l.current(); ok && isDigit(char); char, ok = l.next() {
@@ -117,7 +117,7 @@ func (l *lexer) numberToken() token.Token {
 	return l.longToken(token.NUMBER, lexeme)
 }
 
-func (l *lexer) stringToken() token.Token {
+func (l *Lexer) stringToken() token.Token {
 	lexeme := ""
 
 	for char, ok := l.current(); ok; char, ok = l.next() {
@@ -149,7 +149,7 @@ func (l *lexer) stringToken() token.Token {
 	return l.longToken(token.STRING, lexeme)
 }
 
-func (l *lexer) specialToken() token.Token {
+func (l *Lexer) specialToken() token.Token {
 	char, _ := l.current()
 	lexeme := string(char)
 	l.next()
@@ -168,7 +168,7 @@ func (l *lexer) specialToken() token.Token {
 	return l.longToken(token.ILLEGAL, lexeme)
 }
 
-func (l *lexer) skipWhitespace() {
+func (l *Lexer) skipWhitespace() {
 	for char, ok := l.current(); ok && isWhitespace(char); char, ok = l.next() {
 		if isLineBreak(char) {
 			l.line += 1
@@ -177,7 +177,7 @@ func (l *lexer) skipWhitespace() {
 	}
 }
 
-func (l *lexer) token(tokenType token.TokenType, literal string) token.Token {
+func (l *Lexer) token(tokenType token.TokenType, literal string) token.Token {
 	return token.Token{
 		Literal: literal,
 		Type:    tokenType,
@@ -186,7 +186,7 @@ func (l *lexer) token(tokenType token.TokenType, literal string) token.Token {
 	}
 }
 
-func (l *lexer) longToken(tokenType token.TokenType, literal string) token.Token {
+func (l *Lexer) longToken(tokenType token.TokenType, literal string) token.Token {
 	return token.Token{
 		Literal: literal,
 		Type:    tokenType,
@@ -195,7 +195,7 @@ func (l *lexer) longToken(tokenType token.TokenType, literal string) token.Token
 	}
 }
 
-func (l *lexer) next() (byte, bool) {
+func (l *Lexer) next() (byte, bool) {
 	if l.ok() {
 		l.consumeComment()
 		l.position += 1
@@ -205,7 +205,7 @@ func (l *lexer) next() (byte, bool) {
 	return 0, false
 }
 
-func (l *lexer) current() (byte, bool) {
+func (l *Lexer) current() (byte, bool) {
 	if l.ok() {
 		l.consumeComment()
 		return l.source[l.position], true
@@ -213,7 +213,7 @@ func (l *lexer) current() (byte, bool) {
 	return 0, false
 }
 
-func (l *lexer) consumeComment() {
+func (l *Lexer) consumeComment() {
 	if isCommentSymbol(l.source[l.position]) {
 		for !isLineBreak(l.source[l.position]) {
 			l.position += 1
@@ -221,7 +221,7 @@ func (l *lexer) consumeComment() {
 	}
 }
 
-func (l *lexer) ok() bool {
+func (l *Lexer) ok() bool {
 	return l.position < len(l.source)
 }
 
