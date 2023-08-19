@@ -60,5 +60,5 @@ const (
 	RIGHT_ARROW = "right_arrow"
 
 	EOF     = "eof"
-	UNKNOWN = "unknown"
+	ILLEGAL = "illegal"
 )

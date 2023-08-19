@@ -128,7 +128,7 @@ func (l *lexer) specialToken() Token {
 		return l.longToken(tokenType, lexeme)
 	}
 
-	return l.longToken(UNKNOWN, lexeme)
+	return l.longToken(ILLEGAL, lexeme)
 }
 
 func (l *lexer) skipWhitespace() {
