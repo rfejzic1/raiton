@@ -1,0 +1,49 @@
+# simple call to `println`
+(println "Raiton!")
+
+# examples of string quoting
+"'single quotes work here'"
+'"double quotes work here"'
+"double quote escape check \""
+'single quote escape check \''
+
+# lambda passed to the `map` function
+(map [1 2 3] \x: (square x))
+
+# explicit type declaration in angle brackets
+<list of number>
+my_list: [1 2 3]
+
+# a function type declaration denoted with arrow `->`
+<number -> number -> number>
+add_numbers a b: (add a b)
+
+# type definition acting as aliasing
+type name: string
+
+# type definition of a `person` record
+type person: {
+  name: string
+}
+
+# this is a scope, like the file level scope
+main {
+  # just a definition, like at the file level scope
+  greeting: "Hello, Raiton!"
+
+  # just a type definition, like at the file level scope
+  type penguin: {
+    name: string
+    fave_fish: string
+  }
+
+  # definition with explicit type declaration
+  <penguin>
+  peng: { name: "Peng", fave_fish: "sardines" }
+
+  # these expressions get evaluated in order
+  # when `main` is evaluated
+  (println 123.4)
+  (println greeting)
+}
+
