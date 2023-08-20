@@ -45,5 +45,8 @@ main {
   # when `main` is evaluated
   (println 123.4)
   (println greeting)
+  (println (greeting)) # also valid as above
+
+  (greeting)
 }
 

@@ -21,7 +21,7 @@ func main() {
 
 	l := lexer.New(string(data))
 
-	for t := l.Next(); t.Matches(token.EOF); t = l.Next() {
+	for t := l.Next(); t.Type == token.EOF; t = l.Next() {
 		t.Print(os.Stdout)
 	}
 }

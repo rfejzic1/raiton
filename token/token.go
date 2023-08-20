@@ -22,10 +22,6 @@ func (t *Token) Print(w io.Writer) {
 	fmt.Fprintf(w, format, t.Line, t.Column, t.Type, t.Literal)
 }
 
-func (t *Token) Matches(tokenType TokenType) bool {
-	return t.Type == tokenType
-}
-
 var KEYWORDS = map[string]TokenType{
 	"type": TYPE,
 }
