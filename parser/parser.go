@@ -354,22 +354,25 @@ func (p *Parser) lambda() (Expression, error) {
 		parameters: []Identifier{},
 	}
 
+	var err error
+
 	for p.match(token.IDENTIFIER) {
 		param := Identifier(p.token.Literal)
 		lambdaLiteral.parameters = append(lambdaLiteral.parameters, param)
 		p.consume(token.IDENTIFIER)
 	}
 
-	if err := p.expect(token.COLON); err != nil {
-		return nil, err
-	}
-
-	p.consume(token.COLON)
-
-	var err error
-	lambdaLiteral.expression, err = p.expression()
-	if err != nil {
-		return nil, err
+	if p.match(token.COLON) {
+		p.consume(token.COLON)
+		if lambdaLiteral.expression, err = p.expression(); err != nil {
+			return Definition{}, err
+		}
+	} else if p.match(token.OPEN_BRACE) {
+		if lambdaLiteral.expression, err = p.scope(); err != nil {
+			return Definition{}, err
+		}
+	} else {
+		return Definition{}, p.unexpected()
 	}
 
 	return lambdaLiteral, nil
