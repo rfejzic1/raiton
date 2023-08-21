@@ -1,27 +1,46 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/rfejzic1/raiton/lexer"
-	"github.com/rfejzic1/raiton/token"
+	"github.com/rfejzic1/raiton/parser"
 )
 
+const VERSION = "v0.0.1"
+
 func main() {
-	if len(os.Args) < 2 {
-		log.Fatal("Usage: lang <path-to-file>")
-	}
+	fmt.Printf("Raiton %s\n", VERSION)
 
-	data, err := os.ReadFile(os.Args[1])
+	for {
+		fmt.Print("> ")
 
-	if err != nil {
-		log.Fatal(err)
-	}
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
 
-	l := lexer.New(string(data))
+		if err := scanner.Err(); err != nil {
+			log.Fatal(err)
+		}
 
-	for t := l.Next(); t.Type == token.EOF; t = l.Next() {
-		t.Print(os.Stdout)
+		input := strings.TrimSpace(scanner.Text())
+
+		if input == "exit" {
+			break
+		}
+
+		lex := lexer.New(input)
+		par := parser.New(&lex)
+
+		_, err := par.Parse()
+
+		if err != nil {
+			fmt.Printf("error: %s\n", err)
+		} else {
+			fmt.Println("ok")
+		}
 	}
 }
