@@ -158,12 +158,12 @@ func (p *Parser) typeDefinition() (TypeDefinition, error) {
 
 func (p *Parser) typeExpression() (TypeExpression, error) {
 	var typeExpression TypeExpression
-	var err error
 
 	if p.match(token.IDENTIFIER) {
 		typeExpression = TypeIdentifier(p.token.Literal)
 		p.consume() // consume IDENTIFIER
 	} else if p.match(token.OPEN_PAREN) {
+		var err error
 		p.consume() // consume OPEN_PAREN
 		typeExpression, err = p.typeExpression()
 		if err != nil {
@@ -197,6 +197,8 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 		}
 
 		p.consume() // consume CLOSED_BRACE
+
+		typeExpression = recortType
 	} else {
 		return nil, p.unexpected()
 	}
@@ -208,18 +210,147 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 			return nil, err
 		}
 
-		return FunctionType{
+		typeExpression = FunctionType{
 			parameterType: typeExpression,
 			returnType:    returnTypeExpression,
-		}, nil
+		}
 	}
 
 	return typeExpression, nil
 }
 
 func (p *Parser) expression() (Expression, error) {
-	// parse expressions
-	return nil, nil
+	var expression Expression
+
+	if p.match(token.IDENTIFIER) {
+		expression = Identifier(p.token.Literal)
+		p.consume()
+	} else if p.match(token.NUMBER) {
+		expression = NumberLiteral(p.token.Literal)
+		p.consume()
+	} else if p.match(token.DOUBLE_QUOTE) {
+		p.consume() // consume DOULE_QUOTE
+		if err := p.expect(token.STRING); err != nil {
+			return nil, err
+		}
+		expression = StringLiteral(p.token.Literal)
+		p.consume()
+		if err := p.expect(token.DOUBLE_QUOTE); err != nil {
+			return nil, err
+		}
+		p.consume() // consume DOUBLE_QUOTE
+	} else if p.match(token.SINGLE_QUOTE) {
+		p.consume() // consume SINGLE_QUOTE
+		if err := p.expect(token.STRING); err != nil {
+			return nil, err
+		}
+		expression = CharacterLiteral(p.token.Literal)
+		p.consume()
+		if err := p.expect(token.SINGLE_QUOTE); err != nil {
+			return nil, err
+		}
+		p.consume() // consume SINGLE_QUOTE
+	} else if p.match(token.OPEN_BRACKET) {
+		p.consume() // consume OPEN_BRACKET
+
+		arrayLiteral := ArrayLiteral{
+			elements: []Expression{},
+		}
+
+		for !p.match(token.EOF) && !p.match(token.CLOSED_BRACKET) {
+			element, err := p.expression()
+			if err != nil {
+				return nil, err
+			}
+			arrayLiteral.elements = append(arrayLiteral.elements, element)
+		}
+
+		if err := p.expect(token.CLOSED_BRACKET); err != nil {
+			return nil, err
+		}
+
+		p.consume() // consume CLOSED_BRACKET
+
+		expression = arrayLiteral
+	} else if p.match(token.OPEN_BRACE) {
+		p.consume() // consume OPEN_BRACE
+
+		recordLiteral := RecordLiteral{
+			fields: map[Identifier]Expression{},
+		}
+
+		for p.match(token.IDENTIFIER) {
+			field := Identifier(p.token.Literal)
+			p.consume()
+
+			expression, err := p.expression()
+
+			if err != nil {
+				return nil, err
+			}
+
+			recordLiteral.fields[field] = expression
+		}
+
+		if err := p.expect(token.CLOSED_BRACE); err != nil {
+			return nil, err
+		}
+
+		p.consume() // consume CLOSED_BRACE
+
+		expression = recordLiteral
+	} else if p.match(token.BACKSLASH) {
+		p.consume() // consume BACKSLASH
+
+		lambdaLiteral := LambdaLiteral{
+			parameters: []Identifier{},
+		}
+
+		for p.match(token.IDENTIFIER) {
+			param := Identifier(p.token.Literal)
+			lambdaLiteral.parameters = append(lambdaLiteral.parameters, param)
+			p.consume()
+		}
+
+		if err := p.expect(token.COLON); err != nil {
+			return nil, err
+		}
+
+		p.consume() // consume COLON
+
+		var err error
+		lambdaLiteral.expression, err = p.expression()
+		if err != nil {
+			return nil, err
+		}
+
+		expression = lambdaLiteral
+	} else if p.match(token.OPEN_PAREN) {
+		p.consume() // consume OPEN_PAREN
+
+		invocation := Invocation{
+			arguments: []Expression{},
+		}
+
+		for !p.match(token.EOF) && !p.match(token.CLOSED_PAREN) {
+			expression, err := p.expression()
+			if err != nil {
+				return nil, err
+			}
+			invocation.arguments = append(invocation.arguments, expression)
+		}
+
+		if err := p.expect(token.CLOSED_PAREN); err != nil {
+			return nil, err
+		}
+
+		p.consume() // consume CLOSED_PAREN
+		expression = invocation
+	} else {
+		return nil, p.unexpected()
+	}
+
+	return expression, nil
 }
 
 /*** Parser utility methods ***/

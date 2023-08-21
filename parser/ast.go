@@ -44,7 +44,6 @@ type RecordType struct {
 type Identifier string
 
 type Invocation struct {
-	invokee   Expression
 	arguments []Expression
 }
 
@@ -57,10 +56,12 @@ type RecordLiteral struct {
 	fields map[Identifier]Expression
 }
 
-type ListLiteral struct {
+type ArrayLiteral struct {
 	elements []Expression
 }
 
 type NumberLiteral string
 
 type StringLiteral string
+
+type CharacterLiteral string
