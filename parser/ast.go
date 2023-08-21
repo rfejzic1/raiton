@@ -33,7 +33,7 @@ type FunctionType struct {
 } // e.g. number -> (number -> number); argumentType -> returnType
 
 type RecordType struct {
-	fields map[TypeIdentifier]TypeExpression
+	fields map[Identifier]TypeExpression
 } // e.g. { name: string, age: number }
 
 // TODO:

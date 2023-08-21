@@ -32,7 +32,7 @@ func (p *Parser) fileScope() (*Scope, error) {
 }
 
 func (p *Parser) scope() (*Scope, error) {
-	p.consume() // consume `{`
+	p.consume() // consume OPEN_BRACE
 
 	s, err := p.scopeContent()
 
@@ -40,6 +40,8 @@ func (p *Parser) scope() (*Scope, error) {
 	if err := p.expect(token.CLOSED_BRACE); err != nil {
 		return nil, err
 	}
+
+	p.consume() // consume CLOSED_BRACE
 
 	return s, err
 }
@@ -89,6 +91,14 @@ func (p *Parser) definition() (Definition, error) {
 		if err != nil {
 			return Definition{}, err
 		}
+		if err := p.expect(token.CLOSED_ANGLE); err != nil {
+			return Definition{}, err
+		}
+		p.consume() // consume CLOSED_ANGLE
+	}
+
+	if err := p.expect(token.IDENTIFIER); err != nil {
+		return Definition{}, err
 	}
 
 	def.identifier = Identifier(p.token.Literal)
@@ -98,6 +108,7 @@ func (p *Parser) definition() (Definition, error) {
 	for p.match(token.IDENTIFIER) {
 		param := Identifier(p.token.Literal)
 		def.parameters = append(def.parameters, param)
+		p.consume()
 	}
 
 	if p.match(token.COLON) {
@@ -117,11 +128,15 @@ func (p *Parser) definition() (Definition, error) {
 }
 
 func (p *Parser) typeDefinition() (TypeDefinition, error) {
+	p.consume() // consume TYPE
+
 	if err := p.expect(token.IDENTIFIER); err != nil {
 		return TypeDefinition{}, err
 	}
 
 	ident := TypeIdentifier(p.token.Literal)
+
+	p.consume() // consume IDENTIFIER
 
 	if err := p.expect(token.COLON); err != nil {
 		return TypeDefinition{}, err
@@ -142,18 +157,64 @@ func (p *Parser) typeDefinition() (TypeDefinition, error) {
 }
 
 func (p *Parser) typeExpression() (TypeExpression, error) {
+	var typeExpression TypeExpression
+	var err error
+
 	if p.match(token.IDENTIFIER) {
-		// parse type identifier e.g. string
-		// of if it's succeded by `->` parse function type expression
-		// e.g. string -> number
+		typeExpression = TypeIdentifier(p.token.Literal)
+		p.consume() // consume IDENTIFIER
 	} else if p.match(token.OPEN_PAREN) {
-		// parse type expression group e.g. (number -> number) -> number
+		p.consume() // consume OPEN_PAREN
+		typeExpression, err = p.typeExpression()
+		if err != nil {
+			return nil, err
+		}
+		if err := p.expect(token.CLOSED_PAREN); err != nil {
+			return nil, err
+		}
+		p.consume() // consume CLOSED_PAREN
 	} else if p.match(token.OPEN_BRACE) {
-		// parse record type expression
+		p.consume() // consume OPEN_BRACE
+		recortType := RecordType{
+			fields: map[Identifier]TypeExpression{},
+		}
+
+		for p.match(token.IDENTIFIER) {
+			field := Identifier(p.token.Literal)
+			p.consume()
+			if err := p.expect(token.COLON); err != nil {
+				return nil, err
+			}
+			typeExpression, err := p.typeExpression()
+			if err != nil {
+				return nil, err
+			}
+			recortType.fields[field] = typeExpression
+		}
+
+		if err := p.expect(token.CLOSED_BRACE); err != nil {
+			return nil, err
+		}
+
+		p.consume() // consume CLOSED_BRACE
 	} else {
-		return TypeDefinition{}, p.unexpected()
+		return nil, p.unexpected()
 	}
-	return nil, nil
+
+	if p.match(token.RIGHT_ARROW) {
+		p.consume() // consume RIGHT_ARROW
+		returnTypeExpression, err := p.typeExpression()
+		if err != nil {
+			return nil, err
+		}
+
+		return FunctionType{
+			parameterType: typeExpression,
+			returnType:    returnTypeExpression,
+		}, nil
+	}
+
+	return typeExpression, nil
 }
 
 func (p *Parser) expression() (Expression, error) {
@@ -163,9 +224,12 @@ func (p *Parser) expression() (Expression, error) {
 
 /*** Parser utility methods ***/
 
-func (p *Parser) expect(tokenType token.TokenType) error {
+func (p *Parser) expectNext(tokenType token.TokenType) error {
 	p.consume()
+	return p.expect(tokenType)
+}
 
+func (p *Parser) expect(tokenType token.TokenType) error {
 	if p.match(tokenType) {
 		return fmt.Errorf("expected %s, but got %s on line %d column %d", tokenType, p.token.Type, p.token.Line, p.token.Column)
 	}
