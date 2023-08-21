@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"bufio"
@@ -13,7 +13,7 @@ import (
 
 const VERSION = "v0.0.1"
 
-func main() {
+func repl() {
 	fmt.Printf("Raiton %s\n", VERSION)
 
 	for {
