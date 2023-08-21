@@ -21,32 +21,13 @@ func New(lex *lexer.Lexer) Parser {
 func (p *Parser) Parse() (Expression, error) {
 	// The fact that the production method is called
 	// means that the current token is matching expecations
-	p.consume()
+	p.consumeAny()
 	return p.fileScope()
 }
 
 /*** Productions ***/
 
 func (p *Parser) fileScope() (*Scope, error) {
-	return p.scopeContent()
-}
-
-func (p *Parser) scope() (*Scope, error) {
-	p.consume() // consume OPEN_BRACE
-
-	s, err := p.scopeContent()
-
-	// expect '}'
-	if err := p.expect(token.CLOSED_BRACE); err != nil {
-		return nil, err
-	}
-
-	p.consume() // consume CLOSED_BRACE
-
-	return s, err
-}
-
-func (p *Parser) scopeContent() (*Scope, error) {
 	scope := &Scope{
 		definitions:     make([]Definition, 0),
 		typeDefinitions: make([]TypeDefinition, 0),
@@ -54,28 +35,60 @@ func (p *Parser) scopeContent() (*Scope, error) {
 	}
 
 	for !p.match(token.EOF) {
-		if p.match(token.IDENTIFIER) || p.match(token.OPEN_ANGLE) {
-			definition, err := p.definition()
-			if err != nil {
-				return nil, err
-			}
-			scope.definitions = append(scope.definitions, definition)
-		} else if p.match(token.TYPE) {
-			typeDefinition, err := p.typeDefinition()
-			if err != nil {
-				return nil, err
-			}
-			scope.typeDefinitions = append(scope.typeDefinitions, typeDefinition)
-		} else {
-			expression, err := p.expression()
-			if err != nil {
-				return nil, err
-			}
-			scope.expressions = append(scope.expressions, expression)
+		if err := p.scopeItem(scope); err != nil {
+			return nil, err
 		}
 	}
 
 	return scope, nil
+}
+
+func (p *Parser) scope() (*Scope, error) {
+	scope := &Scope{
+		definitions:     make([]Definition, 0),
+		typeDefinitions: make([]TypeDefinition, 0),
+		expressions:     make([]Expression, 0),
+	}
+
+	p.consume(token.OPEN_BRACE)
+
+	for !p.match(token.EOF) && !p.match(token.CLOSED_BRACE) {
+		if err := p.scopeItem(scope); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := p.expect(token.CLOSED_BRACE); err != nil {
+		return nil, err
+	}
+
+	p.consume(token.CLOSED_BRACE)
+
+	return scope, nil
+}
+
+func (p *Parser) scopeItem(scope *Scope) error {
+	if p.match(token.IDENTIFIER) || p.match(token.OPEN_ANGLE) {
+		definition, err := p.definition()
+		if err != nil {
+			return err
+		}
+		scope.definitions = append(scope.definitions, definition)
+	} else if p.match(token.TYPE) {
+		typeDefinition, err := p.typeDefinition()
+		if err != nil {
+			return err
+		}
+		scope.typeDefinitions = append(scope.typeDefinitions, typeDefinition)
+	} else {
+		expression, err := p.expression()
+		if err != nil {
+			return err
+		}
+		scope.expressions = append(scope.expressions, expression)
+	}
+
+	return nil
 }
 
 func (p *Parser) definition() (Definition, error) {
@@ -86,7 +99,7 @@ func (p *Parser) definition() (Definition, error) {
 	}
 
 	if p.match(token.OPEN_ANGLE) {
-		p.consume() // consume OPEN_ANGlE
+		p.consume(token.OPEN_ANGLE)
 		def.typeExpression, err = p.typeExpression()
 		if err != nil {
 			return Definition{}, err
@@ -94,7 +107,7 @@ func (p *Parser) definition() (Definition, error) {
 		if err := p.expect(token.CLOSED_ANGLE); err != nil {
 			return Definition{}, err
 		}
-		p.consume() // consume CLOSED_ANGLE
+		p.consume(token.CLOSED_ANGLE)
 	}
 
 	if err := p.expect(token.IDENTIFIER); err != nil {
@@ -103,16 +116,16 @@ func (p *Parser) definition() (Definition, error) {
 
 	def.identifier = Identifier(p.token.Literal)
 
-	p.consume()
+	p.consume(token.IDENTIFIER)
 
 	for p.match(token.IDENTIFIER) {
 		param := Identifier(p.token.Literal)
 		def.parameters = append(def.parameters, param)
-		p.consume()
+		p.consume(token.IDENTIFIER)
 	}
 
 	if p.match(token.COLON) {
-		p.consume() // consume COLON
+		p.consume(token.COLON)
 		if def.expression, err = p.expression(); err != nil {
 			return Definition{}, err
 		}
@@ -128,7 +141,7 @@ func (p *Parser) definition() (Definition, error) {
 }
 
 func (p *Parser) typeDefinition() (TypeDefinition, error) {
-	p.consume() // consume TYPE
+	p.consume(token.TYPE)
 
 	if err := p.expect(token.IDENTIFIER); err != nil {
 		return TypeDefinition{}, err
@@ -136,13 +149,13 @@ func (p *Parser) typeDefinition() (TypeDefinition, error) {
 
 	ident := TypeIdentifier(p.token.Literal)
 
-	p.consume() // consume IDENTIFIER
+	p.consume(token.IDENTIFIER)
 
 	if err := p.expect(token.COLON); err != nil {
 		return TypeDefinition{}, err
 	}
 
-	p.consume() // consume COLON
+	p.consume(token.COLON)
 
 	typeExpression, err := p.typeExpression()
 
@@ -161,10 +174,10 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 
 	if p.match(token.IDENTIFIER) {
 		typeExpression = TypeIdentifier(p.token.Literal)
-		p.consume() // consume IDENTIFIER
+		p.consume(token.IDENTIFIER)
 	} else if p.match(token.OPEN_PAREN) {
 		var err error
-		p.consume() // consume OPEN_PAREN
+		p.consume(token.OPEN_PAREN)
 		typeExpression, err = p.typeExpression()
 		if err != nil {
 			return nil, err
@@ -172,16 +185,16 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 		if err := p.expect(token.CLOSED_PAREN); err != nil {
 			return nil, err
 		}
-		p.consume() // consume CLOSED_PAREN
+		p.consume(token.CLOSED_PAREN)
 	} else if p.match(token.OPEN_BRACE) {
-		p.consume() // consume OPEN_BRACE
+		p.consume(token.OPEN_BRACE)
 		recortType := RecordType{
 			fields: map[Identifier]TypeExpression{},
 		}
 
 		for p.match(token.IDENTIFIER) {
 			field := Identifier(p.token.Literal)
-			p.consume()
+			p.consume(token.IDENTIFIER)
 			if err := p.expect(token.COLON); err != nil {
 				return nil, err
 			}
@@ -196,7 +209,7 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 			return nil, err
 		}
 
-		p.consume() // consume CLOSED_BRACE
+		p.consume(token.CLOSED_BRACE)
 
 		typeExpression = recortType
 	} else {
@@ -204,7 +217,7 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 	}
 
 	if p.match(token.RIGHT_ARROW) {
-		p.consume() // consume RIGHT_ARROW
+		p.consume(token.RIGHT_ARROW)
 		returnTypeExpression, err := p.typeExpression()
 		if err != nil {
 			return nil, err
@@ -224,34 +237,34 @@ func (p *Parser) expression() (Expression, error) {
 
 	if p.match(token.IDENTIFIER) {
 		expression = Identifier(p.token.Literal)
-		p.consume()
+		p.consume(token.IDENTIFIER)
 	} else if p.match(token.NUMBER) {
 		expression = NumberLiteral(p.token.Literal)
-		p.consume()
+		p.consume(token.NUMBER)
 	} else if p.match(token.DOUBLE_QUOTE) {
-		p.consume() // consume DOULE_QUOTE
+		p.consume(token.DOUBLE_QUOTE)
 		if err := p.expect(token.STRING); err != nil {
 			return nil, err
 		}
 		expression = StringLiteral(p.token.Literal)
-		p.consume()
+		p.consume(token.STRING)
 		if err := p.expect(token.DOUBLE_QUOTE); err != nil {
 			return nil, err
 		}
-		p.consume() // consume DOUBLE_QUOTE
+		p.consume(token.DOUBLE_QUOTE)
 	} else if p.match(token.SINGLE_QUOTE) {
-		p.consume() // consume SINGLE_QUOTE
+		p.consume(token.SINGLE_QUOTE)
 		if err := p.expect(token.STRING); err != nil {
 			return nil, err
 		}
 		expression = CharacterLiteral(p.token.Literal)
-		p.consume()
+		p.consume(token.STRING)
 		if err := p.expect(token.SINGLE_QUOTE); err != nil {
 			return nil, err
 		}
-		p.consume() // consume SINGLE_QUOTE
+		p.consume(token.SINGLE_QUOTE)
 	} else if p.match(token.OPEN_BRACKET) {
-		p.consume() // consume OPEN_BRACKET
+		p.consume(token.OPEN_BRACKET)
 
 		arrayLiteral := ArrayLiteral{
 			elements: []Expression{},
@@ -269,11 +282,11 @@ func (p *Parser) expression() (Expression, error) {
 			return nil, err
 		}
 
-		p.consume() // consume CLOSED_BRACKET
+		p.consume(token.CLOSED_BRACKET)
 
 		expression = arrayLiteral
 	} else if p.match(token.OPEN_BRACE) {
-		p.consume() // consume OPEN_BRACE
+		p.consume(token.OPEN_BRACE)
 
 		recordLiteral := RecordLiteral{
 			fields: map[Identifier]Expression{},
@@ -281,7 +294,7 @@ func (p *Parser) expression() (Expression, error) {
 
 		for p.match(token.IDENTIFIER) {
 			field := Identifier(p.token.Literal)
-			p.consume()
+			p.consume(token.IDENTIFIER)
 
 			expression, err := p.expression()
 
@@ -296,11 +309,11 @@ func (p *Parser) expression() (Expression, error) {
 			return nil, err
 		}
 
-		p.consume() // consume CLOSED_BRACE
+		p.consume(token.CLOSED_BRACE)
 
 		expression = recordLiteral
 	} else if p.match(token.BACKSLASH) {
-		p.consume() // consume BACKSLASH
+		p.consume(token.BACKSLASH)
 
 		lambdaLiteral := LambdaLiteral{
 			parameters: []Identifier{},
@@ -309,14 +322,14 @@ func (p *Parser) expression() (Expression, error) {
 		for p.match(token.IDENTIFIER) {
 			param := Identifier(p.token.Literal)
 			lambdaLiteral.parameters = append(lambdaLiteral.parameters, param)
-			p.consume()
+			p.consume(token.IDENTIFIER)
 		}
 
 		if err := p.expect(token.COLON); err != nil {
 			return nil, err
 		}
 
-		p.consume() // consume COLON
+		p.consume(token.COLON)
 
 		var err error
 		lambdaLiteral.expression, err = p.expression()
@@ -326,7 +339,7 @@ func (p *Parser) expression() (Expression, error) {
 
 		expression = lambdaLiteral
 	} else if p.match(token.OPEN_PAREN) {
-		p.consume() // consume OPEN_PAREN
+		p.consume(token.OPEN_PAREN)
 
 		invocation := Invocation{
 			arguments: []Expression{},
@@ -344,7 +357,7 @@ func (p *Parser) expression() (Expression, error) {
 			return nil, err
 		}
 
-		p.consume() // consume CLOSED_PAREN
+		p.consume(token.CLOSED_PAREN)
 		expression = invocation
 	} else {
 		return nil, p.unexpected()
@@ -354,11 +367,6 @@ func (p *Parser) expression() (Expression, error) {
 }
 
 /*** Parser utility methods ***/
-
-func (p *Parser) expectNext(tokenType token.TokenType) error {
-	p.consume()
-	return p.expect(tokenType)
-}
 
 func (p *Parser) expect(tokenType token.TokenType) error {
 	if !p.match(tokenType) {
@@ -376,8 +384,15 @@ func (p *Parser) match(tokenType token.TokenType) bool {
 	return p.token.Type == tokenType
 }
 
-func (p *Parser) consume() token.Token {
+func (p *Parser) consume(tokenType token.TokenType) {
+	if err := p.expect(tokenType); err != nil {
+		panic(err)
+	}
+
+	p.consumeAny()
+}
+
+func (p *Parser) consumeAny() {
 	t := p.lex.Next()
 	p.token = t
-	return p.token
 }
