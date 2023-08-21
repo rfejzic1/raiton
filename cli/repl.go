@@ -3,27 +3,27 @@ package cli
 import (
 	"bufio"
 	"fmt"
-	"log"
-	"os"
 	"strings"
 
 	"github.com/rfejzic1/raiton/lexer"
 	"github.com/rfejzic1/raiton/parser"
+	"github.com/urfave/cli/v2"
 )
 
-const VERSION = "v0.0.1"
+func repl(ctx *cli.Context) error {
+	in := ctx.App.Reader
+	out := ctx.App.Writer
 
-func repl() {
-	fmt.Printf("Raiton %s\n", VERSION)
+	fmt.Fprintf(out, "Raiton %s\n", VERSION)
 
 	for {
-		fmt.Print("> ")
+		fmt.Fprint(out, "> ")
 
-		scanner := bufio.NewScanner(os.Stdin)
+		scanner := bufio.NewScanner(in)
 		scanner.Scan()
 
 		if err := scanner.Err(); err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		input := strings.TrimSpace(scanner.Text())
@@ -38,9 +38,11 @@ func repl() {
 		_, err := par.Parse()
 
 		if err != nil {
-			fmt.Printf("error: %s\n", err)
+			fmt.Fprintf(out, "error: %s\n", err)
 		} else {
-			fmt.Println("ok")
+			fmt.Fprintln(out, "ok")
 		}
 	}
+
+	return nil
 }

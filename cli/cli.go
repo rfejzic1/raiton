@@ -1,6 +1,8 @@
 package cli
 
-import "github.com/urfave/cli/v2"
+import (
+	"github.com/urfave/cli/v2"
+)
 
 type Cli struct {
 	app *cli.App
@@ -8,10 +10,26 @@ type Cli struct {
 
 func New() Cli {
 	app := &cli.App{
-		Name:  "raiton",
-		Usage: "the Raiton language toolchain",
-		Action: func(ctx *cli.Context) error {
-			return cli.ShowAppHelp(ctx)
+		Name:    "raiton",
+		Usage:   "the Raiton language toolchain",
+		Version: VERSION,
+		Authors: []*cli.Author{
+			{
+				Name: "rfejzic1",
+			},
+		},
+		Commands: []*cli.Command{
+			{
+				Name:   "repl",
+				Usage:  "start the REPL",
+				Action: repl,
+			},
+			{
+				Name:  "tokenize",
+				Usage: "tokenize the given file",
+				ArgsUsage: "[file path]",
+				Action:    tokenize,
+			},
 		},
 	}
 
