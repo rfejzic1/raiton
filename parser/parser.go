@@ -361,7 +361,7 @@ func (p *Parser) expectNext(tokenType token.TokenType) error {
 }
 
 func (p *Parser) expect(tokenType token.TokenType) error {
-	if p.match(tokenType) {
+	if !p.match(tokenType) {
 		return fmt.Errorf("expected %s, but got %s on line %d column %d", tokenType, p.token.Type, p.token.Line, p.token.Column)
 	}
 
