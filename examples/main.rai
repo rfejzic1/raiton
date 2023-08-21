@@ -47,6 +47,14 @@ main {
   (println greeting)
   (println (greeting)) # also valid as above
 
+  # these are all valid expressions, tho pointless here
+  { name: "Peng", fave_fish: "sardines" }
+  [1 2 3]
+  "This is legal"
+
+  # because a definition starts with an identifier, due to ambiguity,
+  # parentheses are needed around the identifier
+  # the last expression is what the entire scope evaluates to
   (greeting)
 }
 
