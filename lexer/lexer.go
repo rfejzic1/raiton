@@ -230,7 +230,7 @@ func isAlpha(c byte) bool {
 }
 
 func isDigit(c byte) bool {
-	return c > '0' && c < '9'
+	return c >= '0' && c <= '9'
 }
 
 func isQuote(c byte) bool {
