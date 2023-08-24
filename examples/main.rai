@@ -11,8 +11,16 @@
 (map [1 2 3] \x: (square x))
 
 # explicit type declaration in angle brackets
-<list of number>
-my_list: [1 2 3]
+<string>
+env: "development"
+
+# array type definition with mandatory size
+<[3: number]>
+my_array: [1 2 3]
+
+# slice type definition with no size specified
+<[number]>
+my_slice: [1 2 3] # slice from array
 
 # a function type declaration denoted with arrow `->`
 <number -> number -> number>

@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/rfejzic1/raiton/lexer"
 	"github.com/rfejzic1/raiton/token"
@@ -19,7 +20,7 @@ func New(lex *lexer.Lexer) Parser {
 }
 
 func (p *Parser) Parse() (Expression, error) {
-	// The fact that the production method is called
+	// The fact that a production method is called
 	// means that the current token is matching expecations
 	p.consumeAny()
 	return p.fileScope()
@@ -171,49 +172,22 @@ func (p *Parser) typeDefinition() (TypeDefinition, error) {
 
 func (p *Parser) typeExpression() (TypeExpression, error) {
 	var typeExpression TypeExpression
+	var err error
 
 	if p.match(token.IDENTIFIER) {
-		typeExpression = TypeIdentifier(p.token.Literal)
-		p.consume(token.IDENTIFIER)
+		typeExpression = p.typeIdentifier()
 	} else if p.match(token.OPEN_PAREN) {
-		var err error
-		p.consume(token.OPEN_PAREN)
-		typeExpression, err = p.typeExpression()
-		if err != nil {
-			return nil, err
-		}
-		if err := p.expect(token.CLOSED_PAREN); err != nil {
-			return nil, err
-		}
-		p.consume(token.CLOSED_PAREN)
+		typeExpression, err = p.typeGroup()
+	} else if p.match(token.OPEN_BRACKET) {
+		typeExpression, err = p.typeArrayOrSlice()
 	} else if p.match(token.OPEN_BRACE) {
-		p.consume(token.OPEN_BRACE)
-		recortType := RecordType{
-			fields: map[Identifier]TypeExpression{},
-		}
-
-		for p.match(token.IDENTIFIER) {
-			field := Identifier(p.token.Literal)
-			p.consume(token.IDENTIFIER)
-			if err := p.expect(token.COLON); err != nil {
-				return nil, err
-			}
-			typeExpression, err := p.typeExpression()
-			if err != nil {
-				return nil, err
-			}
-			recortType.fields[field] = typeExpression
-		}
-
-		if err := p.expect(token.CLOSED_BRACE); err != nil {
-			return nil, err
-		}
-
-		p.consume(token.CLOSED_BRACE)
-
-		typeExpression = recortType
+		typeExpression, err = p.typeRecord()
 	} else {
 		return nil, p.unexpected()
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	if p.match(token.RIGHT_ARROW) {
@@ -232,6 +206,105 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 	return typeExpression, nil
 }
 
+func (p *Parser) typeIdentifier() TypeExpression {
+	ident := TypeIdentifier(p.token.Literal)
+	p.consume(token.IDENTIFIER)
+	return ident
+}
+
+func (p *Parser) typeGroup() (TypeExpression, error) {
+	p.consume(token.OPEN_PAREN)
+	typeExpression, err := p.typeExpression()
+	if err != nil {
+		return nil, err
+	}
+	if err := p.expect(token.CLOSED_PAREN); err != nil {
+		return nil, err
+	}
+	p.consume(token.CLOSED_PAREN)
+
+	return typeExpression, nil
+}
+
+func (p *Parser) typeRecord() (TypeExpression, error) {
+	p.consume(token.OPEN_BRACE)
+	recortType := RecordType{
+		fields: map[Identifier]TypeExpression{},
+	}
+
+	for p.match(token.IDENTIFIER) {
+		field := Identifier(p.token.Literal)
+		p.consume(token.IDENTIFIER)
+		if err := p.expect(token.COLON); err != nil {
+			return nil, err
+		}
+		typeExpression, err := p.typeExpression()
+		if err != nil {
+			return nil, err
+		}
+		recortType.fields[field] = typeExpression
+	}
+
+	if err := p.expect(token.CLOSED_BRACE); err != nil {
+		return nil, err
+	}
+
+	p.consume(token.CLOSED_BRACE)
+
+	return recortType, nil
+}
+
+func (p *Parser) typeArrayOrSlice() (TypeExpression, error) {
+	p.consume(token.OPEN_BRACKET)
+
+	var typeExpression TypeExpression
+
+	if p.match(token.NUMBER) {
+		size, err := strconv.ParseUint(p.token.Literal, 10, 0)
+
+		if err != nil {
+			return nil, fmt.Errorf("expected a non-negative integer, but got `%s`", p.token.Literal)
+		}
+
+		p.consume(token.NUMBER)
+
+		if err := p.expect(token.COLON); err != nil {
+			return nil, err
+		}
+
+		p.consume(token.COLON)
+
+		elementType, err := p.typeExpression()
+
+		if err != nil {
+			return nil, err
+		}
+
+		typeExpression = ArrayType{
+			size:        size,
+			elementType: elementType,
+		}
+	} else {
+		elementType, err := p.typeExpression()
+
+		if err != nil {
+			return nil, err
+		}
+
+		typeExpression = SliceType{
+			elementType: elementType,
+		}
+	}
+
+	if err := p.expect(token.CLOSED_BRACKET); err != nil {
+		return nil, err
+	}
+
+	p.consume(token.CLOSED_BRACKET)
+
+	return typeExpression, nil
+}
+
 func (p *Parser) expression() (Expression, error) {
 	if p.match(token.IDENTIFIER) {
 		return p.identifier(), nil
@@ -242,7 +315,7 @@ func (p *Parser) expression() (Expression, error) {
 	} else if p.match(token.SINGLE_QUOTE) {
 		return p.character()
 	} else if p.match(token.OPEN_BRACKET) {
-		return p.array()
+		return p.arrayOrSlice()
 	} else if p.match(token.OPEN_BRACE) {
 		return p.record()
 	} else if p.match(token.BACKSLASH) {
@@ -294,11 +367,35 @@ func (p *Parser) character() (Expression, error) {
 	return char, nil
 }
 
-func (p *Parser) array() (Expression, error) {
+func (p *Parser) arrayOrSlice() (Expression, error) {
 	p.consume(token.OPEN_BRACKET)
 
-	arrayLiteral := ArrayLiteral{
-		elements: []Expression{},
+	var expression Expression
+	elements := []Expression{}
+
+	if p.match(token.NUMBER) {
+		size, err := parseArraySize(p.token.Literal)
+
+		if err != nil {
+			return nil, err
+		}
+
+		p.consume(token.NUMBER)
+
+		if err := p.expect(token.COLON); err != nil {
+			return nil, err
+		}
+
+		p.consume(token.COLON)
+
+		expression = ArrayLiteral{
+			size:     size,
+			elements: elements,
+		}
+	} else {
+		expression = SliceLiteral{
+			elements: elements,
+		}
 	}
 
 	for !p.match(token.EOF) && !p.match(token.CLOSED_BRACKET) {
@@ -306,7 +403,7 @@ func (p *Parser) array() (Expression, error) {
 		if err != nil {
 			return nil, err
 		}
-		arrayLiteral.elements = append(arrayLiteral.elements, element)
+		elements = append(elements, element)
 	}
 
 	if err := p.expect(token.CLOSED_BRACKET); err != nil {
@@ -315,7 +412,7 @@ func (p *Parser) array() (Expression, error) {
 
 	p.consume(token.CLOSED_BRACKET)
 
-	return arrayLiteral, nil
+	return expression, nil
 }
 
 func (p *Parser) record() (Expression, error) {
@@ -403,6 +500,16 @@ func (p *Parser) invocation() (Expression, error) {
 }
 
 /*** Parser utility methods ***/
+
+func parseArraySize(literal string) (uint64, error) {
+	size, err := strconv.ParseUint(literal, 10, 0)
+
+	if err != nil {
+		return 0, fmt.Errorf("expected a non-negative integer, but got %s", literal)
+	}
+
+	return size, nil
+}
 
 func (p *Parser) expect(tokenType token.TokenType) error {
 	if !p.match(tokenType) {

@@ -36,6 +36,15 @@ type RecordType struct {
 	fields map[Identifier]TypeExpression
 } // e.g. { name: string, age: number }
 
+type SliceType struct {
+	elementType TypeExpression
+}
+
+type ArrayType struct {
+	size        uint64
+	elementType TypeExpression
+}
+
 // TODO:
 // type EnumType struct{} // e.g. Red | Green | Blue | RGB { r: number, g: number, b: number}
 
@@ -57,6 +66,11 @@ type RecordLiteral struct {
 }
 
 type ArrayLiteral struct {
+	size     uint64
+	elements []Expression
+}
+
+type SliceLiteral struct {
 	elements []Expression
 }
 
