@@ -58,6 +58,8 @@ func (l *Lexer) normalMode() token.Token {
 		l.mode = SEQUENCE_MODE
 		l.modeChar = char
 		return token
+	} else if isMinus(char) {
+		return l.numberOrSpecialToken()
 	} else {
 		return l.specialToken()
 	}
@@ -99,7 +101,15 @@ func (l *Lexer) identifierToken() token.Token {
 }
 
 func (l *Lexer) numberToken() token.Token {
+	return l.signedNumberToken(true)
+}
+
+func (l *Lexer) signedNumberToken(positive bool) token.Token {
 	lexeme := ""
+
+	if !positive {
+		lexeme += "-"
+	}
 
 	for char, ok := l.current(); ok && isDigit(char); char, ok = l.next() {
 		lexeme += string(char)
@@ -114,7 +124,31 @@ func (l *Lexer) numberToken() token.Token {
 		}
 	}
 
+	if lexeme == "-" {
+		// because `-` alone is not a valid number,
+		// let specialTokenWith method handle the rest
+		return l.specialTokenWith('-')
+	}
+
 	return l.longToken(token.NUMBER, lexeme)
+}
+
+func (l *Lexer) numberOrSpecialToken() token.Token {
+	l.next() // to consume '-'
+
+	char, ok := l.current()
+
+	if !ok {
+		// because the '-' symbol is already consumed, if we're
+		// at EOF, let the specialTokenWith method handle it
+		return l.specialTokenWith('-')
+	}
+
+	if isDigit(char) {
+		return l.signedNumberToken(false)
+	} else {
+		return l.specialTokenWith('-')
+	}
 }
 
 func (l *Lexer) stringToken() token.Token {
@@ -163,6 +197,30 @@ func (l *Lexer) specialToken() token.Token {
 	}
 	if tokenType, ok := token.SYMBOLS[lexeme]; ok {
 		return l.longToken(tokenType, lexeme)
+	}
+
+	return l.longToken(token.ILLEGAL, lexeme)
+}
+
+func (l *Lexer) specialTokenWith(prefix byte) token.Token {
+	lexeme := string(prefix)
+
+	char, ok := l.current()
+
+	// if there is no more characters, try to lookup the prefix
+	// in the symbols table and handle it
+	if !ok {
+		if tokenType, ok := token.SYMBOLS[lexeme]; ok {
+			return l.token(tokenType, lexeme)
+		}
+		return l.token(token.ILLEGAL, lexeme)
+	}
+
+	extended := lexeme + string(char)
+
+	if tokenType, ok := token.SYMBOLS[extended]; ok {
+		l.next()
+		return l.longToken(tokenType, extended)
 	}
 
 	return l.longToken(token.ILLEGAL, lexeme)
@@ -231,6 +289,10 @@ func isAlpha(c byte) bool {
 
 func isDigit(c byte) bool {
 	return c >= '0' && c <= '9'
+}
+
+func isMinus(c byte) bool {
+	return c == '-'
 }
 
 func isQuote(c byte) bool {

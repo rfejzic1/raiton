@@ -55,30 +55,22 @@ func TestIdentifierLexing(t *testing.T) {
 
 func TestNumberLexing(t *testing.T) {
 	test := newTest(t, "NumberLexing")
-	source := `123`
+	source := `
+	1
+	0.1
+	-0.1
+	-0.
+	-2
+	1.
+	`
 
 	test.expect(source, []tokenExpect{
-		{token.NUMBER, `123`},
-		{token.EOF, ``},
-	})
-}
-
-func TestNumberLexingWithDecimal(t *testing.T) {
-	test := newTest(t, "NumberLexingWithDecimal")
-	source := `123.4`
-
-	test.expect(source, []tokenExpect{
-		{token.NUMBER, `123.4`},
-		{token.EOF, ``},
-	})
-}
-
-func TestNumberLexingWithTrailingDecimal(t *testing.T) {
-	test := newTest(t, "NumberLexingWithTrailingDecimal")
-	source := `123.`
-
-	test.expect(source, []tokenExpect{
-		{token.NUMBER, "123."},
+		{token.NUMBER, `1`},
+		{token.NUMBER, `0.1`},
+		{token.NUMBER, `-0.1`},
+		{token.NUMBER, `-0.`},
+		{token.NUMBER, `-2`},
+		{token.NUMBER, `1.`},
 		{token.EOF, ``},
 	})
 }
