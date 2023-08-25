@@ -214,16 +214,27 @@ func (p *Parser) typeIdentifier() TypeExpression {
 
 func (p *Parser) typeGroup() (TypeExpression, error) {
 	p.consume(token.OPEN_PAREN)
-	typeExpression, err := p.typeExpression()
-	if err != nil {
-		return nil, err
+
+	typeExpressions := []TypeExpression{}
+
+	for !p.match(token.EOF) && !p.match(token.CLOSED_PAREN) {
+		typeExpression, err := p.typeExpression()
+		if err != nil {
+			return nil, err
+		}
+
+		typeExpressions = append(typeExpressions, typeExpression)
 	}
+
 	if err := p.expect(token.CLOSED_PAREN); err != nil {
 		return nil, err
 	}
+
 	p.consume(token.CLOSED_PAREN)
 
-	return typeExpression, nil
+	return GroupType{
+		typeExpressions: typeExpressions,
+	}, nil
 }
 
 func (p *Parser) typeRecord() (TypeExpression, error) {

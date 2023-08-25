@@ -45,6 +45,10 @@ type ArrayType struct {
 	elementType TypeExpression
 }
 
+type GroupType struct {
+	typeExpressions []TypeExpression
+}
+
 // TODO:
 // type EnumType struct{} // e.g. Red | Green | Blue | RGB { r: number, g: number, b: number}
 
