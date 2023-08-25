@@ -176,6 +176,8 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 
 	if p.match(token.IDENTIFIER) {
 		typeExpression = p.typeIdentifier()
+	} else if p.match(token.PIPE) {
+		typeExpression, err = p.typeSum()
 	} else if p.match(token.OPEN_PAREN) {
 		typeExpression, err = p.typeGroup()
 	} else if p.match(token.OPEN_BRACKET) {
@@ -237,6 +239,41 @@ func (p *Parser) typeGroup() (TypeExpression, error) {
 	}, nil
 }
 
+func (p *Parser) typeSum() (TypeExpression, error) {
+	sumType := SumType{
+		variants: []SumTypeVariant{},
+	}
+
+	for p.match(token.PIPE) {
+		p.consume(token.PIPE)
+
+		if err := p.expect(token.IDENTIFIER); err != nil {
+			return nil, err
+		}
+
+		variant := SumTypeVariant{
+			identifier: Identifier(p.token.Literal),
+		}
+
+		p.consume(token.IDENTIFIER)
+
+		if p.match(token.COLON) {
+			p.consume(token.COLON)
+
+			typeExpression, err := p.typeExpression()
+			if err != nil {
+				return nil, err
+			}
+
+			variant.typeExpression = typeExpression
+		}
+
+		sumType.variants = append(sumType.variants, variant)
+	}
+
+	return sumType, nil
+}
+
 func (p *Parser) typeRecord() (TypeExpression, error) {
 	p.consume(token.OPEN_BRACE)
 	recortType := RecordType{
@@ -249,6 +286,7 @@ func (p *Parser) typeRecord() (TypeExpression, error) {
 		if err := p.expect(token.COLON); err != nil {
 			return nil, err
 		}
+		p.consume(token.COLON)
 		typeExpression, err := p.typeExpression()
 		if err != nil {
 			return nil, err

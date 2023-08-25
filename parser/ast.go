@@ -49,8 +49,14 @@ type GroupType struct {
 	typeExpressions []TypeExpression
 }
 
-// TODO:
-// type EnumType struct{} // e.g. Red | Green | Blue | RGB { r: number, g: number, b: number}
+type SumType struct {
+	variants []SumTypeVariant
+}
+
+type SumTypeVariant struct {
+	identifier     Identifier
+	typeExpression TypeExpression
+}
 
 // *** Expressions ***
 

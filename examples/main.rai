@@ -66,3 +66,17 @@ main {
   (greeting)
 }
 
+# this is a classic sum type with the option to pass
+# arguments to the constructors
+type color: | Red | Green | Blue | RGB: { r:uint8 g:uint8 b:uint8 }
+
+<color>
+red: color.Red # the single instance of color.Red
+
+<color>
+green: (color.Green) # if evaluated, evaluates to the single instance of color.Green
+
+blue: (color.Blue) # inferred type color
+
+white: (color.RGB { r: 0 g: 0 b: 0}) # evaluated to color.RGB but with arguments
+
