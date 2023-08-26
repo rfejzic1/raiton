@@ -28,9 +28,9 @@ type Node interface {
 }
 
 type Scope struct {
-	typeDefinitions []TypeDefinition
-	definitions     []Definition
-	expressions     []Expression
+	TypeDefinitions []TypeDefinition
+	Definitions     []Definition
+	Expressions     []Expression
 }
 
 func (s *Scope) Accept(visitor Visitor) error {
@@ -38,8 +38,8 @@ func (s *Scope) Accept(visitor Visitor) error {
 }
 
 type TypeDefinition struct {
-	identifier     TypeIdentifier
-	typeExpression TypeExpression
+	Identifier     TypeIdentifier
+	TypeExpression TypeExpression
 }
 
 func (d *TypeDefinition) Accept(visitor Visitor) error {
@@ -47,10 +47,10 @@ func (d *TypeDefinition) Accept(visitor Visitor) error {
 }
 
 type Definition struct {
-	typeExpression TypeExpression
-	identifier     Identifier
-	parameters     []Identifier
-	expression     Expression
+	TypeExpression TypeExpression
+	Identifier     Identifier
+	Parameters     []Identifier
+	Expression     Expression
 }
 
 func (d *Definition) Accept(visitor Visitor) error {
@@ -74,8 +74,8 @@ func (i *TypeIdentifier) Accept(visitor Visitor) error {
 }
 
 type FunctionType struct {
-	parameterType TypeExpression
-	returnType    TypeExpression
+	ParameterType TypeExpression
+	ReturnType    TypeExpression
 }
 
 func (f *FunctionType) Accept(visitor Visitor) error {
@@ -83,7 +83,7 @@ func (f *FunctionType) Accept(visitor Visitor) error {
 }
 
 type RecordType struct {
-	fields map[Identifier]TypeExpression
+	Fields map[Identifier]TypeExpression
 }
 
 func (r *RecordType) Accept(visitor Visitor) error {
@@ -91,7 +91,7 @@ func (r *RecordType) Accept(visitor Visitor) error {
 }
 
 type SliceType struct {
-	elementType TypeExpression
+	ElementType TypeExpression
 }
 
 func (s *SliceType) Accept(visitor Visitor) error {
@@ -99,8 +99,8 @@ func (s *SliceType) Accept(visitor Visitor) error {
 }
 
 type ArrayType struct {
-	size        uint64
-	elementType TypeExpression
+	Size        uint64
+	ElementType TypeExpression
 }
 
 func (a *ArrayType) Accept(visitor Visitor) error {
@@ -108,7 +108,7 @@ func (a *ArrayType) Accept(visitor Visitor) error {
 }
 
 type GroupType struct {
-	typeExpressions []TypeExpression
+	TypeExpressions []TypeExpression
 }
 
 func (g *GroupType) Accept(visitor Visitor) error {
@@ -116,7 +116,7 @@ func (g *GroupType) Accept(visitor Visitor) error {
 }
 
 type SumType struct {
-	variants []SumTypeVariant
+	Variants []SumTypeVariant
 }
 
 func (s *SumType) Accept(visitor Visitor) error {
@@ -124,8 +124,8 @@ func (s *SumType) Accept(visitor Visitor) error {
 }
 
 type SumTypeVariant struct {
-	identifier     Identifier
-	typeExpression TypeExpression
+	Identifier     Identifier
+	TypeExpression TypeExpression
 }
 
 func (v *SumTypeVariant) Accept(visitor Visitor) error {
@@ -141,7 +141,7 @@ func (i *Identifier) Accept(visitor Visitor) error {
 }
 
 type Invocation struct {
-	arguments []Expression
+	Arguments []Expression
 }
 
 func (i *Invocation) Accept(visitor Visitor) error {
@@ -149,8 +149,8 @@ func (i *Invocation) Accept(visitor Visitor) error {
 }
 
 type LambdaLiteral struct {
-	parameters []Identifier
-	expression Expression
+	Parameters []Identifier
+	Expression Expression
 }
 
 func (l *LambdaLiteral) Accept(visitor Visitor) error {
@@ -158,7 +158,7 @@ func (l *LambdaLiteral) Accept(visitor Visitor) error {
 }
 
 type RecordLiteral struct {
-	fields map[Identifier]Expression
+	Fields map[Identifier]Expression
 }
 
 func (r *RecordLiteral) Accept(visitor Visitor) error {
@@ -166,8 +166,8 @@ func (r *RecordLiteral) Accept(visitor Visitor) error {
 }
 
 type ArrayLiteral struct {
-	size     uint64
-	elements []Expression
+	Size     uint64
+	Elements []Expression
 }
 
 func (a *ArrayLiteral) Accept(visitor Visitor) error {
@@ -175,7 +175,7 @@ func (a *ArrayLiteral) Accept(visitor Visitor) error {
 }
 
 type SliceLiteral struct {
-	elements []Expression
+	Elements []Expression
 }
 
 func (s *SliceLiteral) Accept(visitor Visitor) error {

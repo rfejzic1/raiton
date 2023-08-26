@@ -30,9 +30,9 @@ func (p *Parser) Parse() (Expression, error) {
 
 func (p *Parser) fileScope() (*Scope, error) {
 	scope := &Scope{
-		definitions:     make([]Definition, 0),
-		typeDefinitions: make([]TypeDefinition, 0),
-		expressions:     make([]Expression, 0),
+		Definitions:     make([]Definition, 0),
+		TypeDefinitions: make([]TypeDefinition, 0),
+		Expressions:     make([]Expression, 0),
 	}
 
 	for !p.match(token.EOF) {
@@ -46,9 +46,9 @@ func (p *Parser) fileScope() (*Scope, error) {
 
 func (p *Parser) scope() (*Scope, error) {
 	scope := &Scope{
-		definitions:     make([]Definition, 0),
-		typeDefinitions: make([]TypeDefinition, 0),
-		expressions:     make([]Expression, 0),
+		Definitions:     make([]Definition, 0),
+		TypeDefinitions: make([]TypeDefinition, 0),
+		Expressions:     make([]Expression, 0),
 	}
 
 	p.consume(token.OPEN_BRACE)
@@ -74,19 +74,19 @@ func (p *Parser) scopeItem(scope *Scope) error {
 		if err != nil {
 			return err
 		}
-		scope.definitions = append(scope.definitions, definition)
+		scope.Definitions = append(scope.Definitions, definition)
 	} else if p.match(token.TYPE) {
 		typeDefinition, err := p.typeDefinition()
 		if err != nil {
 			return err
 		}
-		scope.typeDefinitions = append(scope.typeDefinitions, typeDefinition)
+		scope.TypeDefinitions = append(scope.TypeDefinitions, typeDefinition)
 	} else {
 		expression, err := p.expression()
 		if err != nil {
 			return err
 		}
-		scope.expressions = append(scope.expressions, expression)
+		scope.Expressions = append(scope.Expressions, expression)
 	}
 
 	return nil
@@ -96,12 +96,12 @@ func (p *Parser) definition() (Definition, error) {
 	var err error
 
 	def := Definition{
-		parameters: []Identifier{},
+		Parameters: []Identifier{},
 	}
 
 	if p.match(token.OPEN_ANGLE) {
 		p.consume(token.OPEN_ANGLE)
-		def.typeExpression, err = p.typeExpression()
+		def.TypeExpression, err = p.typeExpression()
 		if err != nil {
 			return Definition{}, err
 		}
@@ -115,23 +115,23 @@ func (p *Parser) definition() (Definition, error) {
 		return Definition{}, err
 	}
 
-	def.identifier = Identifier(p.token.Literal)
+	def.Identifier = Identifier(p.token.Literal)
 
 	p.consume(token.IDENTIFIER)
 
 	for p.match(token.IDENTIFIER) {
 		param := Identifier(p.token.Literal)
-		def.parameters = append(def.parameters, param)
+		def.Parameters = append(def.Parameters, param)
 		p.consume(token.IDENTIFIER)
 	}
 
 	if p.match(token.COLON) {
 		p.consume(token.COLON)
-		if def.expression, err = p.expression(); err != nil {
+		if def.Expression, err = p.expression(); err != nil {
 			return Definition{}, err
 		}
 	} else if p.match(token.OPEN_BRACE) {
-		if def.expression, err = p.scope(); err != nil {
+		if def.Expression, err = p.scope(); err != nil {
 			return Definition{}, err
 		}
 	} else {
@@ -165,8 +165,8 @@ func (p *Parser) typeDefinition() (TypeDefinition, error) {
 	}
 
 	return TypeDefinition{
-		identifier:     ident,
-		typeExpression: typeExpression,
+		Identifier:     ident,
+		TypeExpression: typeExpression,
 	}, nil
 }
 
@@ -200,8 +200,8 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 		}
 
 		typeExpression = &FunctionType{
-			parameterType: typeExpression,
-			returnType:    returnTypeExpression,
+			ParameterType: typeExpression,
+			ReturnType:    returnTypeExpression,
 		}
 	}
 
@@ -235,13 +235,13 @@ func (p *Parser) typeGroup() (TypeExpression, error) {
 	p.consume(token.CLOSED_PAREN)
 
 	return &GroupType{
-		typeExpressions: typeExpressions,
+		TypeExpressions: typeExpressions,
 	}, nil
 }
 
 func (p *Parser) typeSum() (TypeExpression, error) {
 	sumType := SumType{
-		variants: []SumTypeVariant{},
+		Variants: []SumTypeVariant{},
 	}
 
 	for p.match(token.PIPE) {
@@ -252,7 +252,7 @@ func (p *Parser) typeSum() (TypeExpression, error) {
 		}
 
 		variant := SumTypeVariant{
-			identifier: Identifier(p.token.Literal),
+			Identifier: Identifier(p.token.Literal),
 		}
 
 		p.consume(token.IDENTIFIER)
@@ -265,10 +265,10 @@ func (p *Parser) typeSum() (TypeExpression, error) {
 				return nil, err
 			}
 
-			variant.typeExpression = typeExpression
+			variant.TypeExpression = typeExpression
 		}
 
-		sumType.variants = append(sumType.variants, variant)
+		sumType.Variants = append(sumType.Variants, variant)
 	}
 
 	return &sumType, nil
@@ -277,7 +277,7 @@ func (p *Parser) typeSum() (TypeExpression, error) {
 func (p *Parser) typeRecord() (TypeExpression, error) {
 	p.consume(token.OPEN_BRACE)
 	recortType := RecordType{
-		fields: map[Identifier]TypeExpression{},
+		Fields: map[Identifier]TypeExpression{},
 	}
 
 	for p.match(token.IDENTIFIER) {
@@ -291,7 +291,7 @@ func (p *Parser) typeRecord() (TypeExpression, error) {
 		if err != nil {
 			return nil, err
 		}
-		recortType.fields[field] = typeExpression
+		recortType.Fields[field] = typeExpression
 	}
 
 	if err := p.expect(token.CLOSED_BRACE); err != nil {
@@ -330,8 +330,8 @@ func (p *Parser) typeArrayOrSlice() (TypeExpression, error) {
 		}
 
 		typeExpression = &ArrayType{
-			size:        size,
-			elementType: elementType,
+			Size:        size,
+			ElementType: elementType,
 		}
 	} else {
 		elementType, err := p.typeExpression()
@@ -341,7 +341,7 @@ func (p *Parser) typeArrayOrSlice() (TypeExpression, error) {
 		}
 
 		typeExpression = &SliceType{
-			elementType: elementType,
+			ElementType: elementType,
 		}
 	}
 
@@ -438,12 +438,12 @@ func (p *Parser) arrayOrSlice() (Expression, error) {
 		p.consume(token.COLON)
 
 		expression = &ArrayLiteral{
-			size:     size,
-			elements: elements,
+			Size:     size,
+			Elements: elements,
 		}
 	} else {
 		expression = &SliceLiteral{
-			elements: elements,
+			Elements: elements,
 		}
 	}
 
@@ -468,7 +468,7 @@ func (p *Parser) record() (Expression, error) {
 	p.consume(token.OPEN_BRACE)
 
 	recordLiteral := RecordLiteral{
-		fields: map[Identifier]Expression{},
+		Fields: map[Identifier]Expression{},
 	}
 
 	for p.match(token.IDENTIFIER) {
@@ -481,7 +481,7 @@ func (p *Parser) record() (Expression, error) {
 			return nil, err
 		}
 
-		recordLiteral.fields[field] = expression
+		recordLiteral.Fields[field] = expression
 	}
 
 	if err := p.expect(token.CLOSED_BRACE); err != nil {
@@ -497,24 +497,24 @@ func (p *Parser) lambda() (Expression, error) {
 	p.consume(token.BACKSLASH)
 
 	lambdaLiteral := LambdaLiteral{
-		parameters: []Identifier{},
+		Parameters: []Identifier{},
 	}
 
 	var err error
 
 	for p.match(token.IDENTIFIER) {
 		param := Identifier(p.token.Literal)
-		lambdaLiteral.parameters = append(lambdaLiteral.parameters, param)
+		lambdaLiteral.Parameters = append(lambdaLiteral.Parameters, param)
 		p.consume(token.IDENTIFIER)
 	}
 
 	if p.match(token.COLON) {
 		p.consume(token.COLON)
-		if lambdaLiteral.expression, err = p.expression(); err != nil {
+		if lambdaLiteral.Expression, err = p.expression(); err != nil {
 			return &Definition{}, err
 		}
 	} else if p.match(token.OPEN_BRACE) {
-		if lambdaLiteral.expression, err = p.scope(); err != nil {
+		if lambdaLiteral.Expression, err = p.scope(); err != nil {
 			return &Definition{}, err
 		}
 	} else {
@@ -528,7 +528,7 @@ func (p *Parser) invocation() (Expression, error) {
 	p.consume(token.OPEN_PAREN)
 
 	invocation := Invocation{
-		arguments: []Expression{},
+		Arguments: []Expression{},
 	}
 
 	for !p.match(token.EOF) && !p.match(token.CLOSED_PAREN) {
@@ -536,7 +536,7 @@ func (p *Parser) invocation() (Expression, error) {
 		if err != nil {
 			return nil, err
 		}
-		invocation.arguments = append(invocation.arguments, expression)
+		invocation.Arguments = append(invocation.Arguments, expression)
 	}
 
 	if err := p.expect(token.CLOSED_PAREN); err != nil {
