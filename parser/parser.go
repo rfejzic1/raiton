@@ -30,8 +30,8 @@ func (p *Parser) Parse() (Expression, error) {
 
 func (p *Parser) fileScope() (*Scope, error) {
 	scope := &Scope{
-		Definitions:     make([]Definition, 0),
-		TypeDefinitions: make([]TypeDefinition, 0),
+		Definitions:     make([]*Definition, 0),
+		TypeDefinitions: make([]*TypeDefinition, 0),
 		Expressions:     make([]Expression, 0),
 	}
 
@@ -46,8 +46,8 @@ func (p *Parser) fileScope() (*Scope, error) {
 
 func (p *Parser) scope() (*Scope, error) {
 	scope := &Scope{
-		Definitions:     make([]Definition, 0),
-		TypeDefinitions: make([]TypeDefinition, 0),
+		Definitions:     make([]*Definition, 0),
+		TypeDefinitions: make([]*TypeDefinition, 0),
 		Expressions:     make([]Expression, 0),
 	}
 
@@ -74,13 +74,13 @@ func (p *Parser) scopeItem(scope *Scope) error {
 		if err != nil {
 			return err
 		}
-		scope.Definitions = append(scope.Definitions, definition)
+		scope.Definitions = append(scope.Definitions, &definition)
 	} else if p.match(token.TYPE) {
 		typeDefinition, err := p.typeDefinition()
 		if err != nil {
 			return err
 		}
-		scope.TypeDefinitions = append(scope.TypeDefinitions, typeDefinition)
+		scope.TypeDefinitions = append(scope.TypeDefinitions, &typeDefinition)
 	} else {
 		expression, err := p.expression()
 		if err != nil {
@@ -96,7 +96,7 @@ func (p *Parser) definition() (Definition, error) {
 	var err error
 
 	def := Definition{
-		Parameters: []Identifier{},
+		Parameters: []*Identifier{},
 	}
 
 	if p.match(token.OPEN_ANGLE) {
@@ -121,7 +121,7 @@ func (p *Parser) definition() (Definition, error) {
 
 	for p.match(token.IDENTIFIER) {
 		param := Identifier(p.token.Literal)
-		def.Parameters = append(def.Parameters, param)
+		def.Parameters = append(def.Parameters, &param)
 		p.consume(token.IDENTIFIER)
 	}
 
@@ -241,7 +241,7 @@ func (p *Parser) typeGroup() (TypeExpression, error) {
 
 func (p *Parser) typeSum() (TypeExpression, error) {
 	sumType := SumType{
-		Variants: []SumTypeVariant{},
+		Variants: []*SumTypeVariant{},
 	}
 
 	for p.match(token.PIPE) {
@@ -268,7 +268,7 @@ func (p *Parser) typeSum() (TypeExpression, error) {
 			variant.TypeExpression = typeExpression
 		}
 
-		sumType.Variants = append(sumType.Variants, variant)
+		sumType.Variants = append(sumType.Variants, &variant)
 	}
 
 	return &sumType, nil
@@ -497,14 +497,14 @@ func (p *Parser) lambda() (Expression, error) {
 	p.consume(token.BACKSLASH)
 
 	lambdaLiteral := LambdaLiteral{
-		Parameters: []Identifier{},
+		Parameters: []*Identifier{},
 	}
 
 	var err error
 
 	for p.match(token.IDENTIFIER) {
 		param := Identifier(p.token.Literal)
-		lambdaLiteral.Parameters = append(lambdaLiteral.Parameters, param)
+		lambdaLiteral.Parameters = append(lambdaLiteral.Parameters, &param)
 		p.consume(token.IDENTIFIER)
 	}
 

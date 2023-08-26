@@ -28,8 +28,8 @@ type Node interface {
 }
 
 type Scope struct {
-	TypeDefinitions []TypeDefinition
-	Definitions     []Definition
+	TypeDefinitions []*TypeDefinition
+	Definitions     []*Definition
 	Expressions     []Expression
 }
 
@@ -49,7 +49,7 @@ func (d *TypeDefinition) Accept(visitor Visitor) error {
 type Definition struct {
 	TypeExpression TypeExpression
 	Identifier     Identifier
-	Parameters     []Identifier
+	Parameters     []*Identifier
 	Expression     Expression
 }
 
@@ -116,7 +116,7 @@ func (g *GroupType) Accept(visitor Visitor) error {
 }
 
 type SumType struct {
-	Variants []SumTypeVariant
+	Variants []*SumTypeVariant
 }
 
 func (s *SumType) Accept(visitor Visitor) error {
@@ -149,7 +149,7 @@ func (i *Invocation) Accept(visitor Visitor) error {
 }
 
 type LambdaLiteral struct {
-	Parameters []Identifier
+	Parameters []*Identifier
 	Expression Expression
 }
 

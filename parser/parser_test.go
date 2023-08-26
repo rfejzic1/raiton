@@ -24,8 +24,8 @@ func parseAndCompare(t *testing.T, source string, expected Expression) {
 func TestParser(t *testing.T) {
 	source := ``
 	expected := Scope{
-		Definitions:     make([]Definition, 0),
-		TypeDefinitions: make([]TypeDefinition, 0),
+		Definitions:     make([]*Definition, 0),
+		TypeDefinitions: make([]*TypeDefinition, 0),
 		Expressions:     make([]Expression, 0),
 	}
 
