@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/rfejzic1/raiton/lexer"
@@ -16,13 +15,18 @@ func parseAndCompare(t *testing.T, source string, expected Expression) {
 		t.Fatalf("parse error: %s", err)
 	}
 
-	if !reflect.DeepEqual(got, expected) {
-		t.Fatalf("assertion failed: ASTs are not equal")
+	comp := NewComparator(got)
+
+	if err := comp.Compare(expected); err != nil {
+		t.Fatalf("assertion failed: %s", err)
 	}
 }
 
 func TestParser(t *testing.T) {
-	source := ``
+	source := `
+	main: 0
+	`
+
 	expected := Scope{
 		Definitions:     make([]*Definition, 0),
 		TypeDefinitions: make([]*TypeDefinition, 0),
