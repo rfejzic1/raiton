@@ -3,17 +3,19 @@ package parser
 import "fmt"
 
 type Comparator struct {
-	source  Node
 	current Node
 }
 
+// Creates a new Comparator with a Node to be compared as argument.
 func NewComparator(compared Node) Comparator {
 	return Comparator{
-		source:  compared,
 		current: compared,
 	}
 }
 
+// Compares the Node given to the NewComparator constructor
+// with the expected Node, returning an error if the equality
+// comparison fails.
 func (c *Comparator) Compare(expected Node) error {
 	return expected.Accept(c)
 }
@@ -112,7 +114,7 @@ func (c *Comparator) VisitTypeIdentifier(expected *TypeIdentifier) error {
 		return nodeTypeError("TypeIdentifier")
 	}
 
-	if current != expected {
+	if string(*current) != string(*expected) {
 		return fmt.Errorf("expected `%s`, but got `%s`", string(*expected), string(*current))
 	}
 
@@ -248,7 +250,7 @@ func (c *Comparator) VisitIdentifier(expected *Identifier) error {
 		return nodeTypeError("Identifier")
 	}
 
-	if current != expected {
+	if string(*current) != string(*expected) {
 		return fmt.Errorf("expected `%s`, but got `%s`", string(*expected), string(*current))
 	}
 
@@ -342,7 +344,7 @@ func (c *Comparator) VisitNumber(expected *NumberLiteral) error {
 		return nodeTypeError("NumberLiteral")
 	}
 
-	if current != expected {
+	if string(*current) != string(*expected) {
 		return fmt.Errorf("expected `%s`, but got `%s`", string(*expected), string(*current))
 	}
 
@@ -356,7 +358,7 @@ func (c *Comparator) VisitString(expected *StringLiteral) error {
 		return nodeTypeError("StringLiteral")
 	}
 
-	if current != expected {
+	if string(*current) != string(*expected) {
 		return fmt.Errorf("expected `%s`, but got `%s`", string(*expected), string(*current))
 	}
 
