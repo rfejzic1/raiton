@@ -199,7 +199,7 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 			return nil, err
 		}
 
-		typeExpression = FunctionType{
+		typeExpression = &FunctionType{
 			parameterType: typeExpression,
 			returnType:    returnTypeExpression,
 		}
@@ -211,7 +211,7 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 func (p *Parser) typeIdentifier() TypeExpression {
 	ident := TypeIdentifier(p.token.Literal)
 	p.consume(token.IDENTIFIER)
-	return ident
+	return &ident
 }
 
 func (p *Parser) typeGroup() (TypeExpression, error) {
@@ -234,7 +234,7 @@ func (p *Parser) typeGroup() (TypeExpression, error) {
 
 	p.consume(token.CLOSED_PAREN)
 
-	return GroupType{
+	return &GroupType{
 		typeExpressions: typeExpressions,
 	}, nil
 }
@@ -271,7 +271,7 @@ func (p *Parser) typeSum() (TypeExpression, error) {
 		sumType.variants = append(sumType.variants, variant)
 	}
 
-	return sumType, nil
+	return &sumType, nil
 }
 
 func (p *Parser) typeRecord() (TypeExpression, error) {
@@ -300,7 +300,7 @@ func (p *Parser) typeRecord() (TypeExpression, error) {
 
 	p.consume(token.CLOSED_BRACE)
 
-	return recortType, nil
+	return &recortType, nil
 }
 
 func (p *Parser) typeArrayOrSlice() (TypeExpression, error) {
@@ -329,7 +329,7 @@ func (p *Parser) typeArrayOrSlice() (TypeExpression, error) {
 			return nil, err
 		}
 
-		typeExpression = ArrayType{
+		typeExpression = &ArrayType{
 			size:        size,
 			elementType: elementType,
 		}
@@ -340,7 +340,7 @@ func (p *Parser) typeArrayOrSlice() (TypeExpression, error) {
 			return nil, err
 		}
 
-		typeExpression = SliceType{
+		typeExpression = &SliceType{
 			elementType: elementType,
 		}
 	}
@@ -379,13 +379,13 @@ func (p *Parser) expression() (Expression, error) {
 func (p *Parser) identifier() Expression {
 	ident := Identifier(p.token.Literal)
 	p.consume(token.IDENTIFIER)
-	return ident
+	return &ident
 }
 
 func (p *Parser) number() Expression {
 	num := NumberLiteral(p.token.Literal)
 	p.consume(token.NUMBER)
-	return num
+	return &num
 }
 
 func (p *Parser) string() (Expression, error) {
@@ -399,7 +399,7 @@ func (p *Parser) string() (Expression, error) {
 		return nil, err
 	}
 	p.consume(token.DOUBLE_QUOTE)
-	return str, nil
+	return &str, nil
 }
 
 func (p *Parser) character() (Expression, error) {
@@ -413,7 +413,7 @@ func (p *Parser) character() (Expression, error) {
 		return nil, err
 	}
 	p.consume(token.SINGLE_QUOTE)
-	return char, nil
+	return &char, nil
 }
 
 func (p *Parser) arrayOrSlice() (Expression, error) {
@@ -437,12 +437,12 @@ func (p *Parser) arrayOrSlice() (Expression, error) {
 
 		p.consume(token.COLON)
 
-		expression = ArrayLiteral{
+		expression = &ArrayLiteral{
 			size:     size,
 			elements: elements,
 		}
 	} else {
-		expression = SliceLiteral{
+		expression = &SliceLiteral{
 			elements: elements,
 		}
 	}
@@ -490,7 +490,7 @@ func (p *Parser) record() (Expression, error) {
 
 	p.consume(token.CLOSED_BRACE)
 
-	return recordLiteral, nil
+	return &recordLiteral, nil
 }
 
 func (p *Parser) lambda() (Expression, error) {
@@ -511,17 +511,17 @@ func (p *Parser) lambda() (Expression, error) {
 	if p.match(token.COLON) {
 		p.consume(token.COLON)
 		if lambdaLiteral.expression, err = p.expression(); err != nil {
-			return Definition{}, err
+			return &Definition{}, err
 		}
 	} else if p.match(token.OPEN_BRACE) {
 		if lambdaLiteral.expression, err = p.scope(); err != nil {
-			return Definition{}, err
+			return &Definition{}, err
 		}
 	} else {
-		return Definition{}, p.unexpected()
+		return &Definition{}, p.unexpected()
 	}
 
-	return lambdaLiteral, nil
+	return &lambdaLiteral, nil
 }
 
 func (p *Parser) invocation() (Expression, error) {
@@ -545,7 +545,7 @@ func (p *Parser) invocation() (Expression, error) {
 
 	p.consume(token.CLOSED_PAREN)
 
-	return invocation, nil
+	return &invocation, nil
 }
 
 /*** Parser utility methods ***/
