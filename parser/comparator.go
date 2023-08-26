@@ -26,11 +26,6 @@ func (c *Comparator) observe(node Node) {
 
 /*** Visitor Methods ***/
 
-// NOTE: These visitor methods get called on the expectation tree.
-//		 The c.current Node points to the matching node of
-//		 the tree being checked and is updated and checked by the
-//		 visitor methods.
-
 func (c *Comparator) VisitScope(expected *Scope) error {
 	current, ok := c.current.(*Scope)
 

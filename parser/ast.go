@@ -69,6 +69,11 @@ type TypeExpression interface {
 
 type TypeIdentifier string
 
+func NewTypeIdentifier(name string) TypeExpression {
+	ident := TypeIdentifier(name)
+	return &ident
+}
+
 func (i *TypeIdentifier) Accept(visitor Visitor) error {
 	return visitor.VisitTypeIdentifier(i)
 }

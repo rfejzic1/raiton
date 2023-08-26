@@ -24,13 +24,26 @@ func parseAndCompare(t *testing.T, source string, expected Expression) {
 
 func TestParser(t *testing.T) {
 	source := `
-	main: 0
+	type person: {
+	  name: string
+	  age: number
+	}
 	`
 
 	expected := Scope{
-		Definitions:     make([]*Definition, 0),
-		TypeDefinitions: make([]*TypeDefinition, 0),
-		Expressions:     make([]Expression, 0),
+		Definitions: []*Definition{},
+		TypeDefinitions: []*TypeDefinition{
+			{
+				Identifier: TypeIdentifier("person"),
+				TypeExpression: &RecordType{
+					Fields: map[Identifier]TypeExpression{
+						Identifier("name"): NewTypeIdentifier("string"),
+						Identifier("age"):  NewTypeIdentifier("number"),
+					},
+				},
+			},
+		},
+		Expressions: []Expression{},
 	}
 
 	parseAndCompare(t, source, &expected)
