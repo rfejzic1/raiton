@@ -16,7 +16,7 @@ env: "development"
 
 # array type definition with mandatory size
 <[3: number]>
-my_array: [1 2 3]
+my_array: [3: 1 2 3]
 
 # slice type definition with no size specified
 <[number]>

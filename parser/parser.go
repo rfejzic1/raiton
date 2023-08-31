@@ -309,10 +309,10 @@ func (p *Parser) typeArrayOrSlice() (TypeExpression, error) {
 	var typeExpression TypeExpression
 
 	if p.match(token.NUMBER) {
-		size, err := strconv.ParseUint(p.token.Literal, 10, 0)
+		size, err := parseArraySize(p.token.Literal)
 
 		if err != nil {
-			return nil, fmt.Errorf("expected a non-negative integer, but got `%s`", p.token.Literal)
+			return nil, err
 		}
 
 		p.consume(token.NUMBER)
@@ -422,6 +422,11 @@ func (p *Parser) arrayOrSlice() (Expression, error) {
 	var expression Expression
 	elements := []Expression{}
 
+	// assume slice literal
+	expression = &SliceLiteral{
+		Elements: elements,
+	}
+
 	if p.match(token.NUMBER) {
 		size, err := parseArraySize(p.token.Literal)
 
@@ -431,19 +436,17 @@ func (p *Parser) arrayOrSlice() (Expression, error) {
 
 		p.consume(token.NUMBER)
 
-		if err := p.expect(token.COLON); err != nil {
-			return nil, err
-		}
+		if p.match(token.COLON) {
+			p.consume(token.COLON)
 
-		p.consume(token.COLON)
-
-		expression = &ArrayLiteral{
-			Size:     size,
-			Elements: elements,
-		}
-	} else {
-		expression = &SliceLiteral{
-			Elements: elements,
+			// array literal because of size specification
+			expression = &ArrayLiteral{
+				Size:     size,
+				Elements: elements,
+			}
+		} else {
+			first := NumberLiteral(strconv.FormatUint(size, 10))
+			elements = append(elements, &first)
 		}
 	}
 
