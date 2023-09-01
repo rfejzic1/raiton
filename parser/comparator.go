@@ -400,7 +400,7 @@ func (c *Comparator) VisitCharacter(expected *CharacterLiteral) error {
 		return nodeTypeError("CharacterLiteral")
 	}
 
-	if current != expected {
+	if string(*current) != string(*expected) {
 		return fmt.Errorf("expected `%s`, but got `%s`", string(*expected), string(*current))
 	}
 

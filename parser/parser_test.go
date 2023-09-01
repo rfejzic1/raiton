@@ -22,28 +22,61 @@ func parseAndCompare(t *testing.T, source string, expected Expression) {
 	}
 }
 
-func TestParser(t *testing.T) {
+func TestExpressions(t *testing.T) {
 	source := `
-	type person: {
-	  name: string
-	  age: number
-	}
+	# string expression
+	"string"
+
+	# character expression
+	'c'
+
+	# number expression; positive integer
+	5
+
+	# number expression; positive float
+	2.65
+
+	# number expression; negative integer
+	-1
+
+	# array expression
+	[3: 1 2 3]
+
+	# slice expression
+	[1 2 3]
+
+	(println "Hello, World")
 	`
 
 	expected := Scope{
-		Definitions: []*Definition{},
-		TypeDefinitions: []*TypeDefinition{
-			{
-				Identifier: TypeIdentifier("person"),
-				TypeExpression: &RecordType{
-					Fields: map[Identifier]TypeExpression{
-						Identifier("name"): NewTypeIdentifier("string"),
-						Identifier("age"):  NewTypeIdentifier("number"),
-					},
+		Expressions: []Expression{
+			NewStringLiteral("string"),
+			NewCharacterLiteral("c"),
+			NewNumberLiteral("5"),
+			NewNumberLiteral("2.65"),
+			NewNumberLiteral("-1"),
+			&ArrayLiteral{
+				Size: 3,
+				Elements: []Expression{
+					NewNumberLiteral("1"),
+					NewNumberLiteral("2"),
+					NewNumberLiteral("3"),
+				},
+			},
+			&SliceLiteral{
+				Elements: []Expression{
+					NewNumberLiteral("1"),
+					NewNumberLiteral("2"),
+					NewNumberLiteral("3"),
+				},
+			},
+			&Invocation{
+				Arguments: []Expression{
+					NewIdentifier("println"),
+					NewStringLiteral("Hello, World"),
 				},
 			},
 		},
-		Expressions: []Expression{},
 	}
 
 	parseAndCompare(t, source, &expected)

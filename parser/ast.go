@@ -69,7 +69,7 @@ type TypeExpression interface {
 
 type TypeIdentifier string
 
-func NewTypeIdentifier(name string) TypeExpression {
+func NewTypeIdentifier(name string) *TypeIdentifier {
 	ident := TypeIdentifier(name)
 	return &ident
 }
@@ -141,6 +141,11 @@ func (v *SumTypeVariant) Accept(visitor Visitor) error {
 
 type Identifier string
 
+func NewIdentifier(value string) *Identifier {
+	ident := Identifier(value)
+	return &ident
+}
+
 func (i *Identifier) Accept(visitor Visitor) error {
 	return visitor.VisitIdentifier(i)
 }
@@ -189,17 +194,32 @@ func (s *SliceLiteral) Accept(visitor Visitor) error {
 
 type NumberLiteral string
 
+func NewNumberLiteral(value string) *NumberLiteral {
+	num := NumberLiteral(value)
+	return &num
+}
+
 func (n *NumberLiteral) Accept(visitor Visitor) error {
 	return visitor.VisitNumber(n)
 }
 
 type StringLiteral string
 
+func NewStringLiteral(value string) *StringLiteral {
+	string := StringLiteral(value)
+	return &string
+}
+
 func (s *StringLiteral) Accept(visitor Visitor) error {
 	return visitor.VisitString(s)
 }
 
 type CharacterLiteral string
+
+func NewCharacterLiteral(value string) *CharacterLiteral {
+	char := CharacterLiteral(value)
+	return &char
+}
 
 func (c *CharacterLiteral) Accept(visitor Visitor) error {
 	return visitor.VisitCharacter(c)
