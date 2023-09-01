@@ -9,8 +9,9 @@ import (
 )
 
 type Parser struct {
-	lex   *lexer.Lexer
-	token token.Token
+	lex       *lexer.Lexer
+	token     token.Token
+	peekToken *token.Token
 }
 
 func New(lex *lexer.Lexer) Parser {
@@ -22,7 +23,7 @@ func New(lex *lexer.Lexer) Parser {
 func (p *Parser) Parse() (Expression, error) {
 	// The fact that a production method is called
 	// means that the current token is matching expecations
-	p.consumeAny()
+	p.nextToken()
 	return p.fileScope()
 }
 
@@ -142,15 +143,24 @@ func (p *Parser) definition() (Definition, error) {
 }
 
 func (p *Parser) typeDefinition() (TypeDefinition, error) {
+	var err error
+	typeDef := TypeDefinition{}
+
 	p.consume(token.TYPE)
 
 	if err := p.expect(token.IDENTIFIER); err != nil {
 		return TypeDefinition{}, err
 	}
 
-	ident := TypeIdentifier(p.token.Literal)
+	typeDef.Identifier = TypeIdentifier(p.token.Literal)
 
 	p.consume(token.IDENTIFIER)
+
+	for p.match(token.IDENTIFIER) {
+		param := Identifier(p.token.Literal)
+		typeDef.Parameters = append(typeDef.Parameters, &param)
+		p.consume(token.IDENTIFIER)
+	}
 
 	if err := p.expect(token.COLON); err != nil {
 		return TypeDefinition{}, err
@@ -158,16 +168,13 @@ func (p *Parser) typeDefinition() (TypeDefinition, error) {
 
 	p.consume(token.COLON)
 
-	typeExpression, err := p.typeExpression()
+	typeDef.TypeExpression, err = p.typeExpression()
 
 	if err != nil {
 		return TypeDefinition{}, err
 	}
 
-	return TypeDefinition{
-		Identifier:     ident,
-		TypeExpression: typeExpression,
-	}, nil
+	return typeDef, nil
 }
 
 func (p *Parser) typeExpression() (TypeExpression, error) {
@@ -383,9 +390,9 @@ func (p *Parser) identifier() Expression {
 }
 
 func (p *Parser) number() Expression {
-	num := NumberLiteral(p.token.Literal)
+	num := NewNumberLiteral(p.token.Literal)
 	p.consume(token.NUMBER)
-	return &num
+	return num
 }
 
 func (p *Parser) string() (Expression, error) {
@@ -393,13 +400,13 @@ func (p *Parser) string() (Expression, error) {
 	if err := p.expect(token.STRING); err != nil {
 		return nil, err
 	}
-	str := StringLiteral(p.token.Literal)
+	str := NewStringLiteral(p.token.Literal)
 	p.consume(token.STRING)
 	if err := p.expect(token.DOUBLE_QUOTE); err != nil {
 		return nil, err
 	}
 	p.consume(token.DOUBLE_QUOTE)
-	return &str, nil
+	return str, nil
 }
 
 func (p *Parser) character() (Expression, error) {
@@ -407,55 +414,42 @@ func (p *Parser) character() (Expression, error) {
 	if err := p.expect(token.STRING); err != nil {
 		return nil, err
 	}
-	char := CharacterLiteral(p.token.Literal)
+	char := NewCharacterLiteral(p.token.Literal)
 	p.consume(token.STRING)
 	if err := p.expect(token.SINGLE_QUOTE); err != nil {
 		return nil, err
 	}
 	p.consume(token.SINGLE_QUOTE)
-	return &char, nil
+	return char, nil
 }
 
 func (p *Parser) arrayOrSlice() (Expression, error) {
+	var expression Expression
+
 	p.consume(token.OPEN_BRACKET)
 
-	var expression Expression
-	elements := []Expression{}
-
-	// assume slice literal
-	expression = &SliceLiteral{
-		Elements: elements,
-	}
-
 	if p.match(token.NUMBER) {
-		size, err := parseArraySize(p.token.Literal)
+		p.peek()
 
-		if err != nil {
-			return nil, err
-		}
+		if p.peekMatch(token.COLON) {
+			var err error
 
-		p.consume(token.NUMBER)
+			expression, err = p.array()
 
-		if p.match(token.COLON) {
-			p.consume(token.COLON)
-
-			// array literal because of size specification
-			expression = &ArrayLiteral{
-				Size:     size,
-				Elements: elements,
+			if err != nil {
+				return nil, err
 			}
-		} else {
-			first := NumberLiteral(strconv.FormatUint(size, 10))
-			elements = append(elements, &first)
 		}
 	}
 
-	for !p.match(token.EOF) && !p.match(token.CLOSED_BRACKET) {
-		element, err := p.expression()
+	if expression == nil {
+		var err error
+
+		expression, err = p.slice()
+
 		if err != nil {
 			return nil, err
 		}
-		elements = append(elements, element)
 	}
 
 	if err := p.expect(token.CLOSED_BRACKET); err != nil {
@@ -465,6 +459,55 @@ func (p *Parser) arrayOrSlice() (Expression, error) {
 	p.consume(token.CLOSED_BRACKET)
 
 	return expression, nil
+}
+
+func (p *Parser) array() (Expression, error) {
+	size, err := parseArraySize(p.token.Literal)
+
+	if err != nil {
+		return nil, err
+	}
+
+	p.consume(token.NUMBER)
+
+	if err := p.expect(token.COLON); err != nil {
+		return nil, err
+	}
+
+	p.consume(token.COLON)
+
+	array := &ArrayLiteral{
+		Size:     size,
+		Elements: []Expression{},
+	}
+
+	for !p.match(token.EOF) && !p.match(token.CLOSED_BRACKET) {
+		element, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+
+		array.Elements = append(array.Elements, element)
+	}
+
+	return array, nil
+}
+
+func (p *Parser) slice() (Expression, error) {
+	slice := &SliceLiteral{
+		Elements: []Expression{},
+	}
+
+	for !p.match(token.EOF) && !p.match(token.CLOSED_BRACKET) {
+		element, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+
+		slice.Elements = append(slice.Elements, element)
+	}
+
+	return slice, nil
 }
 
 func (p *Parser) record() (Expression, error) {
@@ -563,6 +606,27 @@ func parseArraySize(literal string) (uint64, error) {
 	return size, nil
 }
 
+func (p *Parser) unexpected() error {
+	return fmt.Errorf("unexpected token `%s` of type %s on line %d column %d", p.token.Literal, p.token.Type, p.token.Line, p.token.Column)
+}
+
+func (p *Parser) consume(tokenType token.TokenType) {
+	if err := p.expect(tokenType); err != nil {
+		panic(err)
+	}
+
+	if p.peekToken != nil {
+		p.token = *p.peekToken
+		p.peekToken = nil
+	} else {
+		p.nextToken()
+	}
+}
+
+func (p *Parser) match(tokenType token.TokenType) bool {
+	return p.token.Type == tokenType
+}
+
 func (p *Parser) expect(tokenType token.TokenType) error {
 	if !p.match(tokenType) {
 		return fmt.Errorf("expected %s, but got %s on line %d column %d", tokenType, p.token.Type, p.token.Line, p.token.Column)
@@ -571,23 +635,18 @@ func (p *Parser) expect(tokenType token.TokenType) error {
 	return nil
 }
 
-func (p *Parser) unexpected() error {
-	return fmt.Errorf("unexpected token `%s` of type %s on line %d column %d", p.token.Literal, p.token.Type, p.token.Line, p.token.Column)
-}
-
-func (p *Parser) match(tokenType token.TokenType) bool {
-	return p.token.Type == tokenType
-}
-
-func (p *Parser) consume(tokenType token.TokenType) {
-	if err := p.expect(tokenType); err != nil {
-		panic(err)
+func (p *Parser) peek() {
+	if p.peekToken == nil {
+		t := p.lex.Next()
+		p.peekToken = &t
 	}
-
-	p.consumeAny()
 }
 
-func (p *Parser) consumeAny() {
+func (p *Parser) peekMatch(tokenType token.TokenType) bool {
+	return p.peekToken.Type == tokenType
+}
+
+func (p *Parser) nextToken() {
 	t := p.lex.Next()
 	p.token = t
 }

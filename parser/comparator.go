@@ -17,20 +17,23 @@ func NewComparator(compared Node) Comparator {
 // with the expected Node, returning an error if the equality
 // comparison fails.
 func (c *Comparator) Compare(expected Node) error {
-	if expected == nil {
-		return fmt.Errorf("should not expect nil, please check the AST")
+	if expected == nil && c.current == nil {
+		return nil
+	}
+
+	if expected == nil && c.current != nil {
+		return fmt.Errorf("expected nil")
+	}
+
+	if expected != nil && c.current == nil {
+		return fmt.Errorf("unexpected nil")
 	}
 
 	return expected.Accept(c)
 }
 
-func (c *Comparator) observe(node Node) error {
-	if node == nil {
-		return fmt.Errorf("should not observe nil")
-	}
-
+func (c *Comparator) observe(node Node) {
 	c.current = node
-	return nil
 }
 
 /*** Visitor Methods ***/
@@ -64,17 +67,13 @@ func (c *Comparator) VisitDefinition(expected *Definition) error {
 		return nodeTypeError("Definition")
 	}
 
-	if err := c.observe(current.TypeExpression); err != nil {
-		return err
-	}
+	c.observe(current.TypeExpression)
 
 	if err := c.Compare(expected.TypeExpression); err != nil {
 		return err
 	}
 
-	if err := c.observe(&current.Identifier); err != nil {
-		return err
-	}
+	c.observe(&current.Identifier)
 
 	if err := c.Compare(&expected.Identifier); err != nil {
 		return err
@@ -84,9 +83,7 @@ func (c *Comparator) VisitDefinition(expected *Definition) error {
 		return err
 	}
 
-	if err := c.observe(current.Expression); err != nil {
-		return err
-	}
+	c.observe(current.Expression)
 
 	if err := expected.Expression.Accept(c); err != nil {
 		return err
@@ -102,17 +99,17 @@ func (c *Comparator) VisitTypeDefinition(expected *TypeDefinition) error {
 		return nodeTypeError("TypeDefinition")
 	}
 
-	if err := c.observe(&current.Identifier); err != nil {
-		return err
-	}
+	c.observe(&current.Identifier)
 
 	if err := c.Compare(&expected.Identifier); err != nil {
 		return err
 	}
 
-	if err := c.observe(current.TypeExpression); err != nil {
+	if err := compareSlices(c, "type parameters", expected.Parameters, current.Parameters); err != nil {
 		return err
 	}
+
+	c.observe(current.TypeExpression)
 
 	if err := c.Compare(expected.TypeExpression); err != nil {
 		return err
@@ -142,17 +139,13 @@ func (c *Comparator) VisitFunctionType(expected *FunctionType) error {
 		return nodeTypeError("FunctionType")
 	}
 
-	if err := c.observe(current.ParameterType); err != nil {
-		return err
-	}
+	c.observe(current.ParameterType)
 
 	if err := c.Compare(expected.ParameterType); err != nil {
 		return err
 	}
 
-	if err := c.observe(current.ReturnType); err != nil {
-		return err
-	}
+	c.observe(current.ReturnType)
 
 	if err := c.Compare(expected.ReturnType); err != nil {
 		return err
@@ -182,9 +175,7 @@ func (c *Comparator) VisitSliceType(expected *SliceType) error {
 		return nodeTypeError("SliceType")
 	}
 
-	if err := c.observe(current.ElementType); err != nil {
-		return err
-	}
+	c.observe(current.ElementType)
 
 	if err := c.Compare(expected.ElementType); err != nil {
 		return err
@@ -204,9 +195,7 @@ func (c *Comparator) VisitArrayType(expected *ArrayType) error {
 		return fmt.Errorf("expected array of size %d, but got size %d", expected.Size, current.Size)
 	}
 
-	if err := c.observe(current.ElementType); err != nil {
-		return err
-	}
+	c.observe(current.ElementType)
 
 	if err := c.Compare(expected.ElementType); err != nil {
 		return err
@@ -250,17 +239,13 @@ func (c *Comparator) VisitSumTypeVariant(expected *SumTypeVariant) error {
 		return nodeTypeError("SumTypeVariant")
 	}
 
-	if err := c.observe(&current.Identifier); err != nil {
-		return err
-	}
+	c.observe(&current.Identifier)
 
 	if err := c.Compare(&expected.Identifier); err != nil {
 		return err
 	}
 
-	if err := c.observe(current.TypeExpression); err != nil {
-		return err
-	}
+	c.observe(current.TypeExpression)
 
 	if err := c.Compare(expected.TypeExpression); err != nil {
 		return err
@@ -308,9 +293,7 @@ func (c *Comparator) VisitLambda(expected *LambdaLiteral) error {
 		return err
 	}
 
-	if err := c.observe(current.Expression); err != nil {
-		return err
-	}
+	c.observe(current.Expression)
 
 	if err := c.Compare(expected.Expression); err != nil {
 		return err
@@ -400,7 +383,7 @@ func (c *Comparator) VisitCharacter(expected *CharacterLiteral) error {
 		return nodeTypeError("CharacterLiteral")
 	}
 
-	if current != expected {
+	if string(*current) != string(*expected) {
 		return fmt.Errorf("expected `%s`, but got `%s`", string(*expected), string(*current))
 	}
 
@@ -419,9 +402,7 @@ func compareSlices[T Node](c *Comparator, what string, expected []T, current []T
 	}
 
 	for i, d := range expected {
-		if err := c.observe(current[i]); err != nil {
-			return err
-		}
+		c.observe(current[i])
 
 		if err := c.Compare(d); err != nil {
 			return err
@@ -443,9 +424,7 @@ func compareMaps[T Node](c *Comparator, expected map[Identifier]T, current map[I
 			return fmt.Errorf("field `%s` not found", ident)
 		}
 
-		if err := c.observe(otherExpr); err != nil {
-			return err
-		}
+		c.observe(otherExpr)
 
 		if err := c.Compare(expr); err != nil {
 			return err
