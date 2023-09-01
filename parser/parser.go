@@ -143,15 +143,24 @@ func (p *Parser) definition() (Definition, error) {
 }
 
 func (p *Parser) typeDefinition() (TypeDefinition, error) {
+	var err error
+	typeDef := TypeDefinition{}
+
 	p.consume(token.TYPE)
 
 	if err := p.expect(token.IDENTIFIER); err != nil {
 		return TypeDefinition{}, err
 	}
 
-	ident := TypeIdentifier(p.token.Literal)
+	typeDef.Identifier = TypeIdentifier(p.token.Literal)
 
 	p.consume(token.IDENTIFIER)
+
+	for p.match(token.IDENTIFIER) {
+		param := Identifier(p.token.Literal)
+		typeDef.Parameters = append(typeDef.Parameters, &param)
+		p.consume(token.IDENTIFIER)
+	}
 
 	if err := p.expect(token.COLON); err != nil {
 		return TypeDefinition{}, err
@@ -159,16 +168,13 @@ func (p *Parser) typeDefinition() (TypeDefinition, error) {
 
 	p.consume(token.COLON)
 
-	typeExpression, err := p.typeExpression()
+	typeDef.TypeExpression, err = p.typeExpression()
 
 	if err != nil {
 		return TypeDefinition{}, err
 	}
 
-	return TypeDefinition{
-		Identifier:     ident,
-		TypeExpression: typeExpression,
-	}, nil
+	return typeDef, nil
 }
 
 func (p *Parser) typeExpression() (TypeExpression, error) {

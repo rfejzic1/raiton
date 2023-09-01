@@ -161,3 +161,109 @@ func TestDefinition(t *testing.T) {
 
 	parseAndCompare(t, source, &expected)
 }
+
+func TestTypeDefinition(t *testing.T) {
+	source := `
+	type name: string
+
+	type numArray: [3: number]
+
+	type numSlice: [number]
+
+	type person: {
+		name: string
+		age: number
+	}
+
+	type color: | Red | Green | Blue | RGB: { r:number g:number b:number }
+
+	type option T: | Some: T | None
+
+	type stringOption: (option string)
+	`
+
+	expected := Scope{
+		TypeDefinitions: []*TypeDefinition{
+			{
+				Identifier:     TypeIdentifier("name"),
+				TypeExpression: NewTypeIdentifier("string"),
+			},
+			{
+				Identifier: TypeIdentifier("numArray"),
+				TypeExpression: &ArrayType{
+					Size:        3,
+					ElementType: NewTypeIdentifier("number"),
+				},
+			},
+			{
+				Identifier: TypeIdentifier("numSlice"),
+				TypeExpression: &SliceType{
+					ElementType: NewTypeIdentifier("number"),
+				},
+			},
+			{
+				Identifier: TypeIdentifier("person"),
+				TypeExpression: &RecordType{
+					Fields: map[Identifier]TypeExpression{
+						Identifier("name"): NewTypeIdentifier("string"),
+						Identifier("age"):  NewTypeIdentifier("number"),
+					},
+				},
+			},
+			{
+				Identifier: TypeIdentifier("color"),
+				TypeExpression: &SumType{
+					Variants: []*SumTypeVariant{
+						{
+							Identifier: Identifier("Red"),
+						},
+						{
+							Identifier: Identifier("Green"),
+						},
+						{
+							Identifier: Identifier("Blue"),
+						},
+						{
+							Identifier: Identifier("RGB"),
+							TypeExpression: &RecordType{
+								Fields: map[Identifier]TypeExpression{
+									Identifier("r"): NewTypeIdentifier("number"),
+									Identifier("g"): NewTypeIdentifier("number"),
+									Identifier("b"): NewTypeIdentifier("number"),
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				Identifier: TypeIdentifier("option"),
+				Parameters: []*Identifier{
+					NewIdentifier("T"),
+				},
+				TypeExpression: &SumType{
+					Variants: []*SumTypeVariant{
+						{
+							Identifier:     Identifier("Some"),
+							TypeExpression: NewTypeIdentifier("T"),
+						},
+						{
+							Identifier: Identifier("None"),
+						},
+					},
+				},
+			},
+			{
+				Identifier: TypeIdentifier("stringOption"),
+				TypeExpression: &GroupType{
+					TypeExpressions: []TypeExpression{
+						NewTypeIdentifier("option"),
+						NewTypeIdentifier("string"),
+					},
+				},
+			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}

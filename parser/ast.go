@@ -39,6 +39,7 @@ func (s *Scope) Accept(visitor Visitor) error {
 
 type TypeDefinition struct {
 	Identifier     TypeIdentifier
+	Parameters     []*Identifier
 	TypeExpression TypeExpression
 }
 
