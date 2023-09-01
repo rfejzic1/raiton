@@ -22,14 +22,32 @@ func parseAndCompare(t *testing.T, source string, expected Expression) {
 	}
 }
 
-func TestExpressions(t *testing.T) {
+func TestExpressionString(t *testing.T) {
+	source := `"this is a string"`
+
+	expected := Scope{
+		Expressions: []Expression{
+			NewStringLiteral("this is a string"),
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestExpressionCharacter(t *testing.T) {
+	source := `'c'`
+
+	expected := Scope{
+		Expressions: []Expression{
+			NewCharacterLiteral("c"),
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestExpressionNumber(t *testing.T) {
 	source := `
-	# string expression
-	"string"
-
-	# character expression
-	'c'
-
 	# number expression; positive integer
 	5
 
@@ -38,23 +56,24 @@ func TestExpressions(t *testing.T) {
 
 	# number expression; negative integer
 	-1
-
-	# array expression
-	[3: 1 2 3]
-
-	# slice expression
-	[1 2 3]
-
-	(println "Hello, World")
 	`
 
 	expected := Scope{
 		Expressions: []Expression{
-			NewStringLiteral("string"),
-			NewCharacterLiteral("c"),
 			NewNumberLiteral("5"),
 			NewNumberLiteral("2.65"),
 			NewNumberLiteral("-1"),
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestExpressionArray(t *testing.T) {
+	source := `[3: 1 2 3]`
+
+	expected := Scope{
+		Expressions: []Expression{
 			&ArrayLiteral{
 				Size: 3,
 				Elements: []Expression{
@@ -63,6 +82,17 @@ func TestExpressions(t *testing.T) {
 					NewNumberLiteral("3"),
 				},
 			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestExpressionSlice(t *testing.T) {
+	source := `[1 2 3]`
+
+	expected := Scope{
+		Expressions: []Expression{
 			&SliceLiteral{
 				Elements: []Expression{
 					NewNumberLiteral("1"),
@@ -70,6 +100,17 @@ func TestExpressions(t *testing.T) {
 					NewNumberLiteral("3"),
 				},
 			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestExpressionInvocation(t *testing.T) {
+	source := `(println "Hello, World")`
+
+	expected := Scope{
+		Expressions: []Expression{
 			&Invocation{
 				Arguments: []Expression{
 					NewIdentifier("println"),
@@ -82,33 +123,33 @@ func TestExpressions(t *testing.T) {
 	parseAndCompare(t, source, &expected)
 }
 
-func TestDefinition(t *testing.T) {
+func TestDefinitionTypedWithSingleExpression(t *testing.T) {
 	source := `
-	# definition
 	<string>
 	name: "Tojuro"
-
-	# definition with scope
-	<number>
-	age { 24 }
-
-	# function definition
-	<number -> number>
-	add_two x: (add x 2)
-
-	# function definition with scope
-	<number -> number>
-	add_three x { (add x 3) }
 	`
 
 	expected := Scope{
-		Expressions: []Expression{},
 		Definitions: []*Definition{
 			{
 				TypeExpression: NewTypeIdentifier("string"),
 				Identifier:     Identifier("name"),
 				Expression:     NewStringLiteral("Tojuro"),
 			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestDefinitionTypedWithScope(t *testing.T) {
+	source := `
+	<number>
+	age { 24 }
+	`
+
+	expected := Scope{
+		Definitions: []*Definition{
 			{
 				TypeExpression: NewTypeIdentifier("number"),
 				Identifier:     Identifier("age"),
@@ -118,6 +159,20 @@ func TestDefinition(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestFunctionDefinitionTypedWithSingleExpression(t *testing.T) {
+	source := `
+	<number -> number>
+	add_two x: (add x 2)
+	`
+
+	expected := Scope{
+		Definitions: []*Definition{
 			{
 				TypeExpression: &FunctionType{
 					ParameterType: NewTypeIdentifier("number"),
@@ -135,6 +190,20 @@ func TestDefinition(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestFunctionDefinitionTypedWithScope(t *testing.T) {
+	source := `
+	<number -> number>
+	add_three x { (add x 3) }
+	`
+
+	expected := Scope{
+		Definitions: []*Definition{
 			{
 				TypeExpression: &FunctionType{
 					ParameterType: NewTypeIdentifier("number"),
@@ -162,24 +231,9 @@ func TestDefinition(t *testing.T) {
 	parseAndCompare(t, source, &expected)
 }
 
-func TestTypeDefinition(t *testing.T) {
+func TestTypeDefinitionAlias(t *testing.T) {
 	source := `
 	type name: string
-
-	type numArray: [3: number]
-
-	type numSlice: [number]
-
-	type person: {
-		name: string
-		age: number
-	}
-
-	type color: | Red | Green | Blue | RGB: { r:number g:number b:number }
-
-	type option T: | Some: T | None
-
-	type stringOption: (option string)
 	`
 
 	expected := Scope{
@@ -188,6 +242,19 @@ func TestTypeDefinition(t *testing.T) {
 				Identifier:     TypeIdentifier("name"),
 				TypeExpression: NewTypeIdentifier("string"),
 			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestTypeDefinitionArray(t *testing.T) {
+	source := `
+	type numArray: [3: number]
+	`
+
+	expected := Scope{
+		TypeDefinitions: []*TypeDefinition{
 			{
 				Identifier: TypeIdentifier("numArray"),
 				TypeExpression: &ArrayType{
@@ -195,12 +262,41 @@ func TestTypeDefinition(t *testing.T) {
 					ElementType: NewTypeIdentifier("number"),
 				},
 			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestTypeDefinitionSlice(t *testing.T) {
+	source := `
+	type numSlice: [number]
+	`
+
+	expected := Scope{
+		TypeDefinitions: []*TypeDefinition{
 			{
 				Identifier: TypeIdentifier("numSlice"),
 				TypeExpression: &SliceType{
 					ElementType: NewTypeIdentifier("number"),
 				},
 			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestTypeDefinitionRecord(t *testing.T) {
+	source := `
+	type person: {
+		name: string
+		age: number
+	}
+	`
+
+	expected := Scope{
+		TypeDefinitions: []*TypeDefinition{
 			{
 				Identifier: TypeIdentifier("person"),
 				TypeExpression: &RecordType{
@@ -210,6 +306,19 @@ func TestTypeDefinition(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestTypeDefinitionSum(t *testing.T) {
+	source := `
+	type color: | Red | Green | Blue | RGB: { r:number g:number b:number }
+	`
+
+	expected := Scope{
+		TypeDefinitions: []*TypeDefinition{
 			{
 				Identifier: TypeIdentifier("color"),
 				TypeExpression: &SumType{
@@ -236,6 +345,19 @@ func TestTypeDefinition(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestTypeDefinitionParametrized(t *testing.T) {
+	source := `
+	type option T: | Some: T | None
+	`
+
+	expected := Scope{
+		TypeDefinitions: []*TypeDefinition{
 			{
 				Identifier: TypeIdentifier("option"),
 				Parameters: []*Identifier{
@@ -253,6 +375,19 @@ func TestTypeDefinition(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestTypeDefinitionGroup(t *testing.T) {
+	source := `
+	type stringOption: (option string)
+	`
+
+	expected := Scope{
+		TypeDefinitions: []*TypeDefinition{
 			{
 				Identifier: TypeIdentifier("stringOption"),
 				TypeExpression: &GroupType{
