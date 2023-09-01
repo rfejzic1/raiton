@@ -81,3 +81,83 @@ func TestExpressions(t *testing.T) {
 
 	parseAndCompare(t, source, &expected)
 }
+
+func TestDefinition(t *testing.T) {
+	source := `
+	# definition
+	<string>
+	name: "Tojuro"
+
+	# definition with scope
+	<number>
+	age { 24 }
+
+	# function definition
+	<number -> number>
+	add_two x: (add x 2)
+
+	# function definition with scope
+	<number -> number>
+	add_three x { (add x 3) }
+	`
+
+	expected := Scope{
+		Expressions: []Expression{},
+		Definitions: []*Definition{
+			{
+				TypeExpression: NewTypeIdentifier("string"),
+				Identifier:     Identifier("name"),
+				Expression:     NewStringLiteral("Tojuro"),
+			},
+			{
+				TypeExpression: NewTypeIdentifier("number"),
+				Identifier:     Identifier("age"),
+				Expression: &Scope{
+					Expressions: []Expression{
+						NewNumberLiteral("24"),
+					},
+				},
+			},
+			{
+				TypeExpression: &FunctionType{
+					ParameterType: NewTypeIdentifier("number"),
+					ReturnType:    NewTypeIdentifier("number"),
+				},
+				Identifier: Identifier("add_two"),
+				Parameters: []*Identifier{
+					NewIdentifier("x"),
+				},
+				Expression: &Invocation{
+					Arguments: []Expression{
+						NewIdentifier("add"),
+						NewIdentifier("x"),
+						NewNumberLiteral("2"),
+					},
+				},
+			},
+			{
+				TypeExpression: &FunctionType{
+					ParameterType: NewTypeIdentifier("number"),
+					ReturnType:    NewTypeIdentifier("number"),
+				},
+				Identifier: Identifier("add_three"),
+				Parameters: []*Identifier{
+					NewIdentifier("x"),
+				},
+				Expression: &Scope{
+					Expressions: []Expression{
+						&Invocation{
+							Arguments: []Expression{
+								NewIdentifier("add"),
+								NewIdentifier("x"),
+								NewNumberLiteral("3"),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
