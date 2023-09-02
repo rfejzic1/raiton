@@ -45,10 +45,30 @@ func TestEmptySource(t *testing.T) {
 
 func TestIdentifierLexing(t *testing.T) {
 	test := newTest(t, "IdentifierLexing")
-	source := `println`
+	source := `
+	add
+	println!
+	_
+	_what
+	___
+	_what_is_this
+	_1
+	_a1
+	_1a
+	_!
+	`
 
 	test.expect(source, []tokenExpect{
-		{token.IDENTIFIER, `println`},
+		{token.IDENTIFIER, `add`},
+		{token.IDENTIFIER, `println!`},
+		{token.IDENTIFIER, `_`},
+		{token.IDENTIFIER, `_what`},
+		{token.IDENTIFIER, `___`},
+		{token.IDENTIFIER, `_what_is_this`},
+		{token.IDENTIFIER, `_1`},
+		{token.IDENTIFIER, `_a1`},
+		{token.IDENTIFIER, `_1a`},
+		{token.IDENTIFIER, `_!`},
 		{token.EOF, ``},
 	})
 }

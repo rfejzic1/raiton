@@ -49,7 +49,7 @@ func (l *Lexer) normalMode() token.Token {
 		return l.token(token.EOF, "")
 	}
 
-	if isAlpha(char) {
+	if isUnderscore(char) || isAlpha(char) {
 		return l.identifierToken()
 	} else if isDigit(char) {
 		return l.numberToken()
@@ -58,7 +58,7 @@ func (l *Lexer) normalMode() token.Token {
 		l.mode = SEQUENCE_MODE
 		l.modeChar = char
 		return token
-	} else if isMinus(char) {
+	} else if isDash(char) {
 		return l.numberOrSpecialToken()
 	} else {
 		return l.specialToken()
@@ -83,7 +83,13 @@ func (l *Lexer) sequenceMode() token.Token {
 
 func (l *Lexer) identifierToken() token.Token {
 	literal := ""
-	for char, ok := l.current(); ok && (isAlpha(char) || char == '_'); char, ok = l.next() {
+
+	if char, ok := l.current(); ok && (isAlpha(char) || isUnderscore(char)) {
+		literal += string(char)
+		l.next()
+	}
+
+	for char, ok := l.current(); ok && (isAlpha(char) || isUnderscore(char) || isDigit(char)); char, ok = l.next() {
 		literal += string(char)
 	}
 
@@ -291,8 +297,12 @@ func isDigit(c byte) bool {
 	return c >= '0' && c <= '9'
 }
 
-func isMinus(c byte) bool {
+func isDash(c byte) bool {
 	return c == '-'
+}
+
+func isUnderscore(c byte) bool {
+	return c == '_'
 }
 
 func isQuote(c byte) bool {
