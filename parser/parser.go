@@ -6,6 +6,7 @@ import (
 
 	"github.com/rfejzic1/raiton/lexer"
 	"github.com/rfejzic1/raiton/token"
+	"github.com/rfejzic1/raiton/ast"
 )
 
 type Parser struct {
@@ -20,7 +21,7 @@ func New(lex *lexer.Lexer) Parser {
 	}
 }
 
-func (p *Parser) Parse() (Expression, error) {
+func (p *Parser) Parse() (ast.Expression, error) {
 	// The fact that a production method is called
 	// means that the current token is matching expecations
 	p.nextToken()
@@ -29,11 +30,11 @@ func (p *Parser) Parse() (Expression, error) {
 
 /*** Productions ***/
 
-func (p *Parser) fileScope() (*Scope, error) {
-	scope := &Scope{
-		Definitions:     make([]*Definition, 0),
-		TypeDefinitions: make([]*TypeDefinition, 0),
-		Expressions:     make([]Expression, 0),
+func (p *Parser) fileScope() (*ast.Scope, error) {
+	scope := &ast.Scope{
+		Definitions:     make([]*ast.Definition, 0),
+		TypeDefinitions: make([]*ast.TypeDefinition, 0),
+		Expressions:     make([]ast.Expression, 0),
 	}
 
 	for !p.match(token.EOF) {
@@ -45,11 +46,11 @@ func (p *Parser) fileScope() (*Scope, error) {
 	return scope, nil
 }
 
-func (p *Parser) scope() (*Scope, error) {
-	scope := &Scope{
-		Definitions:     make([]*Definition, 0),
-		TypeDefinitions: make([]*TypeDefinition, 0),
-		Expressions:     make([]Expression, 0),
+func (p *Parser) scope() (*ast.Scope, error) {
+	scope := &ast.Scope{
+		Definitions:     make([]*ast.Definition, 0),
+		TypeDefinitions: make([]*ast.TypeDefinition, 0),
+		Expressions:     make([]ast.Expression, 0),
 	}
 
 	p.consume(token.OPEN_BRACE)
@@ -69,7 +70,7 @@ func (p *Parser) scope() (*Scope, error) {
 	return scope, nil
 }
 
-func (p *Parser) scopeItem(scope *Scope) error {
+func (p *Parser) scopeItem(scope *ast.Scope) error {
 	if p.match(token.IDENTIFIER) || p.match(token.OPEN_ANGLE) {
 		definition, err := p.definition()
 		if err != nil {
@@ -93,35 +94,35 @@ func (p *Parser) scopeItem(scope *Scope) error {
 	return nil
 }
 
-func (p *Parser) definition() (Definition, error) {
+func (p *Parser) definition() (ast.Definition, error) {
 	var err error
 
-	def := Definition{
-		Parameters: []*Identifier{},
+	def := ast.Definition{
+		Parameters: []*ast.Identifier{},
 	}
 
 	if p.match(token.OPEN_ANGLE) {
 		p.consume(token.OPEN_ANGLE)
 		def.TypeExpression, err = p.typeExpression()
 		if err != nil {
-			return Definition{}, err
+			return ast.Definition{}, err
 		}
 		if err := p.expect(token.CLOSED_ANGLE); err != nil {
-			return Definition{}, err
+			return ast.Definition{}, err
 		}
 		p.consume(token.CLOSED_ANGLE)
 	}
 
 	if err := p.expect(token.IDENTIFIER); err != nil {
-		return Definition{}, err
+		return ast.Definition{}, err
 	}
 
-	def.Identifier = Identifier(p.token.Literal)
+	def.Identifier = ast.Identifier(p.token.Literal)
 
 	p.consume(token.IDENTIFIER)
 
 	for p.match(token.IDENTIFIER) {
-		param := Identifier(p.token.Literal)
+		param := ast.Identifier(p.token.Literal)
 		def.Parameters = append(def.Parameters, &param)
 		p.consume(token.IDENTIFIER)
 	}
@@ -129,41 +130,41 @@ func (p *Parser) definition() (Definition, error) {
 	if p.match(token.COLON) {
 		p.consume(token.COLON)
 		if def.Expression, err = p.expression(); err != nil {
-			return Definition{}, err
+			return ast.Definition{}, err
 		}
 	} else if p.match(token.OPEN_BRACE) {
 		if def.Expression, err = p.scope(); err != nil {
-			return Definition{}, err
+			return ast.Definition{}, err
 		}
 	} else {
-		return Definition{}, p.unexpected()
+		return ast.Definition{}, p.unexpected()
 	}
 
 	return def, nil
 }
 
-func (p *Parser) typeDefinition() (TypeDefinition, error) {
+func (p *Parser) typeDefinition() (ast.TypeDefinition, error) {
 	var err error
-	typeDef := TypeDefinition{}
+	typeDef := ast.TypeDefinition{}
 
 	p.consume(token.TYPE)
 
 	if err := p.expect(token.IDENTIFIER); err != nil {
-		return TypeDefinition{}, err
+		return ast.TypeDefinition{}, err
 	}
 
-	typeDef.Identifier = TypeIdentifier(p.token.Literal)
+	typeDef.Identifier = ast.TypeIdentifier(p.token.Literal)
 
 	p.consume(token.IDENTIFIER)
 
 	for p.match(token.IDENTIFIER) {
-		param := Identifier(p.token.Literal)
+		param := ast.Identifier(p.token.Literal)
 		typeDef.Parameters = append(typeDef.Parameters, &param)
 		p.consume(token.IDENTIFIER)
 	}
 
 	if err := p.expect(token.COLON); err != nil {
-		return TypeDefinition{}, err
+		return ast.TypeDefinition{}, err
 	}
 
 	p.consume(token.COLON)
@@ -171,14 +172,14 @@ func (p *Parser) typeDefinition() (TypeDefinition, error) {
 	typeDef.TypeExpression, err = p.typeExpression()
 
 	if err != nil {
-		return TypeDefinition{}, err
+		return ast.TypeDefinition{}, err
 	}
 
 	return typeDef, nil
 }
 
-func (p *Parser) typeExpression() (TypeExpression, error) {
-	var typeExpression TypeExpression
+func (p *Parser) typeExpression() (ast.TypeExpression, error) {
+	var typeExpression ast.TypeExpression
 	var err error
 
 	if p.match(token.IDENTIFIER) {
@@ -206,7 +207,7 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 			return nil, err
 		}
 
-		typeExpression = &FunctionType{
+		typeExpression = &ast.FunctionType{
 			ParameterType: typeExpression,
 			ReturnType:    returnTypeExpression,
 		}
@@ -215,14 +216,14 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 	return typeExpression, nil
 }
 
-func (p *Parser) typeIdentifier() *TypeIdentifier {
-	ident := TypeIdentifier(p.token.Literal)
+func (p *Parser) typeIdentifier() *ast.TypeIdentifier {
+	ident := ast.TypeIdentifier(p.token.Literal)
 	p.consume(token.IDENTIFIER)
 	return &ident
 }
 
-func (p *Parser) typeIdentifierPath() (TypeExpression, error) {
-	identifiers := []*TypeIdentifier{}
+func (p *Parser) typeIdentifierPath() (ast.TypeExpression, error) {
+	identifiers := []*ast.TypeIdentifier{}
 
 	for p.match(token.IDENTIFIER) {
 		ident := p.typeIdentifier()
@@ -239,15 +240,15 @@ func (p *Parser) typeIdentifierPath() (TypeExpression, error) {
 		}
 	}
 
-	return &TypeIdentifierPath{
+	return &ast.TypeIdentifierPath{
 		Identifiers: identifiers,
 	}, nil
 }
 
-func (p *Parser) typeGroup() (TypeExpression, error) {
+func (p *Parser) typeGroup() (ast.TypeExpression, error) {
 	p.consume(token.OPEN_PAREN)
 
-	typeExpressions := []TypeExpression{}
+	typeExpressions := []ast.TypeExpression{}
 
 	for !p.match(token.EOF) && !p.match(token.CLOSED_PAREN) {
 		typeExpression, err := p.typeExpression()
@@ -264,14 +265,14 @@ func (p *Parser) typeGroup() (TypeExpression, error) {
 
 	p.consume(token.CLOSED_PAREN)
 
-	return &GroupType{
+	return &ast.GroupType{
 		TypeExpressions: typeExpressions,
 	}, nil
 }
 
-func (p *Parser) typeSum() (TypeExpression, error) {
-	sumType := SumType{
-		Variants: []*SumTypeVariant{},
+func (p *Parser) typeSum() (ast.TypeExpression, error) {
+	sumType := ast.SumType{
+		Variants: []*ast.SumTypeVariant{},
 	}
 
 	for p.match(token.PIPE) {
@@ -281,8 +282,8 @@ func (p *Parser) typeSum() (TypeExpression, error) {
 			return nil, err
 		}
 
-		variant := SumTypeVariant{
-			Identifier: Identifier(p.token.Literal),
+		variant := ast.SumTypeVariant{
+			Identifier: ast.Identifier(p.token.Literal),
 		}
 
 		p.consume(token.IDENTIFIER)
@@ -304,14 +305,14 @@ func (p *Parser) typeSum() (TypeExpression, error) {
 	return &sumType, nil
 }
 
-func (p *Parser) typeRecord() (TypeExpression, error) {
+func (p *Parser) typeRecord() (ast.TypeExpression, error) {
 	p.consume(token.OPEN_BRACE)
-	recortType := RecordType{
-		Fields: map[Identifier]TypeExpression{},
+	recortType := ast.RecordType{
+		Fields: map[ast.Identifier]ast.TypeExpression{},
 	}
 
 	for p.match(token.IDENTIFIER) {
-		field := Identifier(p.token.Literal)
+		field := ast.Identifier(p.token.Literal)
 		p.consume(token.IDENTIFIER)
 		if err := p.expect(token.COLON); err != nil {
 			return nil, err
@@ -333,10 +334,10 @@ func (p *Parser) typeRecord() (TypeExpression, error) {
 	return &recortType, nil
 }
 
-func (p *Parser) typeArrayOrSlice() (TypeExpression, error) {
+func (p *Parser) typeArrayOrSlice() (ast.TypeExpression, error) {
 	p.consume(token.OPEN_BRACKET)
 
-	var typeExpression TypeExpression
+	var typeExpression ast.TypeExpression
 
 	if p.match(token.NUMBER) {
 		size, err := parseArraySize(p.token.Literal)
@@ -359,7 +360,7 @@ func (p *Parser) typeArrayOrSlice() (TypeExpression, error) {
 			return nil, err
 		}
 
-		typeExpression = &ArrayType{
+		typeExpression = &ast.ArrayType{
 			Size:        size,
 			ElementType: elementType,
 		}
@@ -370,7 +371,7 @@ func (p *Parser) typeArrayOrSlice() (TypeExpression, error) {
 			return nil, err
 		}
 
-		typeExpression = &SliceType{
+		typeExpression = &ast.SliceType{
 			ElementType: elementType,
 		}
 	}
@@ -384,7 +385,7 @@ func (p *Parser) typeArrayOrSlice() (TypeExpression, error) {
 	return typeExpression, nil
 }
 
-func (p *Parser) expression() (Expression, error) {
+func (p *Parser) expression() (ast.Expression, error) {
 	if p.match(token.IDENTIFIER) {
 		return p.identifierPath()
 	} else if p.match(token.NUMBER) {
@@ -406,14 +407,14 @@ func (p *Parser) expression() (Expression, error) {
 	}
 }
 
-func (p *Parser) identifier() *Identifier {
-	ident := Identifier(p.token.Literal)
+func (p *Parser) identifier() *ast.Identifier {
+	ident := ast.Identifier(p.token.Literal)
 	p.consume(token.IDENTIFIER)
 	return &ident
 }
 
-func (p *Parser) identifierPath() (TypeExpression, error) {
-	identifiers := []*Identifier{}
+func (p *Parser) identifierPath() (ast.TypeExpression, error) {
+	identifiers := []*ast.Identifier{}
 
 	for p.match(token.IDENTIFIER) {
 		ident := p.identifier()
@@ -430,23 +431,23 @@ func (p *Parser) identifierPath() (TypeExpression, error) {
 		}
 	}
 
-	return &IdentifierPath{
+	return &ast.IdentifierPath{
 		Identifiers: identifiers,
 	}, nil
 }
 
-func (p *Parser) number() Expression {
-	num := NewNumberLiteral(p.token.Literal)
+func (p *Parser) number() ast.Expression {
+	num := ast.NewNumberLiteral(p.token.Literal)
 	p.consume(token.NUMBER)
 	return num
 }
 
-func (p *Parser) string() (Expression, error) {
+func (p *Parser) string() (ast.Expression, error) {
 	p.consume(token.DOUBLE_QUOTE)
 	if err := p.expect(token.STRING); err != nil {
 		return nil, err
 	}
-	str := NewStringLiteral(p.token.Literal)
+	str := ast.NewStringLiteral(p.token.Literal)
 	p.consume(token.STRING)
 	if err := p.expect(token.DOUBLE_QUOTE); err != nil {
 		return nil, err
@@ -455,12 +456,12 @@ func (p *Parser) string() (Expression, error) {
 	return str, nil
 }
 
-func (p *Parser) character() (Expression, error) {
+func (p *Parser) character() (ast.Expression, error) {
 	p.consume(token.SINGLE_QUOTE)
 	if err := p.expect(token.STRING); err != nil {
 		return nil, err
 	}
-	char := NewCharacterLiteral(p.token.Literal)
+	char := ast.NewCharacterLiteral(p.token.Literal)
 	p.consume(token.STRING)
 	if err := p.expect(token.SINGLE_QUOTE); err != nil {
 		return nil, err
@@ -469,8 +470,8 @@ func (p *Parser) character() (Expression, error) {
 	return char, nil
 }
 
-func (p *Parser) arrayOrSlice() (Expression, error) {
-	var expression Expression
+func (p *Parser) arrayOrSlice() (ast.Expression, error) {
+	var expression ast.Expression
 
 	p.consume(token.OPEN_BRACKET)
 
@@ -507,7 +508,7 @@ func (p *Parser) arrayOrSlice() (Expression, error) {
 	return expression, nil
 }
 
-func (p *Parser) array() (Expression, error) {
+func (p *Parser) array() (ast.Expression, error) {
 	size, err := parseArraySize(p.token.Literal)
 
 	if err != nil {
@@ -522,9 +523,9 @@ func (p *Parser) array() (Expression, error) {
 
 	p.consume(token.COLON)
 
-	array := &ArrayLiteral{
+	array := &ast.ArrayLiteral{
 		Size:     size,
-		Elements: []Expression{},
+		Elements: []ast.Expression{},
 	}
 
 	for !p.match(token.EOF) && !p.match(token.CLOSED_BRACKET) {
@@ -539,9 +540,9 @@ func (p *Parser) array() (Expression, error) {
 	return array, nil
 }
 
-func (p *Parser) slice() (Expression, error) {
-	slice := &SliceLiteral{
-		Elements: []Expression{},
+func (p *Parser) slice() (ast.Expression, error) {
+	slice := &ast.SliceLiteral{
+		Elements: []ast.Expression{},
 	}
 
 	for !p.match(token.EOF) && !p.match(token.CLOSED_BRACKET) {
@@ -556,15 +557,15 @@ func (p *Parser) slice() (Expression, error) {
 	return slice, nil
 }
 
-func (p *Parser) record() (Expression, error) {
+func (p *Parser) record() (ast.Expression, error) {
 	p.consume(token.OPEN_BRACE)
 
-	recordLiteral := RecordLiteral{
-		Fields: map[Identifier]Expression{},
+	recordLiteral := ast.RecordLiteral{
+		Fields: map[ast.Identifier]ast.Expression{},
 	}
 
 	for p.match(token.IDENTIFIER) {
-		field := Identifier(p.token.Literal)
+		field := ast.Identifier(p.token.Literal)
 		p.consume(token.IDENTIFIER)
 
 		expression, err := p.expression()
@@ -585,17 +586,17 @@ func (p *Parser) record() (Expression, error) {
 	return &recordLiteral, nil
 }
 
-func (p *Parser) lambda() (Expression, error) {
+func (p *Parser) lambda() (ast.Expression, error) {
 	p.consume(token.BACKSLASH)
 
-	lambdaLiteral := LambdaLiteral{
-		Parameters: []*Identifier{},
+	lambdaLiteral := ast.LambdaLiteral{
+		Parameters: []*ast.Identifier{},
 	}
 
 	var err error
 
 	for p.match(token.IDENTIFIER) {
-		param := Identifier(p.token.Literal)
+		param := ast.Identifier(p.token.Literal)
 		lambdaLiteral.Parameters = append(lambdaLiteral.Parameters, &param)
 		p.consume(token.IDENTIFIER)
 	}
@@ -603,24 +604,24 @@ func (p *Parser) lambda() (Expression, error) {
 	if p.match(token.COLON) {
 		p.consume(token.COLON)
 		if lambdaLiteral.Expression, err = p.expression(); err != nil {
-			return &Definition{}, err
+			return &ast.Definition{}, err
 		}
 	} else if p.match(token.OPEN_BRACE) {
 		if lambdaLiteral.Expression, err = p.scope(); err != nil {
-			return &Definition{}, err
+			return &ast.Definition{}, err
 		}
 	} else {
-		return &Definition{}, p.unexpected()
+		return &ast.Definition{}, p.unexpected()
 	}
 
 	return &lambdaLiteral, nil
 }
 
-func (p *Parser) invocation() (Expression, error) {
+func (p *Parser) invocation() (ast.Expression, error) {
 	p.consume(token.OPEN_PAREN)
 
-	invocation := Invocation{
-		Arguments: []Expression{},
+	invocation := ast.Invocation{
+		Arguments: []ast.Expression{},
 	}
 
 	for !p.match(token.EOF) && !p.match(token.CLOSED_PAREN) {

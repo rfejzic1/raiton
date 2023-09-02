@@ -1,4 +1,4 @@
-package parser
+package ast
 
 type Visitor interface {
 	VisitScope(s *Scope) error
@@ -219,7 +219,7 @@ type ArrayLiteral struct {
 
 func NewArrayLiteral(size uint64, elements ...Expression) *ArrayLiteral {
 	return &ArrayLiteral{
-		Size: size,
+		Size:     size,
 		Elements: elements,
 	}
 }
