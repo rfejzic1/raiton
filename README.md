@@ -1,5 +1,7 @@
 # The Raiton Language
 
+[![CI](https://github.com/rfejzic1/raiton/actions/workflows/cli.yml/badge.svg?branch=main)](https://github.com/rfejzic1/raiton/actions/workflows/cli.yml)
+
 A toolchain for the Raiton language.
 
 Raiton is a language that is the successor of the [Katon](https://github.com/rfejzic1/katon) language I implemented
