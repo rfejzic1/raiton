@@ -5,6 +5,7 @@ type Visitor interface {
 	VisitDefinition(d *Definition) error
 	VisitTypeDefinition(d *TypeDefinition) error
 	VisitTypeIdentifier(i *TypeIdentifier) error
+	VisitTypeIdentifierPath(i *TypeIdentifierPath) error
 	VisitFunctionType(f *FunctionType) error
 	VisitRecordType(r *RecordType) error
 	VisitSliceType(s *SliceType) error
@@ -13,6 +14,7 @@ type Visitor interface {
 	VisitSumType(s *SumType) error
 	VisitSumTypeVariant(v *SumTypeVariant) error
 	VisitIdentifier(i *Identifier) error
+	VisitIdentifierPath(i *IdentifierPath) error
 	VisitInvocation(i *Invocation) error
 	VisitLambda(l *LambdaLiteral) error
 	VisitRecord(r *RecordLiteral) error
@@ -77,6 +79,20 @@ func NewTypeIdentifier(name string) *TypeIdentifier {
 
 func (i *TypeIdentifier) Accept(visitor Visitor) error {
 	return visitor.VisitTypeIdentifier(i)
+}
+
+type TypeIdentifierPath struct {
+	Identifiers []*TypeIdentifier
+}
+
+func NewTypeIdentifierPath(identifiers ...*TypeIdentifier) *TypeIdentifierPath {
+	return &TypeIdentifierPath{
+		Identifiers: identifiers,
+	}
+}
+
+func (f *TypeIdentifierPath) Accept(visitor Visitor) error {
+	return visitor.VisitTypeIdentifierPath(f)
 }
 
 type FunctionType struct {
@@ -149,6 +165,20 @@ func NewIdentifier(value string) *Identifier {
 
 func (i *Identifier) Accept(visitor Visitor) error {
 	return visitor.VisitIdentifier(i)
+}
+
+type IdentifierPath struct {
+	Identifiers []*Identifier
+}
+
+func NewIdentifierPath(identifiers ...*Identifier) *IdentifierPath {
+	return &IdentifierPath{
+		Identifiers: identifiers,
+	}
+}
+
+func (f *IdentifierPath) Accept(visitor Visitor) error {
+	return visitor.VisitIdentifierPath(f)
 }
 
 type Invocation struct {

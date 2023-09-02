@@ -113,7 +113,7 @@ func TestExpressionInvocation(t *testing.T) {
 		Expressions: []Expression{
 			&Invocation{
 				Arguments: []Expression{
-					NewIdentifier("println"),
+					NewIdentifierPath(NewIdentifier("println")),
 					NewStringLiteral("Hello, World"),
 				},
 			},
@@ -132,7 +132,7 @@ func TestDefinitionTypedWithSingleExpression(t *testing.T) {
 	expected := Scope{
 		Definitions: []*Definition{
 			{
-				TypeExpression: NewTypeIdentifier("string"),
+				TypeExpression: NewTypeIdentifierPath(NewTypeIdentifier("string")),
 				Identifier:     Identifier("name"),
 				Expression:     NewStringLiteral("Tojuro"),
 			},
@@ -151,7 +151,7 @@ func TestDefinitionTypedWithScope(t *testing.T) {
 	expected := Scope{
 		Definitions: []*Definition{
 			{
-				TypeExpression: NewTypeIdentifier("number"),
+				TypeExpression: NewTypeIdentifierPath(NewTypeIdentifier("number")),
 				Identifier:     Identifier("age"),
 				Expression: &Scope{
 					Expressions: []Expression{
@@ -175,8 +175,8 @@ func TestFunctionDefinitionTypedWithSingleExpression(t *testing.T) {
 		Definitions: []*Definition{
 			{
 				TypeExpression: &FunctionType{
-					ParameterType: NewTypeIdentifier("number"),
-					ReturnType:    NewTypeIdentifier("number"),
+					ParameterType: NewTypeIdentifierPath(NewTypeIdentifier("number")),
+					ReturnType:    NewTypeIdentifierPath(NewTypeIdentifier("number")),
 				},
 				Identifier: Identifier("add_two"),
 				Parameters: []*Identifier{
@@ -184,8 +184,8 @@ func TestFunctionDefinitionTypedWithSingleExpression(t *testing.T) {
 				},
 				Expression: &Invocation{
 					Arguments: []Expression{
-						NewIdentifier("add"),
-						NewIdentifier("x"),
+						NewIdentifierPath(NewIdentifier("add")),
+						NewIdentifierPath(NewIdentifier("x")),
 						NewNumberLiteral("2"),
 					},
 				},
@@ -206,8 +206,8 @@ func TestFunctionDefinitionTypedWithScope(t *testing.T) {
 		Definitions: []*Definition{
 			{
 				TypeExpression: &FunctionType{
-					ParameterType: NewTypeIdentifier("number"),
-					ReturnType:    NewTypeIdentifier("number"),
+					ParameterType: NewTypeIdentifierPath(NewTypeIdentifier("number")),
+					ReturnType:    NewTypeIdentifierPath(NewTypeIdentifier("number")),
 				},
 				Identifier: Identifier("add_three"),
 				Parameters: []*Identifier{
@@ -217,8 +217,8 @@ func TestFunctionDefinitionTypedWithScope(t *testing.T) {
 					Expressions: []Expression{
 						&Invocation{
 							Arguments: []Expression{
-								NewIdentifier("add"),
-								NewIdentifier("x"),
+								NewIdentifierPath(NewIdentifier("add")),
+								NewIdentifierPath(NewIdentifier("x")),
 								NewNumberLiteral("3"),
 							},
 						},
@@ -240,7 +240,7 @@ func TestTypeDefinitionAlias(t *testing.T) {
 		TypeDefinitions: []*TypeDefinition{
 			{
 				Identifier:     TypeIdentifier("name"),
-				TypeExpression: NewTypeIdentifier("string"),
+				TypeExpression: NewTypeIdentifierPath(NewTypeIdentifier("string")),
 			},
 		},
 	}
@@ -259,7 +259,7 @@ func TestTypeDefinitionArray(t *testing.T) {
 				Identifier: TypeIdentifier("numArray"),
 				TypeExpression: &ArrayType{
 					Size:        3,
-					ElementType: NewTypeIdentifier("number"),
+					ElementType: NewTypeIdentifierPath(NewTypeIdentifier("number")),
 				},
 			},
 		},
@@ -278,7 +278,7 @@ func TestTypeDefinitionSlice(t *testing.T) {
 			{
 				Identifier: TypeIdentifier("numSlice"),
 				TypeExpression: &SliceType{
-					ElementType: NewTypeIdentifier("number"),
+					ElementType: NewTypeIdentifierPath(NewTypeIdentifier("number")),
 				},
 			},
 		},
@@ -301,8 +301,8 @@ func TestTypeDefinitionRecord(t *testing.T) {
 				Identifier: TypeIdentifier("person"),
 				TypeExpression: &RecordType{
 					Fields: map[Identifier]TypeExpression{
-						Identifier("name"): NewTypeIdentifier("string"),
-						Identifier("age"):  NewTypeIdentifier("number"),
+						Identifier("name"): NewTypeIdentifierPath(NewTypeIdentifier("string")),
+						Identifier("age"):  NewTypeIdentifierPath(NewTypeIdentifier("number")),
 					},
 				},
 			},
@@ -336,9 +336,9 @@ func TestTypeDefinitionSum(t *testing.T) {
 							Identifier: Identifier("RGB"),
 							TypeExpression: &RecordType{
 								Fields: map[Identifier]TypeExpression{
-									Identifier("r"): NewTypeIdentifier("number"),
-									Identifier("g"): NewTypeIdentifier("number"),
-									Identifier("b"): NewTypeIdentifier("number"),
+									Identifier("r"): NewTypeIdentifierPath(NewTypeIdentifier("number")),
+									Identifier("g"): NewTypeIdentifierPath(NewTypeIdentifier("number")),
+									Identifier("b"): NewTypeIdentifierPath(NewTypeIdentifier("number")),
 								},
 							},
 						},
@@ -367,7 +367,7 @@ func TestTypeDefinitionParametrized(t *testing.T) {
 					Variants: []*SumTypeVariant{
 						{
 							Identifier:     Identifier("Some"),
-							TypeExpression: NewTypeIdentifier("T"),
+							TypeExpression: NewTypeIdentifierPath(NewTypeIdentifier("T")),
 						},
 						{
 							Identifier: Identifier("None"),
@@ -392,8 +392,8 @@ func TestTypeDefinitionGroup(t *testing.T) {
 				Identifier: TypeIdentifier("stringOption"),
 				TypeExpression: &GroupType{
 					TypeExpressions: []TypeExpression{
-						NewTypeIdentifier("option"),
-						NewTypeIdentifier("string"),
+						NewTypeIdentifierPath(NewTypeIdentifier("option")),
+						NewTypeIdentifierPath(NewTypeIdentifier("string")),
 					},
 				},
 			},

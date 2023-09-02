@@ -182,7 +182,7 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 	var err error
 
 	if p.match(token.IDENTIFIER) {
-		typeExpression = p.typeIdentifier()
+		typeExpression, err = p.typeIdentifierPath()
 	} else if p.match(token.PIPE) {
 		typeExpression, err = p.typeSum()
 	} else if p.match(token.OPEN_PAREN) {
@@ -215,10 +215,33 @@ func (p *Parser) typeExpression() (TypeExpression, error) {
 	return typeExpression, nil
 }
 
-func (p *Parser) typeIdentifier() TypeExpression {
+func (p *Parser) typeIdentifier() *TypeIdentifier {
 	ident := TypeIdentifier(p.token.Literal)
 	p.consume(token.IDENTIFIER)
 	return &ident
+}
+
+func (p *Parser) typeIdentifierPath() (TypeExpression, error) {
+	identifiers := []*TypeIdentifier{}
+
+	for p.match(token.IDENTIFIER) {
+		ident := p.typeIdentifier()
+		identifiers = append(identifiers, ident)
+
+		if p.match(token.DOT) {
+			p.consume(token.DOT)
+
+			if err := p.expect(token.IDENTIFIER); err != nil {
+				return nil, err
+			}
+		} else {
+			break
+		}
+	}
+
+	return &TypeIdentifierPath{
+		Identifiers: identifiers,
+	}, nil
 }
 
 func (p *Parser) typeGroup() (TypeExpression, error) {
@@ -363,7 +386,7 @@ func (p *Parser) typeArrayOrSlice() (TypeExpression, error) {
 
 func (p *Parser) expression() (Expression, error) {
 	if p.match(token.IDENTIFIER) {
-		return p.identifier(), nil
+		return p.identifierPath()
 	} else if p.match(token.NUMBER) {
 		return p.number(), nil
 	} else if p.match(token.DOUBLE_QUOTE) {
@@ -383,10 +406,33 @@ func (p *Parser) expression() (Expression, error) {
 	}
 }
 
-func (p *Parser) identifier() Expression {
+func (p *Parser) identifier() *Identifier {
 	ident := Identifier(p.token.Literal)
 	p.consume(token.IDENTIFIER)
 	return &ident
+}
+
+func (p *Parser) identifierPath() (TypeExpression, error) {
+	identifiers := []*Identifier{}
+
+	for p.match(token.IDENTIFIER) {
+		ident := p.identifier()
+		identifiers = append(identifiers, ident)
+
+		if p.match(token.DOT) {
+			p.consume(token.DOT)
+
+			if err := p.expect(token.IDENTIFIER); err != nil {
+				return nil, err
+			}
+		} else {
+			break
+		}
+	}
+
+	return &IdentifierPath{
+		Identifiers: identifiers,
+	}, nil
 }
 
 func (p *Parser) number() Expression {
