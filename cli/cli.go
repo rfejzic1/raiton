@@ -30,6 +30,12 @@ func New() Cli {
 				ArgsUsage: "[file path]",
 				Action:    tokenize,
 			},
+			{
+				Name: "parse",
+				Usage: "parse the given file and check for errors",
+				ArgsUsage: "[file path]",
+				Action: parse,
+			},
 		},
 	}
 

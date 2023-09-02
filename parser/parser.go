@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/rfejzic1/raiton/ast"
 	"github.com/rfejzic1/raiton/lexer"
 	"github.com/rfejzic1/raiton/token"
-	"github.com/rfejzic1/raiton/ast"
 )
 
 type Parser struct {
@@ -567,6 +567,12 @@ func (p *Parser) record() (ast.Expression, error) {
 	for p.match(token.IDENTIFIER) {
 		field := ast.Identifier(p.token.Literal)
 		p.consume(token.IDENTIFIER)
+
+		if err := p.expect(token.COLON); err != nil {
+			return nil, err
+		}
+
+		p.consume(token.COLON)
 
 		expression, err := p.expression()
 

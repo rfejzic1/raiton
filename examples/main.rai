@@ -47,7 +47,7 @@ main {
 
   # definition with explicit type declaration
   <penguin>
-  peng: { name: "Peng", fave_fish: "sardines" }
+  peng: { name: "Peng" fave_fish: "sardines" }
 
   # these expressions get evaluated in order
   # when `main` is evaluated
@@ -56,7 +56,7 @@ main {
   (println (greeting)) # also valid as above
 
   # these are all valid expressions, tho pointless here
-  { name: "Peng", fave_fish: "sardines" }
+  { name: "Peng" fave_fish: "sardines" }
   [1 2 3]
   "This is legal"
 
@@ -68,7 +68,7 @@ main {
 
 # this is a classic sum type with the option to pass
 # arguments to the constructors
-type color: | Red | Green | Blue | RGB: { r:uint8 g:uint8 b:uint8 }
+type color: | Red | Green | Blue | RGB: { r:uint g:uint b:uint }
 
 <color>
 red: color.Red # the single instance of color.Red
