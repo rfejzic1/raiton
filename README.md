@@ -19,7 +19,7 @@ This is a pet project for now, but I hope other people will like the language in
 
 ## Getting started
 
-The `raiton` tool is implemented in [Go v2.21.0](https://go.dev/dl/), so you will need the `go` tool installed to build the project.
+The `raiton` tool is implemented in [Go v1.21.0](https://go.dev/dl/), so you will need the `go` tool installed to build the project.
 This will probably work with some older versions, but this is the one I worked with.
 
 After cloning the repository, run `make build` to build the tool. You should get the
@@ -137,6 +137,9 @@ Expressions are evaluated lazily. Here are some examples of expressions:
 (concat "Rai" "ton")
 
 # array literal
+[3: 1 2 3]
+
+# slice literal
 [1 2 3]
 
 # identifier

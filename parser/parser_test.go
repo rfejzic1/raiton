@@ -4,9 +4,10 @@ import (
 	"testing"
 
 	"github.com/rfejzic1/raiton/lexer"
+	"github.com/rfejzic1/raiton/ast"
 )
 
-func parseAndCompare(t *testing.T, source string, expected Expression) {
+func parseAndCompare(t *testing.T, source string, expected ast.Expression) {
 	l := lexer.New(source)
 	p := New(&l)
 	got, err := p.Parse()
@@ -15,7 +16,7 @@ func parseAndCompare(t *testing.T, source string, expected Expression) {
 		t.Fatalf("parse error: %s", err)
 	}
 
-	comp := NewComparator(got)
+	comp := ast.NewComparator(got)
 
 	if err := comp.Compare(expected); err != nil {
 		t.Fatalf("assertion failed: %s", err)
@@ -25,9 +26,9 @@ func parseAndCompare(t *testing.T, source string, expected Expression) {
 func TestExpressionString(t *testing.T) {
 	source := `"this is a string"`
 
-	expected := Scope{
-		Expressions: []Expression{
-			NewStringLiteral("this is a string"),
+	expected := ast.Scope{
+		Expressions: []ast.Expression{
+			ast.NewStringLiteral("this is a string"),
 		},
 	}
 
@@ -37,9 +38,9 @@ func TestExpressionString(t *testing.T) {
 func TestExpressionCharacter(t *testing.T) {
 	source := `'c'`
 
-	expected := Scope{
-		Expressions: []Expression{
-			NewCharacterLiteral("c"),
+	expected := ast.Scope{
+		Expressions: []ast.Expression{
+			ast.NewCharacterLiteral("c"),
 		},
 	}
 
@@ -58,11 +59,11 @@ func TestExpressionNumber(t *testing.T) {
 	-1
 	`
 
-	expected := Scope{
-		Expressions: []Expression{
-			NewNumberLiteral("5"),
-			NewNumberLiteral("2.65"),
-			NewNumberLiteral("-1"),
+	expected := ast.Scope{
+		Expressions: []ast.Expression{
+			ast.NewNumberLiteral("5"),
+			ast.NewNumberLiteral("2.65"),
+			ast.NewNumberLiteral("-1"),
 		},
 	}
 
@@ -72,16 +73,14 @@ func TestExpressionNumber(t *testing.T) {
 func TestExpressionArray(t *testing.T) {
 	source := `[3: 1 2 3]`
 
-	expected := Scope{
-		Expressions: []Expression{
-			&ArrayLiteral{
-				Size: 3,
-				Elements: []Expression{
-					NewNumberLiteral("1"),
-					NewNumberLiteral("2"),
-					NewNumberLiteral("3"),
-				},
-			},
+	expected := ast.Scope{
+		Expressions: []ast.Expression{
+			ast.NewArrayLiteral(
+				3,
+				ast.NewNumberLiteral("1"),
+				ast.NewNumberLiteral("2"),
+				ast.NewNumberLiteral("3"),
+			),
 		},
 	}
 
@@ -91,15 +90,13 @@ func TestExpressionArray(t *testing.T) {
 func TestExpressionSlice(t *testing.T) {
 	source := `[1 2 3]`
 
-	expected := Scope{
-		Expressions: []Expression{
-			&SliceLiteral{
-				Elements: []Expression{
-					NewNumberLiteral("1"),
-					NewNumberLiteral("2"),
-					NewNumberLiteral("3"),
-				},
-			},
+	expected := ast.Scope{
+		Expressions: []ast.Expression{
+			ast.NewSliceLiteral(
+				ast.NewNumberLiteral("1"),
+				ast.NewNumberLiteral("2"),
+				ast.NewNumberLiteral("3"),
+			),
 		},
 	}
 
@@ -109,14 +106,12 @@ func TestExpressionSlice(t *testing.T) {
 func TestExpressionInvocation(t *testing.T) {
 	source := `(println "Hello, World")`
 
-	expected := Scope{
-		Expressions: []Expression{
-			&Invocation{
-				Arguments: []Expression{
-					NewIdentifier("println"),
-					NewStringLiteral("Hello, World"),
-				},
-			},
+	expected := ast.Scope{
+		Expressions: []ast.Expression{
+			ast.NewInvocation(
+				ast.NewIdentifierPath(ast.NewIdentifier("println")),
+				ast.NewStringLiteral("Hello, World"),
+			),
 		},
 	}
 
@@ -129,12 +124,12 @@ func TestDefinitionTypedWithSingleExpression(t *testing.T) {
 	name: "Tojuro"
 	`
 
-	expected := Scope{
-		Definitions: []*Definition{
+	expected := ast.Scope{
+		Definitions: []*ast.Definition{
 			{
-				TypeExpression: NewTypeIdentifier("string"),
-				Identifier:     Identifier("name"),
-				Expression:     NewStringLiteral("Tojuro"),
+				TypeExpression: ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("string")),
+				Identifier:     ast.Identifier("name"),
+				Expression:     ast.NewStringLiteral("Tojuro"),
 			},
 		},
 	}
@@ -148,14 +143,14 @@ func TestDefinitionTypedWithScope(t *testing.T) {
 	age { 24 }
 	`
 
-	expected := Scope{
-		Definitions: []*Definition{
+	expected := ast.Scope{
+		Definitions: []*ast.Definition{
 			{
-				TypeExpression: NewTypeIdentifier("number"),
-				Identifier:     Identifier("age"),
-				Expression: &Scope{
-					Expressions: []Expression{
-						NewNumberLiteral("24"),
+				TypeExpression: ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("number")),
+				Identifier:     ast.Identifier("age"),
+				Expression: &ast.Scope{
+					Expressions: []ast.Expression{
+						ast.NewNumberLiteral("24"),
 					},
 				},
 			},
@@ -171,24 +166,22 @@ func TestFunctionDefinitionTypedWithSingleExpression(t *testing.T) {
 	add_two x: (add x 2)
 	`
 
-	expected := Scope{
-		Definitions: []*Definition{
+	expected := ast.Scope{
+		Definitions: []*ast.Definition{
 			{
-				TypeExpression: &FunctionType{
-					ParameterType: NewTypeIdentifier("number"),
-					ReturnType:    NewTypeIdentifier("number"),
+				TypeExpression: &ast.FunctionType{
+					ParameterType: ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("number")),
+					ReturnType:    ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("number")),
 				},
-				Identifier: Identifier("add_two"),
-				Parameters: []*Identifier{
-					NewIdentifier("x"),
+				Identifier: ast.Identifier("add_two"),
+				Parameters: []*ast.Identifier{
+					ast.NewIdentifier("x"),
 				},
-				Expression: &Invocation{
-					Arguments: []Expression{
-						NewIdentifier("add"),
-						NewIdentifier("x"),
-						NewNumberLiteral("2"),
-					},
-				},
+				Expression: ast.NewInvocation(
+					ast.NewIdentifierPath(ast.NewIdentifier("add")),
+					ast.NewIdentifierPath(ast.NewIdentifier("x")),
+					ast.NewNumberLiteral("2"),
+				),
 			},
 		},
 	}
@@ -202,26 +195,24 @@ func TestFunctionDefinitionTypedWithScope(t *testing.T) {
 	add_three x { (add x 3) }
 	`
 
-	expected := Scope{
-		Definitions: []*Definition{
+	expected := ast.Scope{
+		Definitions: []*ast.Definition{
 			{
-				TypeExpression: &FunctionType{
-					ParameterType: NewTypeIdentifier("number"),
-					ReturnType:    NewTypeIdentifier("number"),
+				TypeExpression: &ast.FunctionType{
+					ParameterType: ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("number")),
+					ReturnType:    ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("number")),
 				},
-				Identifier: Identifier("add_three"),
-				Parameters: []*Identifier{
-					NewIdentifier("x"),
+				Identifier: ast.Identifier("add_three"),
+				Parameters: []*ast.Identifier{
+					ast.NewIdentifier("x"),
 				},
-				Expression: &Scope{
-					Expressions: []Expression{
-						&Invocation{
-							Arguments: []Expression{
-								NewIdentifier("add"),
-								NewIdentifier("x"),
-								NewNumberLiteral("3"),
-							},
-						},
+				Expression: &ast.Scope{
+					Expressions: []ast.Expression{
+						ast.NewInvocation(
+							ast.NewIdentifierPath(ast.NewIdentifier("add")),
+							ast.NewIdentifierPath(ast.NewIdentifier("x")),
+							ast.NewNumberLiteral("3"),
+						),
 					},
 				},
 			},
@@ -236,11 +227,11 @@ func TestTypeDefinitionAlias(t *testing.T) {
 	type name: string
 	`
 
-	expected := Scope{
-		TypeDefinitions: []*TypeDefinition{
+	expected := ast.Scope{
+		TypeDefinitions: []*ast.TypeDefinition{
 			{
-				Identifier:     TypeIdentifier("name"),
-				TypeExpression: NewTypeIdentifier("string"),
+				Identifier:     ast.TypeIdentifier("name"),
+				TypeExpression: ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("string")),
 			},
 		},
 	}
@@ -253,13 +244,13 @@ func TestTypeDefinitionArray(t *testing.T) {
 	type numArray: [3: number]
 	`
 
-	expected := Scope{
-		TypeDefinitions: []*TypeDefinition{
+	expected := ast.Scope{
+		TypeDefinitions: []*ast.TypeDefinition{
 			{
-				Identifier: TypeIdentifier("numArray"),
-				TypeExpression: &ArrayType{
+				Identifier: ast.TypeIdentifier("numArray"),
+				TypeExpression: &ast.ArrayType{
 					Size:        3,
-					ElementType: NewTypeIdentifier("number"),
+					ElementType: ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("number")),
 				},
 			},
 		},
@@ -273,12 +264,12 @@ func TestTypeDefinitionSlice(t *testing.T) {
 	type numSlice: [number]
 	`
 
-	expected := Scope{
-		TypeDefinitions: []*TypeDefinition{
+	expected := ast.Scope{
+		TypeDefinitions: []*ast.TypeDefinition{
 			{
-				Identifier: TypeIdentifier("numSlice"),
-				TypeExpression: &SliceType{
-					ElementType: NewTypeIdentifier("number"),
+				Identifier: ast.TypeIdentifier("numSlice"),
+				TypeExpression: &ast.SliceType{
+					ElementType: ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("number")),
 				},
 			},
 		},
@@ -295,14 +286,14 @@ func TestTypeDefinitionRecord(t *testing.T) {
 	}
 	`
 
-	expected := Scope{
-		TypeDefinitions: []*TypeDefinition{
+	expected := ast.Scope{
+		TypeDefinitions: []*ast.TypeDefinition{
 			{
-				Identifier: TypeIdentifier("person"),
-				TypeExpression: &RecordType{
-					Fields: map[Identifier]TypeExpression{
-						Identifier("name"): NewTypeIdentifier("string"),
-						Identifier("age"):  NewTypeIdentifier("number"),
+				Identifier: ast.TypeIdentifier("person"),
+				TypeExpression: &ast.RecordType{
+					Fields: map[ast.Identifier]ast.TypeExpression{
+						ast.Identifier("name"): ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("string")),
+						ast.Identifier("age"):  ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("number")),
 					},
 				},
 			},
@@ -317,28 +308,28 @@ func TestTypeDefinitionSum(t *testing.T) {
 	type color: | Red | Green | Blue | RGB: { r:number g:number b:number }
 	`
 
-	expected := Scope{
-		TypeDefinitions: []*TypeDefinition{
+	expected := ast.Scope{
+		TypeDefinitions: []*ast.TypeDefinition{
 			{
-				Identifier: TypeIdentifier("color"),
-				TypeExpression: &SumType{
-					Variants: []*SumTypeVariant{
+				Identifier: ast.TypeIdentifier("color"),
+				TypeExpression: &ast.SumType{
+					Variants: []*ast.SumTypeVariant{
 						{
-							Identifier: Identifier("Red"),
+							Identifier: ast.Identifier("Red"),
 						},
 						{
-							Identifier: Identifier("Green"),
+							Identifier: ast.Identifier("Green"),
 						},
 						{
-							Identifier: Identifier("Blue"),
+							Identifier: ast.Identifier("Blue"),
 						},
 						{
-							Identifier: Identifier("RGB"),
-							TypeExpression: &RecordType{
-								Fields: map[Identifier]TypeExpression{
-									Identifier("r"): NewTypeIdentifier("number"),
-									Identifier("g"): NewTypeIdentifier("number"),
-									Identifier("b"): NewTypeIdentifier("number"),
+							Identifier: ast.Identifier("RGB"),
+							TypeExpression: &ast.RecordType{
+								Fields: map[ast.Identifier]ast.TypeExpression{
+									ast.Identifier("r"): ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("number")),
+									ast.Identifier("g"): ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("number")),
+									ast.Identifier("b"): ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("number")),
 								},
 							},
 						},
@@ -356,21 +347,21 @@ func TestTypeDefinitionParametrized(t *testing.T) {
 	type option T: | Some: T | None
 	`
 
-	expected := Scope{
-		TypeDefinitions: []*TypeDefinition{
+	expected := ast.Scope{
+		TypeDefinitions: []*ast.TypeDefinition{
 			{
-				Identifier: TypeIdentifier("option"),
-				Parameters: []*Identifier{
-					NewIdentifier("T"),
+				Identifier: ast.TypeIdentifier("option"),
+				Parameters: []*ast.Identifier{
+					ast.NewIdentifier("T"),
 				},
-				TypeExpression: &SumType{
-					Variants: []*SumTypeVariant{
+				TypeExpression: &ast.SumType{
+					Variants: []*ast.SumTypeVariant{
 						{
-							Identifier:     Identifier("Some"),
-							TypeExpression: NewTypeIdentifier("T"),
+							Identifier:     ast.Identifier("Some"),
+							TypeExpression: ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("T")),
 						},
 						{
-							Identifier: Identifier("None"),
+							Identifier: ast.Identifier("None"),
 						},
 					},
 				},
@@ -386,14 +377,14 @@ func TestTypeDefinitionGroup(t *testing.T) {
 	type stringOption: (option string)
 	`
 
-	expected := Scope{
-		TypeDefinitions: []*TypeDefinition{
+	expected := ast.Scope{
+		TypeDefinitions: []*ast.TypeDefinition{
 			{
-				Identifier: TypeIdentifier("stringOption"),
-				TypeExpression: &GroupType{
-					TypeExpressions: []TypeExpression{
-						NewTypeIdentifier("option"),
-						NewTypeIdentifier("string"),
+				Identifier: ast.TypeIdentifier("stringOption"),
+				TypeExpression: &ast.GroupType{
+					TypeExpressions: []ast.TypeExpression{
+						ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("option")),
+						ast.NewTypeIdentifierPath(ast.NewTypeIdentifier("string")),
 					},
 				},
 			},

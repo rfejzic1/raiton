@@ -1,4 +1,4 @@
-package parser
+package ast
 
 import "fmt"
 
@@ -127,6 +127,20 @@ func (c *Comparator) VisitTypeIdentifier(expected *TypeIdentifier) error {
 
 	if string(*current) != string(*expected) {
 		return fmt.Errorf("expected `%s`, but got `%s`", string(*expected), string(*current))
+	}
+
+	return nil
+}
+
+func (c *Comparator) VisitTypeIdentifierPath(expected *TypeIdentifierPath) error {
+	current, ok := c.current.(*TypeIdentifierPath)
+
+	if !ok {
+		return nodeTypeError("TypeIdentifierPath")
+	}
+
+	if err := compareSlices(c, "identifiers", expected.Identifiers, current.Identifiers); err != nil {
+		return err
 	}
 
 	return nil
@@ -263,6 +277,20 @@ func (c *Comparator) VisitIdentifier(expected *Identifier) error {
 
 	if string(*current) != string(*expected) {
 		return fmt.Errorf("expected `%s`, but got `%s`", string(*expected), string(*current))
+	}
+
+	return nil
+}
+
+func (c *Comparator) VisitIdentifierPath(expected *IdentifierPath) error {
+	current, ok := c.current.(*IdentifierPath)
+
+	if !ok {
+		return nodeTypeError("IdentifierPath")
+	}
+
+	if err := compareSlices(c, "identifiers", expected.Identifiers, current.Identifiers); err != nil {
+		return err
 	}
 
 	return nil
