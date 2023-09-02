@@ -185,6 +185,12 @@ type Invocation struct {
 	Arguments []Expression
 }
 
+func NewInvocation(arguments ...Expression) *Invocation {
+	return &Invocation{
+		Arguments: arguments,
+	}
+}
+
 func (i *Invocation) Accept(visitor Visitor) error {
 	return visitor.VisitInvocation(i)
 }
@@ -211,12 +217,25 @@ type ArrayLiteral struct {
 	Elements []Expression
 }
 
+func NewArrayLiteral(size uint64, elements ...Expression) *ArrayLiteral {
+	return &ArrayLiteral{
+		Size: size,
+		Elements: elements,
+	}
+}
+
 func (a *ArrayLiteral) Accept(visitor Visitor) error {
 	return visitor.VisitArray(a)
 }
 
 type SliceLiteral struct {
 	Elements []Expression
+}
+
+func NewSliceLiteral(elements ...Expression) *SliceLiteral {
+	return &SliceLiteral{
+		Elements: elements,
+	}
 }
 
 func (s *SliceLiteral) Accept(visitor Visitor) error {

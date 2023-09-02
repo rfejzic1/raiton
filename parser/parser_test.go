@@ -74,14 +74,12 @@ func TestExpressionArray(t *testing.T) {
 
 	expected := Scope{
 		Expressions: []Expression{
-			&ArrayLiteral{
-				Size: 3,
-				Elements: []Expression{
-					NewNumberLiteral("1"),
-					NewNumberLiteral("2"),
-					NewNumberLiteral("3"),
-				},
-			},
+			NewArrayLiteral(
+				3,
+				NewNumberLiteral("1"),
+				NewNumberLiteral("2"),
+				NewNumberLiteral("3"),
+			),
 		},
 	}
 
@@ -93,13 +91,11 @@ func TestExpressionSlice(t *testing.T) {
 
 	expected := Scope{
 		Expressions: []Expression{
-			&SliceLiteral{
-				Elements: []Expression{
-					NewNumberLiteral("1"),
-					NewNumberLiteral("2"),
-					NewNumberLiteral("3"),
-				},
-			},
+			NewSliceLiteral(
+				NewNumberLiteral("1"),
+				NewNumberLiteral("2"),
+				NewNumberLiteral("3"),
+			),
 		},
 	}
 
@@ -111,12 +107,10 @@ func TestExpressionInvocation(t *testing.T) {
 
 	expected := Scope{
 		Expressions: []Expression{
-			&Invocation{
-				Arguments: []Expression{
-					NewIdentifierPath(NewIdentifier("println")),
-					NewStringLiteral("Hello, World"),
-				},
-			},
+			NewInvocation(
+				NewIdentifierPath(NewIdentifier("println")),
+				NewStringLiteral("Hello, World"),
+			),
 		},
 	}
 
@@ -182,13 +176,11 @@ func TestFunctionDefinitionTypedWithSingleExpression(t *testing.T) {
 				Parameters: []*Identifier{
 					NewIdentifier("x"),
 				},
-				Expression: &Invocation{
-					Arguments: []Expression{
-						NewIdentifierPath(NewIdentifier("add")),
-						NewIdentifierPath(NewIdentifier("x")),
-						NewNumberLiteral("2"),
-					},
-				},
+				Expression: NewInvocation(
+					NewIdentifierPath(NewIdentifier("add")),
+					NewIdentifierPath(NewIdentifier("x")),
+					NewNumberLiteral("2"),
+				),
 			},
 		},
 	}
@@ -215,13 +207,11 @@ func TestFunctionDefinitionTypedWithScope(t *testing.T) {
 				},
 				Expression: &Scope{
 					Expressions: []Expression{
-						&Invocation{
-							Arguments: []Expression{
-								NewIdentifierPath(NewIdentifier("add")),
-								NewIdentifierPath(NewIdentifier("x")),
-								NewNumberLiteral("3"),
-							},
-						},
+						NewInvocation(
+							NewIdentifierPath(NewIdentifier("add")),
+							NewIdentifierPath(NewIdentifier("x")),
+							NewNumberLiteral("3"),
+						),
 					},
 				},
 			},
