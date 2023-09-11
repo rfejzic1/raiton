@@ -4,6 +4,8 @@
 
 A toolchain for the Raiton language.
 
+> Colorless green ideas sleep furiously. - Noam Chomsky
+
 Raiton is a language that is the successor of the [Katon](https://github.com/rfejzic1/katon) language I implemented
 with a friend as a project for a university course about programming languages. Back then, I had just started learning about
 compilers and interpreters when I started the Katon project, so it's not so well implemented (plus it's a
