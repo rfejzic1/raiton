@@ -2,6 +2,10 @@
 
 [![CI](https://github.com/rfejzic1/raiton/actions/workflows/cli.yml/badge.svg?branch=main)](https://github.com/rfejzic1/raiton/actions/workflows/cli.yml)
 
+> IMPORTANT: This is the branch containing the first attempt at implementing raiton. I feel like I made the mistake of trying to implement each stage of the compiler completely,
+> instead of incrementally building each stage. On the `main` branch the iterative approach will be used and I will try to implement the whole compiler pipeline for a small
+> subset of the language and then extend it gradually.
+
 A toolchain for the Raiton language.
 
 > Colorless green ideas sleep furiously. - Noam Chomsky
