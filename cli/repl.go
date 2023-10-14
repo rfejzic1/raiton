@@ -46,9 +46,9 @@ func repl(ctx *cli.Context) error {
 			continue
 		}
 
-		eval := evaluator.New(env, node)
+		eval := evaluator.New(env)
 
-		obj, err := eval.Evaluate()
+		obj, err := eval.Evaluate(node)
 
 		if err != nil {
 			fmt.Fprintf(out, "error: %s\n", err)

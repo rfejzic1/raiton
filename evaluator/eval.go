@@ -10,19 +10,17 @@ import (
 
 type Evaluator struct {
 	env     *object.Environment
-	node    ast.Node
 	results stack
 }
 
-func New(env *object.Environment, node ast.Node) Evaluator {
+func New(env *object.Environment) Evaluator {
 	return Evaluator{
-		env:  env,
-		node: node,
+		env: env,
 	}
 }
 
-func (e *Evaluator) Evaluate() (object.Object, error) {
-	if err := e.node.Accept(e); err != nil {
+func (e *Evaluator) Evaluate(node ast.Node) (object.Object, error) {
+	if err := node.Accept(e); err != nil {
 		return nil, err
 	}
 
@@ -103,7 +101,7 @@ func (e *Evaluator) VisitIdentifierPath(i *ast.IdentifierPath) error {
 
 func (e *Evaluator) VisitApplication(a *ast.Application) error {
 	if len(a.Arguments) < 1 {
-		return fmt.Errorf("expected function")
+		return fmt.Errorf("expected at least one expression")
 	}
 
 	if err := a.Arguments[0].Accept(e); err != nil {
@@ -113,7 +111,8 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 	obj := e.results.pop()
 
 	if obj.Type() != object.FUNCTION {
-		return fmt.Errorf("expected a function, but got %s", obj.Type())
+		e.results.push(obj)
+		return nil
 	}
 
 	function := obj.(*object.Function)
@@ -123,6 +122,8 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 	if len(args) != len(function.Parameters) {
 		return fmt.Errorf("function expects %d arguments, but got %d", len(function.Parameters), len(args))
 	}
+
+	e.env = object.NewEnclosedEnvironment(e.env)
 
 	for i, p := range function.Parameters {
 		arg := args[i]
@@ -134,13 +135,14 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 		ident := string(*p)
 		obj := e.results.pop()
 
-		// TODO: This should be added to new env
 		e.env.Define(ident, obj)
 	}
 
 	if err := function.Body.Accept(e); err != nil {
 		return err
 	}
+
+	e.env = e.env.Enclosing()
 
 	return nil
 }

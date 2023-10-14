@@ -17,9 +17,9 @@ func testEvaluation(env *object.Environment, input string) (object.Object, error
 		return nil, err
 	}
 
-	eval := New(env, program)
+	eval := New(env)
 
-	return eval.Evaluate()
+	return eval.Evaluate(program)
 }
 
 func TestEvaluationInteger(t *testing.T) {
