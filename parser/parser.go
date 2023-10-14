@@ -358,8 +358,6 @@ func (p *Parser) function() (ast.Expression, error) {
 		Parameters: []*ast.Identifier{},
 	}
 
-	var err error
-
 	for p.match(token.IDENTIFIER) {
 		param := ast.Identifier(p.token.Literal)
 		functionLiteral.Parameters = append(functionLiteral.Parameters, &param)
@@ -368,13 +366,23 @@ func (p *Parser) function() (ast.Expression, error) {
 
 	if p.match(token.COLON) {
 		p.consume(token.COLON)
-		if functionLiteral.Expression, err = p.expression(); err != nil {
+		expr, err := p.expression()
+
+		if err != nil {
 			return &ast.Definition{}, err
+		}
+
+		functionLiteral.Body = &ast.Scope{
+			Expressions: []ast.Expression{expr},
 		}
 	} else if p.match(token.OPEN_BRACE) {
-		if functionLiteral.Expression, err = p.scope(); err != nil {
-			return &ast.Definition{}, err
+		scope, err := p.scope()
+
+		if err != nil {
+			return &ast.Application{}, err
 		}
+
+		functionLiteral.Body = scope
 	} else {
 		return &ast.Definition{}, p.unexpected()
 	}

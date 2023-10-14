@@ -86,7 +86,7 @@ func (i *Application) Accept(visitor Visitor) error {
 
 type FunctionLiteral struct {
 	Parameters []*Identifier
-	Expression Expression
+	Body       *Scope
 }
 
 func (l *FunctionLiteral) Accept(visitor Visitor) error {

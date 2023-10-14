@@ -135,9 +135,9 @@ func (c *Comparator) VisitFunction(expected *FunctionLiteral) error {
 		return err
 	}
 
-	c.observe(current.Expression)
+	c.observe(current.Body)
 
-	if err := c.Compare(expected.Expression); err != nil {
+	if err := c.Compare(expected.Body); err != nil {
 		return err
 	}
 
