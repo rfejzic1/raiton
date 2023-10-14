@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/rfejzic1/raiton/evaluator"
 	"github.com/rfejzic1/raiton/lexer"
 	"github.com/rfejzic1/raiton/parser"
 	"github.com/urfave/cli/v2"
@@ -35,13 +36,23 @@ func repl(ctx *cli.Context) error {
 		lex := lexer.New(input)
 		par := parser.New(&lex)
 
-		_, err := par.Parse()
+		node, err := par.Parse()
 
 		if err != nil {
 			fmt.Fprintf(out, "error: %s\n", err)
-		} else {
-			fmt.Fprintln(out, "ok")
+			continue
 		}
+
+		eval := evaluator.New(node)
+
+		obj, err := eval.Evaluate()
+
+		if err != nil {
+			fmt.Fprintf(out, "error: %s\n", err)
+			continue
+		}
+
+		fmt.Fprintf(out, "%s\n", obj.Inspect())
 	}
 
 	return nil
