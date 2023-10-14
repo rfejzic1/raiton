@@ -19,7 +19,7 @@ var builtins = map[string]*object.Builtin{
 
 		second, ok := args[1].(*object.Integer)
 		if !ok {
-			return nil, fmt.Errorf("expected second argument to be integer, but got %s", args[0].Type())
+			return nil, fmt.Errorf("expected second argument to be integer, but got %s", args[1].Type())
 		}
 
 		result := first.Value + second.Value
