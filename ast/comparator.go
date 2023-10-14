@@ -69,10 +69,6 @@ func (c *Comparator) VisitDefinition(expected *Definition) error {
 		return err
 	}
 
-	if err := compareSlices(c, "parameters", expected.Parameters, current.Parameters); err != nil {
-		return err
-	}
-
 	c.observe(current.Expression)
 
 	if err := expected.Expression.Accept(c); err != nil {

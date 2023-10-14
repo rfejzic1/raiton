@@ -87,40 +87,66 @@ func (p *Parser) scopeItem(scope *ast.Scope) error {
 }
 
 func (p *Parser) definition() (ast.Definition, error) {
-	var err error
-
-	def := ast.Definition{
-		Parameters: []*ast.Identifier{},
-	}
-
 	if err := p.expect(token.IDENTIFIER); err != nil {
 		return ast.Definition{}, err
 	}
 
-	def.Identifier = ast.Identifier(p.token.Literal)
+	ident := ast.Identifier(p.token.Literal)
 
 	p.consume(token.IDENTIFIER)
 
+	parameters := []*ast.Identifier{}
+
 	for p.match(token.IDENTIFIER) {
 		param := ast.Identifier(p.token.Literal)
-		def.Parameters = append(def.Parameters, &param)
+		parameters = append(parameters, &param)
 		p.consume(token.IDENTIFIER)
 	}
 
+	is_function := len(parameters) > 0
+
 	if p.match(token.COLON) {
 		p.consume(token.COLON)
-		if def.Expression, err = p.expression(); err != nil {
+
+		expr, err := p.expression()
+
+		if err != nil {
 			return ast.Definition{}, err
 		}
+
+		if is_function {
+			expr = &ast.FunctionLiteral{
+				Parameters: parameters,
+				Body:       ast.ScopeExpressions(expr),
+			}
+		}
+
+		return ast.Definition{
+			Identifier: ident,
+			Expression: expr,
+		}, nil
 	} else if p.match(token.OPEN_BRACE) {
-		if def.Expression, err = p.scope(); err != nil {
+		scope, err := p.scope()
+		expr := ast.Expression(scope)
+
+		if err != nil {
 			return ast.Definition{}, err
 		}
+
+		if is_function {
+			expr = &ast.FunctionLiteral{
+				Parameters: parameters,
+				Body:       scope,
+			}
+		}
+
+		return ast.Definition{
+			Identifier: ident,
+			Expression: expr,
+		}, nil
 	} else {
 		return ast.Definition{}, p.unexpected()
 	}
-
-	return def, nil
 }
 
 func (p *Parser) expression() (ast.Expression, error) {
@@ -357,6 +383,12 @@ func (p *Parser) function() (ast.Expression, error) {
 	functionLiteral := ast.FunctionLiteral{
 		Parameters: []*ast.Identifier{},
 	}
+
+	if err := p.expect(token.IDENTIFIER); err != nil {
+		return nil, err
+	}
+
+	functionLiteral.Parameters = append(functionLiteral.Parameters, ast.NewIdentifier(p.token.Literal))
 
 	for p.match(token.IDENTIFIER) {
 		param := ast.Identifier(p.token.Literal)

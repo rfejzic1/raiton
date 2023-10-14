@@ -1,19 +1,19 @@
 package ast
 
 type Visitor interface {
-	VisitScope(s *Scope) error
-	VisitDefinition(d *Definition) error
-	VisitIdentifier(i *Identifier) error
-	VisitIdentifierPath(i *IdentifierPath) error
-	VisitApplication(i *Application) error
-	VisitFunction(l *FunctionLiteral) error
-	VisitRecord(r *RecordLiteral) error
-	VisitArray(a *ArrayLiteral) error
-	VisitSlice(s *SliceLiteral) error
+	VisitScope(n *Scope) error
+	VisitDefinition(n *Definition) error
+	VisitIdentifier(n *Identifier) error
+	VisitIdentifierPath(n *IdentifierPath) error
+	VisitApplication(n *Application) error
+	VisitFunction(n *FunctionLiteral) error
+	VisitRecord(n *RecordLiteral) error
+	VisitArray(n *ArrayLiteral) error
+	VisitSlice(n *SliceLiteral) error
 	VisitNumber(n *NumberLiteral) error
-	VisitString(s *StringLiteral) error
-	VisitCharacter(c *CharacterLiteral) error
-	VisitBoolean(c *BooleanLiteral) error
+	VisitString(n *StringLiteral) error
+	VisitCharacter(n *CharacterLiteral) error
+	VisitBoolean(n *BooleanLiteral) error
 }
 
 type Node interface {
@@ -25,13 +25,18 @@ type Scope struct {
 	Expressions []Expression
 }
 
+func ScopeExpressions(expressions ...Expression) *Scope {
+	return &Scope{
+		Expressions: expressions,
+	}
+}
+
 func (s *Scope) Accept(visitor Visitor) error {
 	return visitor.VisitScope(s)
 }
 
 type Definition struct {
 	Identifier Identifier
-	Parameters []*Identifier
 	Expression Expression
 }
 

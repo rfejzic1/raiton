@@ -165,14 +165,18 @@ func TestFunctionDefinitionWithSingleExpression(t *testing.T) {
 		Definitions: []*ast.Definition{
 			{
 				Identifier: ast.Identifier("add_two"),
-				Parameters: []*ast.Identifier{
-					ast.NewIdentifier("x"),
+				Expression: &ast.FunctionLiteral{
+					Parameters: []*ast.Identifier{
+						ast.NewIdentifier("x"),
+					},
+					Body: ast.ScopeExpressions(
+						ast.NewApplication(
+							ast.NewIdentifierPath(ast.NewIdentifier("add")),
+							ast.NewIdentifierPath(ast.NewIdentifier("x")),
+							ast.NewNumberLiteral("2"),
+						),
+					),
 				},
-				Expression: ast.NewApplication(
-					ast.NewIdentifierPath(ast.NewIdentifier("add")),
-					ast.NewIdentifierPath(ast.NewIdentifier("x")),
-					ast.NewNumberLiteral("2"),
-				),
 			},
 		},
 	}
@@ -189,17 +193,17 @@ func TestFunctionDefinitionWithScope(t *testing.T) {
 		Definitions: []*ast.Definition{
 			{
 				Identifier: ast.Identifier("add_three"),
-				Parameters: []*ast.Identifier{
-					ast.NewIdentifier("x"),
-				},
-				Expression: &ast.Scope{
-					Expressions: []ast.Expression{
+				Expression: &ast.FunctionLiteral{
+					Parameters: []*ast.Identifier{
+						ast.NewIdentifier("x"),
+					},
+					Body: ast.ScopeExpressions(
 						ast.NewApplication(
 							ast.NewIdentifierPath(ast.NewIdentifier("add")),
 							ast.NewIdentifierPath(ast.NewIdentifier("x")),
 							ast.NewNumberLiteral("3"),
 						),
-					},
+					),
 				},
 			},
 		},
