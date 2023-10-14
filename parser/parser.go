@@ -21,7 +21,7 @@ func New(lex *lexer.Lexer) Parser {
 	}
 }
 
-func (p *Parser) Parse() (ast.Expression, error) {
+func (p *Parser) Parse() (ast.Node, error) {
 	// The fact that a production method is called
 	// means that the current token is matching expecations
 	p.nextToken()
@@ -196,16 +196,9 @@ func (p *Parser) number() (ast.Expression, error) {
 }
 
 func (p *Parser) boolean() (ast.Expression, error) {
-	// TODO: Implement booleans as sum type instead of having tokens for it
-	bool, err := strconv.ParseBool(p.token.Literal)
-
-	if err != nil {
-		return nil, err
-	}
-
+	value := p.token.Literal
 	p.consume(token.BOOLEAN)
-
-	return ast.NewBooleanLiteral(bool), err
+	return ast.NewBooleanLiteral(value), nil
 }
 
 func (p *Parser) string() (ast.Expression, error) {

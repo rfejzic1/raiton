@@ -164,9 +164,9 @@ func (c *CharacterLiteral) Accept(visitor Visitor) error {
 	return visitor.VisitCharacter(c)
 }
 
-type BooleanLiteral bool
+type BooleanLiteral string
 
-func NewBooleanLiteral(value bool) *BooleanLiteral {
+func NewBooleanLiteral(value string) *BooleanLiteral {
 	bool := BooleanLiteral(value)
 	return &bool
 }

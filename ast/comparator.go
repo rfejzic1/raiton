@@ -211,8 +211,8 @@ func (c *Comparator) VisitBoolean(expected *BooleanLiteral) error {
 		return nodeTypeError("BooleanLiteral")
 	}
 
-	if *current != *expected {
-		return fmt.Errorf("expected `%t`, but got `%t`", *expected, *current)
+	if string(*current) != string(*expected) {
+		return fmt.Errorf("expected `%s`, but got `%s`", *expected, *current)
 	}
 
 	return nil
