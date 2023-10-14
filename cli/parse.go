@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/rfejzic1/raiton/ast"
 	"github.com/rfejzic1/raiton/lexer"
 	"github.com/rfejzic1/raiton/parser"
 	"github.com/urfave/cli/v2"
@@ -31,11 +32,15 @@ func parse(ctx *cli.Context) error {
 	l := lexer.New(string(source))
 	p := parser.New(&l)
 
-	if _, err := p.Parse(); err != nil {
+	program, err := p.Parse()
+
+	if err != nil {
 		fmt.Fprintf(ctx.App.ErrWriter, "parse error: %s\n", err)
-	} else {
-		fmt.Fprintf(ctx.App.Writer, "ok\n")
 	}
+
+	printer := ast.NewPrinter(program)
+
+	fmt.Fprintln(ctx.App.Writer, printer.String())
 
 	return nil
 }

@@ -146,7 +146,10 @@ func (f *Function) Inspect() string {
 
 	sb.WriteString(strings.Join(params, " "))
 
-	sb.WriteString(" { ... }")
+	sb.WriteString(" { ")
+	p := ast.NewPrinter(f.Body)
+	sb.WriteString(p.String())
+	sb.WriteString(" }")
 
 	return sb.String()
 }
