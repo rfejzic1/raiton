@@ -84,14 +84,28 @@ func (p *Printer) VisitIdentifier(n *Identifier) error {
 	return nil
 }
 
-func (p *Printer) VisitIdentifierPath(n *IdentifierPath) error {
-	l := len(n.Identifiers)
+func (p *Printer) VisitSelector(n *Selector) error {
+	l := len(n.Items)
 
-	for i, ip := range n.Identifiers {
-		p.write(string(*ip))
+	for i, ip := range n.Items {
+		if err := ip.Accept(p); err != nil {
+			return nil
+		}
+
 		if i != l-1 {
 			p.write(".")
 		}
+
+	}
+
+	return nil
+}
+
+func (p *Printer) VisitSelectorItem(n *SelectorItem) error {
+	if n.Identifier != nil {
+		p.write(string(*n.Identifier))
+	} else {
+		p.write(string(*n.Index))
 	}
 
 	return nil

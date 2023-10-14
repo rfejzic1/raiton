@@ -85,23 +85,107 @@ func (e *Evaluator) VisitIdentifier(i *ast.Identifier) error {
 	return fmt.Errorf("'%s' not defined", ident)
 }
 
-func (e *Evaluator) VisitIdentifierPath(i *ast.IdentifierPath) error {
-	// TODO: Only records and modules support identifier paths
-
-	ident := string(*i.Identifiers[0])
-
-	if obj, ok := e.env.Lookup(ident); ok {
-		e.results.push(obj)
-		return nil
+func (e *Evaluator) VisitSelector(s *ast.Selector) error {
+	if len(s.Items) < 1 || s.Items[0].Identifier == nil {
+		return fmt.Errorf("expected first selector item to be an identifier")
 	}
 
-	if obj, ok := builtins[ident]; ok {
-		e.results.push(obj)
-		return nil
+	ident := string(*s.Items[0].Identifier)
+
+	var obj object.Object
+	var ok bool
+
+	if obj, ok = e.env.Lookup(ident); !ok {
+		if obj, ok = builtins[ident]; !ok {
+			return fmt.Errorf("'%s' not defined", ident)
+		}
 	}
 
-	return fmt.Errorf("'%s' not defined", ident)
+	e.results.push(obj)
 
+	for _, i := range s.Items[1:] {
+		if err := i.Accept(e); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (e *Evaluator) VisitSelectorItem(i *ast.SelectorItem) error {
+	// take reference object off the stack
+	obj := e.results.pop()
+
+	// if object is record or array or module, depending on selector item, dig into it
+	// and push it to the stack
+
+	switch obj.Type() {
+	case object.RECORD:
+		record := obj.(*object.Record)
+
+		if i.Identifier == nil {
+			return fmt.Errorf("can only access record fields with identifiers")
+		}
+
+		ident := string(*i.Identifier)
+
+		obj, ok := record.Value[ident]
+
+		if !ok {
+			return fmt.Errorf("field '%s' not defined on record", ident)
+		}
+
+		e.results.push(obj)
+
+		return nil
+	case object.ARRAY:
+		array := obj.(*object.Array)
+
+		if i.Index == nil {
+			return fmt.Errorf("can only access array elements with index")
+		}
+
+		index, err := strconv.ParseInt(string(*i.Index), 0, 64)
+
+		if err != nil {
+			return err
+		}
+
+		if index > int64(len(array.Value)) {
+			return fmt.Errorf("index %d is out of bounds", index)
+		}
+
+		obj := array.Value[index]
+
+		e.results.push(obj)
+
+		return nil
+	case object.SLICE:
+		slice := obj.(*object.Slice)
+		array := slice.Value
+
+		if i.Index == nil {
+			return fmt.Errorf("can only access array elements with index")
+		}
+
+		index, err := strconv.ParseInt(string(*i.Index), 0, 64)
+
+		if err != nil {
+			return err
+		}
+
+		if index > int64(len(array.Value)) {
+			return fmt.Errorf("index %d is out of bounds", index)
+		}
+
+		obj := array.Value[index]
+
+		e.results.push(obj)
+
+		return nil
+	default:
+		return fmt.Errorf("expected a collection but got %s", obj.Type())
+	}
 }
 
 func (e *Evaluator) VisitApplication(a *ast.Application) error {

@@ -4,7 +4,8 @@ type Visitor interface {
 	VisitScope(n *Scope) error
 	VisitDefinition(n *Definition) error
 	VisitIdentifier(n *Identifier) error
-	VisitIdentifierPath(n *IdentifierPath) error
+	VisitSelector(n *Selector) error
+	VisitSelectorItem(n *SelectorItem) error
 	VisitApplication(n *Application) error
 	VisitFunction(n *FunctionLiteral) error
 	VisitRecord(n *RecordLiteral) error
@@ -62,18 +63,39 @@ func (i *Identifier) Accept(visitor Visitor) error {
 	return visitor.VisitIdentifier(i)
 }
 
-type IdentifierPath struct {
-	Identifiers []*Identifier
+type Selector struct {
+	Items []*SelectorItem
 }
 
-func NewIdentifierPath(identifiers ...*Identifier) *IdentifierPath {
-	return &IdentifierPath{
-		Identifiers: identifiers,
+type SelectorItem struct {
+	Identifier *Identifier
+	Index      *NumberLiteral
+}
+
+func NewIdentifierSelector(ident *Identifier) *SelectorItem {
+	return &SelectorItem{
+		Identifier: ident,
 	}
 }
 
-func (f *IdentifierPath) Accept(visitor Visitor) error {
-	return visitor.VisitIdentifierPath(f)
+func (i *SelectorItem) Accept(visitor Visitor) error {
+	return visitor.VisitSelectorItem(i)
+}
+
+func NewIndexSelector(num *NumberLiteral) *SelectorItem {
+	return &SelectorItem{
+		Index: num,
+	}
+}
+
+func NewSelector(identifiers ...*SelectorItem) *Selector {
+	return &Selector{
+		Items: identifiers,
+	}
+}
+
+func (f *Selector) Accept(visitor Visitor) error {
+	return visitor.VisitSelector(f)
 }
 
 type Application struct {

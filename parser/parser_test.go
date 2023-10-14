@@ -109,7 +109,7 @@ func TestExpressionInvocation(t *testing.T) {
 	expected := ast.Scope{
 		Expressions: []ast.Expression{
 			ast.NewApplication(
-				ast.NewIdentifierPath(ast.NewIdentifier("println")),
+				ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("println"))),
 				ast.NewStringLiteral("Hello, World"),
 			),
 		},
@@ -171,8 +171,8 @@ func TestFunctionDefinitionWithSingleExpression(t *testing.T) {
 					},
 					Body: ast.ScopeExpressions(
 						ast.NewApplication(
-							ast.NewIdentifierPath(ast.NewIdentifier("add")),
-							ast.NewIdentifierPath(ast.NewIdentifier("x")),
+							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("add"))),
+							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("x"))),
 							ast.NewNumberLiteral("2"),
 						),
 					),
@@ -199,8 +199,8 @@ func TestFunctionDefinitionWithScope(t *testing.T) {
 					},
 					Body: ast.ScopeExpressions(
 						ast.NewApplication(
-							ast.NewIdentifierPath(ast.NewIdentifier("add")),
-							ast.NewIdentifierPath(ast.NewIdentifier("x")),
+							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("add"))),
+							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("x"))),
 							ast.NewNumberLiteral("3"),
 						),
 					),

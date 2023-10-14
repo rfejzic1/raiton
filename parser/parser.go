@@ -180,25 +180,40 @@ func (p *Parser) identifier() *ast.Identifier {
 }
 
 func (p *Parser) identifierPath() (ast.Expression, error) {
-	identifiers := []*ast.Identifier{}
+	items := []*ast.SelectorItem{}
 
-	for p.match(token.IDENTIFIER) {
-		ident := p.identifier()
-		identifiers = append(identifiers, ident)
+	if err := p.expect(token.IDENTIFIER); err != nil {
+		return nil, err
+	}
 
-		if p.match(token.DOT) {
-			p.consume(token.DOT)
+	first := p.identifier()
+	firstItem := ast.NewIdentifierSelector(first)
 
-			if err := p.expect(token.IDENTIFIER); err != nil {
+	items = append(items, firstItem)
+
+	for p.match(token.DOT) {
+		p.consume(token.DOT)
+
+		if p.match(token.IDENTIFIER) {
+			ident := p.identifier()
+			item := ast.NewIdentifierSelector(ident)
+			items = append(items, item)
+		} else if p.match(token.NUMBER) {
+			num, err := p.number()
+
+			if err != nil {
 				return nil, err
 			}
+
+			item := ast.NewIndexSelector(num.(*ast.NumberLiteral))
+			items = append(items, item)
 		} else {
-			break
+			return nil, p.unexpected()
 		}
 	}
 
-	return &ast.IdentifierPath{
-		Identifiers: identifiers,
+	return &ast.Selector{
+		Items: items,
 	}, nil
 }
 

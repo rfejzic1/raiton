@@ -92,15 +92,35 @@ func (c *Comparator) VisitIdentifier(expected *Identifier) error {
 	return nil
 }
 
-func (c *Comparator) VisitIdentifierPath(expected *IdentifierPath) error {
-	current, ok := c.current.(*IdentifierPath)
+func (c *Comparator) VisitSelector(expected *Selector) error {
+	current, ok := c.current.(*Selector)
 
 	if !ok {
-		return nodeTypeError("IdentifierPath")
+		return nodeTypeError("Selector")
 	}
 
-	if err := compareSlices(c, "identifiers", expected.Identifiers, current.Identifiers); err != nil {
+	if err := compareSlices(c, "identifiers", expected.Items, current.Items); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (c *Comparator) VisitSelectorItem(expected *SelectorItem) error {
+	current, ok := c.current.(*SelectorItem)
+
+	if !ok {
+		return nodeTypeError("SelectorItem")
+	}
+
+	if current.Identifier != nil {
+		if err := c.Compare(expected.Identifier); err != nil {
+			return err
+		}
+	} else {
+		if err := c.Compare(expected.Index); err != nil {
+			return err
+		}
 	}
 
 	return nil
