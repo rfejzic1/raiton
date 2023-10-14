@@ -139,7 +139,7 @@ func (p *Parser) expression() (ast.Expression, error) {
 	} else if p.match(token.OPEN_BRACE) {
 		return p.record()
 	} else if p.match(token.BACKSLASH) {
-		return p.lambda()
+		return p.function()
 	} else if p.match(token.OPEN_PAREN) {
 		return p.invocation()
 	} else {
@@ -358,10 +358,10 @@ func (p *Parser) record() (ast.Expression, error) {
 	return &recordLiteral, nil
 }
 
-func (p *Parser) lambda() (ast.Expression, error) {
+func (p *Parser) function() (ast.Expression, error) {
 	p.consume(token.BACKSLASH)
 
-	lambdaLiteral := ast.LambdaLiteral{
+	functionLiteral := ast.FunctionLiteral{
 		Parameters: []*ast.Identifier{},
 	}
 
@@ -369,24 +369,24 @@ func (p *Parser) lambda() (ast.Expression, error) {
 
 	for p.match(token.IDENTIFIER) {
 		param := ast.Identifier(p.token.Literal)
-		lambdaLiteral.Parameters = append(lambdaLiteral.Parameters, &param)
+		functionLiteral.Parameters = append(functionLiteral.Parameters, &param)
 		p.consume(token.IDENTIFIER)
 	}
 
 	if p.match(token.COLON) {
 		p.consume(token.COLON)
-		if lambdaLiteral.Expression, err = p.expression(); err != nil {
+		if functionLiteral.Expression, err = p.expression(); err != nil {
 			return &ast.Definition{}, err
 		}
 	} else if p.match(token.OPEN_BRACE) {
-		if lambdaLiteral.Expression, err = p.scope(); err != nil {
+		if functionLiteral.Expression, err = p.scope(); err != nil {
 			return &ast.Definition{}, err
 		}
 	} else {
 		return &ast.Definition{}, p.unexpected()
 	}
 
-	return &lambdaLiteral, nil
+	return &functionLiteral, nil
 }
 
 func (p *Parser) invocation() (ast.Expression, error) {

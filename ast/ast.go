@@ -6,7 +6,7 @@ type Visitor interface {
 	VisitIdentifier(i *Identifier) error
 	VisitIdentifierPath(i *IdentifierPath) error
 	VisitApplication(i *Application) error
-	VisitLambda(l *LambdaLiteral) error
+	VisitFunction(l *FunctionLiteral) error
 	VisitRecord(r *RecordLiteral) error
 	VisitArray(a *ArrayLiteral) error
 	VisitSlice(s *SliceLiteral) error
@@ -84,13 +84,13 @@ func (i *Application) Accept(visitor Visitor) error {
 	return visitor.VisitApplication(i)
 }
 
-type LambdaLiteral struct {
+type FunctionLiteral struct {
 	Parameters []*Identifier
 	Expression Expression
 }
 
-func (l *LambdaLiteral) Accept(visitor Visitor) error {
-	return visitor.VisitLambda(l)
+func (l *FunctionLiteral) Accept(visitor Visitor) error {
+	return visitor.VisitFunction(l)
 }
 
 type RecordLiteral struct {

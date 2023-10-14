@@ -134,7 +134,7 @@ Expressions are evaluated lazily. Here are some examples of expressions:
 # string literal
 "John"
 
-# lambda literal
+# function literal
 \x: (square x)
 
 # invocation

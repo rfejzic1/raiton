@@ -124,11 +124,11 @@ func (c *Comparator) VisitApplication(expected *Application) error {
 	return nil
 }
 
-func (c *Comparator) VisitLambda(expected *LambdaLiteral) error {
-	current, ok := c.current.(*LambdaLiteral)
+func (c *Comparator) VisitFunction(expected *FunctionLiteral) error {
+	current, ok := c.current.(*FunctionLiteral)
 
 	if !ok {
-		return nodeTypeError("LambdaLiteral")
+		return nodeTypeError("FunctionLiteral")
 	}
 
 	if err := compareSlices(c, "parameters", expected.Parameters, current.Parameters); err != nil {

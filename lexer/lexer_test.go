@@ -208,8 +208,8 @@ func TestQuoteLexing(t *testing.T) {
 	})
 }
 
-func TestLambdaLexing(t *testing.T) {
-	test := newTest(t, "TestLambdaLexing")
+func TestFunctionLexing(t *testing.T) {
+	test := newTest(t, "TestFunctionLexing")
 	source := `
 	(map [1 2 3] \x: (square x))
 	`
