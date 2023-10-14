@@ -1,0 +1,8 @@
+a: 1
+
+b {
+  1
+}
+
+plus a b { (add a b) }
+

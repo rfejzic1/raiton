@@ -9,12 +9,14 @@ import (
 )
 
 type Evaluator struct {
+	env     *object.Environment
 	node    ast.Node
 	results stack
 }
 
-func New(node ast.Node) Evaluator {
+func New(env *object.Environment, node ast.Node) Evaluator {
 	return Evaluator{
+		env:  env,
 		node: node,
 	}
 }
@@ -29,10 +31,12 @@ func (e *Evaluator) Evaluate() (object.Object, error) {
 
 /*** Visitor Methods ***/
 
-var unsuported = fmt.Errorf("unsuported object")
-
 func (e *Evaluator) VisitScope(s *ast.Scope) error {
-	// TODO: Visit definitions
+	for _, def := range s.Definitions {
+		if err := def.Accept(e); err != nil {
+			return nil
+		}
+	}
 
 	var returnValue object.Object
 
@@ -44,29 +48,113 @@ func (e *Evaluator) VisitScope(s *ast.Scope) error {
 	}
 
 	// return the evaluation result of the last expression in scope
-	e.results.push(returnValue)
+	if returnValue != nil {
+		e.results.push(returnValue)
+	}
 
 	return nil
 }
 
 func (e *Evaluator) VisitDefinition(d *ast.Definition) error {
-	return unsuported
+	ident := string(d.Identifier)
+
+	if err := d.Expression.Accept(e); err != nil {
+		return err
+	}
+
+	obj := e.results.pop()
+
+	obj = e.env.Define(ident, obj)
+
+	e.results.push(obj)
+
+	return nil
 }
 
 func (e *Evaluator) VisitIdentifier(i *ast.Identifier) error {
-	return unsuported
+	ident := string(*i)
+
+	obj, ok := e.env.Lookup(ident)
+
+	if !ok {
+		return fmt.Errorf("'%s' not defined", ident)
+	}
+
+	e.results.push(obj)
+
+	return nil
 }
 
 func (e *Evaluator) VisitIdentifierPath(i *ast.IdentifierPath) error {
-	return unsuported
+	// TODO: Only records and modules support identifier paths
+
+	ident := string(*i.Identifiers[0])
+
+	obj, ok := e.env.Lookup(ident)
+
+	if !ok {
+		return fmt.Errorf("'%s' not defined", ident)
+	}
+
+	e.results.push(obj)
+
+	return nil
 }
 
-func (e *Evaluator) VisitApplication(i *ast.Application) error {
-	return unsuported
+func (e *Evaluator) VisitApplication(a *ast.Application) error {
+	if len(a.Arguments) < 1 {
+		return fmt.Errorf("expected function")
+	}
+
+	if err := a.Arguments[0].Accept(e); err != nil {
+		return err
+	}
+
+	obj := e.results.pop()
+
+	if obj.Type() != object.FUNCTION {
+		return fmt.Errorf("expected a function, but got %s", obj.Type())
+	}
+
+	function := obj.(*object.Function)
+
+	args := a.Arguments[1:]
+
+	if len(args) != len(function.Parameters) {
+		return fmt.Errorf("function expects %d arguments, but got %d", len(function.Parameters), len(args))
+	}
+
+	for i, p := range function.Parameters {
+		arg := args[i]
+
+		if err := arg.Accept(e); err != nil {
+			return err
+		}
+
+		ident := string(*p)
+		obj := e.results.pop()
+
+		// TODO: This should be added to new env
+		e.env.Define(ident, obj)
+	}
+
+	if err := function.Body.Accept(e); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (e *Evaluator) VisitFunction(l *ast.FunctionLiteral) error {
-	return unsuported
+func (e *Evaluator) VisitFunction(f *ast.FunctionLiteral) error {
+	obj := &object.Function{
+		Parameters:  f.Parameters,
+		Body:        f.Body,
+		Environment: e.env,
+	}
+
+	e.results.push(obj)
+
+	return nil
 }
 
 func (e *Evaluator) VisitRecord(r *ast.RecordLiteral) error {

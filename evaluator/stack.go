@@ -16,7 +16,7 @@ func (s *stack) push(o object.Object) {
 
 func (s *stack) popSafe() (object.Object, error) {
 	if len(s.values) == 0 {
-		return nil, fmt.Errorf("expected a vlue on object stack")
+		return nil, fmt.Errorf("expected a value on object stack")
 	}
 
 	return s.pop(), nil

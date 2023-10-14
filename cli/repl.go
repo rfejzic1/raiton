@@ -7,6 +7,7 @@ import (
 
 	"github.com/rfejzic1/raiton/evaluator"
 	"github.com/rfejzic1/raiton/lexer"
+	"github.com/rfejzic1/raiton/object"
 	"github.com/rfejzic1/raiton/parser"
 	"github.com/urfave/cli/v2"
 )
@@ -15,12 +16,14 @@ func repl(ctx *cli.Context) error {
 	in := ctx.App.Reader
 	out := ctx.App.Writer
 
+	scanner := bufio.NewScanner(in)
+	env := object.NewEnvironment()
+
 	fmt.Fprintf(out, "Raiton %s\n", VERSION)
 
 	for {
 		fmt.Fprint(out, "> ")
 
-		scanner := bufio.NewScanner(in)
 		scanner.Scan()
 
 		if err := scanner.Err(); err != nil {
@@ -43,12 +46,17 @@ func repl(ctx *cli.Context) error {
 			continue
 		}
 
-		eval := evaluator.New(node)
+		eval := evaluator.New(env, node)
 
 		obj, err := eval.Evaluate()
 
 		if err != nil {
 			fmt.Fprintf(out, "error: %s\n", err)
+			continue
+		}
+
+		if obj == nil {
+			fmt.Fprintln(out, "object is nil")
 			continue
 		}
 

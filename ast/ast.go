@@ -27,6 +27,7 @@ type Scope struct {
 
 func ScopeExpressions(expressions ...Expression) *Scope {
 	return &Scope{
+		Definitions: []*Definition{},
 		Expressions: expressions,
 	}
 }
@@ -94,8 +95,8 @@ type FunctionLiteral struct {
 	Body       *Scope
 }
 
-func (l *FunctionLiteral) Accept(visitor Visitor) error {
-	return visitor.VisitFunction(l)
+func (f *FunctionLiteral) Accept(visitor Visitor) error {
+	return visitor.VisitFunction(f)
 }
 
 type RecordLiteral struct {

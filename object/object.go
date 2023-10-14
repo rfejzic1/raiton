@@ -3,6 +3,8 @@ package object
 import (
 	"fmt"
 	"strings"
+
+	"github.com/rfejzic1/raiton/ast"
 )
 
 type ObjectType string
@@ -127,11 +129,26 @@ func (r *Record) Inspect() string {
 func (r *Record) Type() ObjectType { return RECORD }
 
 type Function struct {
-	Value func(Object) Object
+	Parameters  []*ast.Identifier
+	Body        *ast.Scope
+	Environment *Environment
 }
 
 func (f *Function) Inspect() string {
-	return "function"
+	var sb strings.Builder
+
+	sb.WriteString("\\")
+
+	params := []string{}
+	for _, p := range f.Parameters {
+		params = append(params, string(*p))
+	}
+
+	sb.WriteString(strings.Join(params, " "))
+
+	sb.WriteString(" { ... }")
+
+	return sb.String()
 }
 
 func (f *Function) Type() ObjectType { return FUNCTION }

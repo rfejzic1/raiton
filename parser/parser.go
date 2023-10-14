@@ -74,7 +74,7 @@ func (p *Parser) scopeItem(scope *ast.Scope) error {
 		if err != nil {
 			return err
 		}
-		scope.Definitions = append(scope.Definitions, &definition)
+		scope.Definitions = append(scope.Definitions, definition)
 	} else {
 		expression, err := p.expression()
 		if err != nil {
@@ -86,9 +86,9 @@ func (p *Parser) scopeItem(scope *ast.Scope) error {
 	return nil
 }
 
-func (p *Parser) definition() (ast.Definition, error) {
+func (p *Parser) definition() (*ast.Definition, error) {
 	if err := p.expect(token.IDENTIFIER); err != nil {
-		return ast.Definition{}, err
+		return nil, err
 	}
 
 	ident := ast.Identifier(p.token.Literal)
@@ -111,7 +111,7 @@ func (p *Parser) definition() (ast.Definition, error) {
 		expr, err := p.expression()
 
 		if err != nil {
-			return ast.Definition{}, err
+			return nil, err
 		}
 
 		if is_function {
@@ -121,7 +121,7 @@ func (p *Parser) definition() (ast.Definition, error) {
 			}
 		}
 
-		return ast.Definition{
+		return &ast.Definition{
 			Identifier: ident,
 			Expression: expr,
 		}, nil
@@ -130,7 +130,7 @@ func (p *Parser) definition() (ast.Definition, error) {
 		expr := ast.Expression(scope)
 
 		if err != nil {
-			return ast.Definition{}, err
+			return nil, err
 		}
 
 		if is_function {
@@ -140,12 +140,12 @@ func (p *Parser) definition() (ast.Definition, error) {
 			}
 		}
 
-		return ast.Definition{
+		return &ast.Definition{
 			Identifier: ident,
 			Expression: expr,
 		}, nil
 	} else {
-		return ast.Definition{}, p.unexpected()
+		return nil, p.unexpected()
 	}
 }
 
@@ -389,6 +389,8 @@ func (p *Parser) function() (ast.Expression, error) {
 	}
 
 	functionLiteral.Parameters = append(functionLiteral.Parameters, ast.NewIdentifier(p.token.Literal))
+
+	p.consume(token.IDENTIFIER)
 
 	for p.match(token.IDENTIFIER) {
 		param := ast.Identifier(p.token.Literal)

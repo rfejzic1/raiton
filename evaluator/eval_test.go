@@ -8,7 +8,7 @@ import (
 	"github.com/rfejzic1/raiton/parser"
 )
 
-func testEvaluation(input string) (object.Object, error) {
+func testEvaluation(env *object.Environment, input string) (object.Object, error) {
 	l := lexer.New(input)
 	p := parser.New(&l)
 	program, err := p.Parse()
@@ -17,7 +17,7 @@ func testEvaluation(input string) (object.Object, error) {
 		return nil, err
 	}
 
-	eval := New(program)
+	eval := New(env, program)
 
 	return eval.Evaluate()
 }
@@ -31,8 +31,10 @@ func TestEvaluationInteger(t *testing.T) {
 		{"10", 10},
 	}
 
+	env := object.NewEnvironment()
+
 	for _, tt := range tests {
-		evaluated, err := testEvaluation(tt.input)
+		evaluated, err := testEvaluation(env, tt.input)
 
 		if err != nil {
 			t.Fatal(err)
@@ -68,8 +70,10 @@ func TestEvaluationBoolean(t *testing.T) {
 		{"false", false},
 	}
 
+	env := object.NewEnvironment()
+
 	for _, tt := range tests {
-		evaluated, err := testEvaluation(tt.input)
+		evaluated, err := testEvaluation(env, tt.input)
 
 		if err != nil {
 			t.Fatal(err)
