@@ -72,15 +72,17 @@ func (e *Evaluator) VisitDefinition(d *ast.Definition) error {
 func (e *Evaluator) VisitIdentifier(i *ast.Identifier) error {
 	ident := string(*i)
 
-	obj, ok := e.env.Lookup(ident)
-
-	if !ok {
-		return fmt.Errorf("'%s' not defined", ident)
+	if obj, ok := e.env.Lookup(ident); ok {
+		e.results.push(obj)
+		return nil
 	}
 
-	e.results.push(obj)
+	if obj, ok := builtins[ident]; ok {
+		e.results.push(obj)
+		return nil
+	}
 
-	return nil
+	return fmt.Errorf("'%s' not defined", ident)
 }
 
 func (e *Evaluator) VisitIdentifierPath(i *ast.IdentifierPath) error {
@@ -88,15 +90,18 @@ func (e *Evaluator) VisitIdentifierPath(i *ast.IdentifierPath) error {
 
 	ident := string(*i.Identifiers[0])
 
-	obj, ok := e.env.Lookup(ident)
-
-	if !ok {
-		return fmt.Errorf("'%s' not defined", ident)
+	if obj, ok := e.env.Lookup(ident); ok {
+		e.results.push(obj)
+		return nil
 	}
 
-	e.results.push(obj)
+	if obj, ok := builtins[ident]; ok {
+		e.results.push(obj)
+		return nil
+	}
 
-	return nil
+	return fmt.Errorf("'%s' not defined", ident)
+
 }
 
 func (e *Evaluator) VisitApplication(a *ast.Application) error {
@@ -110,39 +115,61 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 
 	obj := e.results.pop()
 
-	if obj.Type() != object.FUNCTION {
-		e.results.push(obj)
-		return nil
-	}
+	switch obj.Type() {
+	case object.FUNCTION:
+		function := obj.(*object.Function)
 
-	function := obj.(*object.Function)
+		args := a.Arguments[1:]
 
-	args := a.Arguments[1:]
+		if len(args) != len(function.Parameters) {
+			return fmt.Errorf("function expects %d arguments, but got %d", len(function.Parameters), len(args))
+		}
 
-	if len(args) != len(function.Parameters) {
-		return fmt.Errorf("function expects %d arguments, but got %d", len(function.Parameters), len(args))
-	}
+		e.env = object.NewEnclosedEnvironment(e.env)
 
-	e.env = object.NewEnclosedEnvironment(e.env)
+		for i, p := range function.Parameters {
+			arg := args[i]
 
-	for i, p := range function.Parameters {
-		arg := args[i]
+			if err := arg.Accept(e); err != nil {
+				return err
+			}
 
-		if err := arg.Accept(e); err != nil {
+			ident := string(*p)
+			obj := e.results.pop()
+
+			e.env.Define(ident, obj)
+		}
+
+		if err := function.Body.Accept(e); err != nil {
 			return err
 		}
 
-		ident := string(*p)
-		obj := e.results.pop()
+		e.env = e.env.Enclosing()
+	case object.BUILTIN:
+		function := obj.(*object.Builtin).Fn
 
-		e.env.Define(ident, obj)
+		objs := []object.Object{}
+
+		for _, a := range a.Arguments[1:] {
+			if err := a.Accept(e); err != nil {
+				return err
+			}
+
+			obj := e.results.pop()
+			objs = append(objs, obj)
+		}
+
+		// TODO: Better error handling
+		obj, err := function(objs...)
+
+		if err != nil {
+			return err
+		}
+
+		e.results.push(obj)
+	default:
+		e.results.push(obj)
 	}
-
-	if err := function.Body.Accept(e); err != nil {
-		return err
-	}
-
-	e.env = e.env.Enclosing()
 
 	return nil
 }

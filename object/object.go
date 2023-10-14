@@ -24,6 +24,7 @@ const (
 	SLICE     = "slice"
 	RECORD    = "record"
 	FUNCTION  = "function"
+	BUILTIN   = "builtin"
 )
 
 type Boolean struct {
@@ -155,3 +156,19 @@ func (f *Function) Inspect() string {
 }
 
 func (f *Function) Type() ObjectType { return FUNCTION }
+
+type BuiltinFunction func(args ...Object) (Object, error)
+
+type Builtin struct {
+	Fn BuiltinFunction
+}
+
+func MakeBuiltin(fn BuiltinFunction) *Builtin {
+	return &Builtin{
+		Fn: fn,
+	}
+}
+
+func (b *Builtin) Type() ObjectType { return BUILTIN }
+
+func (b *Builtin) Inspect() string { return "builtin function" }
