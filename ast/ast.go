@@ -5,7 +5,7 @@ type Visitor interface {
 	VisitDefinition(d *Definition) error
 	VisitIdentifier(i *Identifier) error
 	VisitIdentifierPath(i *IdentifierPath) error
-	VisitInvocation(i *Invocation) error
+	VisitApplication(i *Application) error
 	VisitLambda(l *LambdaLiteral) error
 	VisitRecord(r *RecordLiteral) error
 	VisitArray(a *ArrayLiteral) error
@@ -13,6 +13,7 @@ type Visitor interface {
 	VisitNumber(n *NumberLiteral) error
 	VisitString(s *StringLiteral) error
 	VisitCharacter(c *CharacterLiteral) error
+	VisitBoolean(c *BooleanLiteral) error
 }
 
 type Node interface {
@@ -38,11 +39,11 @@ func (d *Definition) Accept(visitor Visitor) error {
 	return visitor.VisitDefinition(d)
 }
 
+// *** Expressions ***
+
 type Expression interface {
 	Node
 }
-
-// *** Expressions ***
 
 type Identifier string
 
@@ -69,18 +70,18 @@ func (f *IdentifierPath) Accept(visitor Visitor) error {
 	return visitor.VisitIdentifierPath(f)
 }
 
-type Invocation struct {
+type Application struct {
 	Arguments []Expression
 }
 
-func NewInvocation(arguments ...Expression) *Invocation {
-	return &Invocation{
+func NewApplication(arguments ...Expression) *Application {
+	return &Application{
 		Arguments: arguments,
 	}
 }
 
-func (i *Invocation) Accept(visitor Visitor) error {
-	return visitor.VisitInvocation(i)
+func (i *Application) Accept(visitor Visitor) error {
+	return visitor.VisitApplication(i)
 }
 
 type LambdaLiteral struct {
@@ -161,4 +162,15 @@ func NewCharacterLiteral(value string) *CharacterLiteral {
 
 func (c *CharacterLiteral) Accept(visitor Visitor) error {
 	return visitor.VisitCharacter(c)
+}
+
+type BooleanLiteral bool
+
+func NewBooleanLiteral(value bool) *BooleanLiteral {
+	bool := BooleanLiteral(value)
+	return &bool
+}
+
+func (b *BooleanLiteral) Accept(visitor Visitor) error {
+	return visitor.VisitBoolean(b)
 }

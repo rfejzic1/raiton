@@ -128,6 +128,8 @@ func (p *Parser) expression() (ast.Expression, error) {
 		return p.identifierPath()
 	} else if p.match(token.NUMBER) || p.match(token.MINUS) {
 		return p.number()
+	} else if p.match(token.BOOLEAN) {
+		return p.boolean()
 	} else if p.match(token.DOUBLE_QUOTE) {
 		return p.string()
 	} else if p.match(token.SINGLE_QUOTE) {
@@ -191,6 +193,19 @@ func (p *Parser) number() (ast.Expression, error) {
 	num := ast.NewNumberLiteral(numberStr)
 	p.consume(token.NUMBER)
 	return num, nil
+}
+
+func (p *Parser) boolean() (ast.Expression, error) {
+	// TODO: Implement booleans as sum type instead of having tokens for it
+	bool, err := strconv.ParseBool(p.token.Literal)
+
+	if err != nil {
+		return nil, err
+	}
+
+	p.consume(token.BOOLEAN)
+
+	return ast.NewBooleanLiteral(bool), err
 }
 
 func (p *Parser) string() (ast.Expression, error) {
@@ -377,7 +392,7 @@ func (p *Parser) lambda() (ast.Expression, error) {
 func (p *Parser) invocation() (ast.Expression, error) {
 	p.consume(token.OPEN_PAREN)
 
-	invocation := ast.Invocation{
+	invocation := ast.Application{
 		Arguments: []ast.Expression{},
 	}
 

@@ -110,8 +110,8 @@ func (c *Comparator) VisitIdentifierPath(expected *IdentifierPath) error {
 	return nil
 }
 
-func (c *Comparator) VisitInvocation(expected *Invocation) error {
-	current, ok := c.current.(*Invocation)
+func (c *Comparator) VisitApplication(expected *Application) error {
+	current, ok := c.current.(*Application)
 
 	if !ok {
 		return nodeTypeError("Invocation")
@@ -199,6 +199,20 @@ func (c *Comparator) VisitNumber(expected *NumberLiteral) error {
 
 	if string(*current) != string(*expected) {
 		return fmt.Errorf("expected `%s`, but got `%s`", string(*expected), string(*current))
+	}
+
+	return nil
+}
+
+func (c *Comparator) VisitBoolean(expected *BooleanLiteral) error {
+	current, ok := c.current.(*BooleanLiteral)
+
+	if !ok {
+		return nodeTypeError("BooleanLiteral")
+	}
+
+	if *current != *expected {
+		return fmt.Errorf("expected `%t`, but got `%t`", *expected, *current)
 	}
 
 	return nil
