@@ -3,9 +3,9 @@ package evaluator
 import (
 	"testing"
 
-	"github.com/rfejzic1/raiton/lexer"
-	"github.com/rfejzic1/raiton/object"
-	"github.com/rfejzic1/raiton/parser"
+	"raiton/lexer"
+	"raiton/object"
+	"raiton/parser"
 )
 
 func testEvaluation(env *object.Environment, input string) (object.Object, error) {

@@ -3,8 +3,8 @@ package parser
 import (
 	"testing"
 
-	"github.com/rfejzic1/raiton/ast"
-	"github.com/rfejzic1/raiton/lexer"
+	"raiton/ast"
+	"raiton/lexer"
 )
 
 func parseAndCompare(t *testing.T, source string, expected ast.Expression) {

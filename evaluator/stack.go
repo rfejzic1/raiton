@@ -3,7 +3,7 @@ package evaluator
 import (
 	"fmt"
 
-	"github.com/rfejzic1/raiton/object"
+	"raiton/object"
 )
 
 type stack struct {

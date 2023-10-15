@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/rfejzic1/raiton/ast"
-	"github.com/rfejzic1/raiton/object"
+	"raiton/ast"
+	"raiton/object"
 )
 
 type Evaluator struct {

@@ -6,9 +6,9 @@ import (
 	"os"
 	"path"
 
-	"github.com/rfejzic1/raiton/ast"
-	"github.com/rfejzic1/raiton/lexer"
-	"github.com/rfejzic1/raiton/parser"
+	"raiton/ast"
+	"raiton/lexer"
+	"raiton/parser"
 	"github.com/urfave/cli/v2"
 )
 

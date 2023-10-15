@@ -5,8 +5,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/rfejzic1/raiton/lexer"
-	"github.com/rfejzic1/raiton/token"
+	"raiton/lexer"
+	"raiton/token"
 	"github.com/urfave/cli/v2"
 )
 

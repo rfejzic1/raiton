@@ -3,8 +3,8 @@ package evaluator
 import (
 	"fmt"
 
-	"github.com/rfejzic1/raiton/ast"
-	"github.com/rfejzic1/raiton/object"
+	"raiton/ast"
+	"raiton/object"
 )
 
 var builtins = map[string]*object.Builtin{

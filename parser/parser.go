@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/rfejzic1/raiton/ast"
-	"github.com/rfejzic1/raiton/lexer"
-	"github.com/rfejzic1/raiton/token"
+	"raiton/ast"
+	"raiton/lexer"
+	"raiton/token"
 )
 
 type Parser struct {

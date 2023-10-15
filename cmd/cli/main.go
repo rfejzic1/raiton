@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/rfejzic1/raiton/cli"
+	"raiton/cli"
 )
 
 func main() {
