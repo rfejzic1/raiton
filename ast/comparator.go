@@ -114,10 +114,12 @@ func (c *Comparator) VisitSelectorItem(expected *SelectorItem) error {
 	}
 
 	if current.Identifier != nil {
+		c.observe(current.Identifier)
 		if err := c.Compare(expected.Identifier); err != nil {
 			return err
 		}
 	} else {
+		c.observe(current.Index)
 		if err := c.Compare(expected.Index); err != nil {
 			return err
 		}
