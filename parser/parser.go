@@ -199,6 +199,12 @@ func (p *Parser) identifierPath() (ast.Expression, error) {
 			item := ast.NewIdentifierSelector(ident)
 			items = append(items, item)
 		} else if p.match(token.NUMBER) {
+			// TODO: the lexer reads decimal numbers as well, which is not ideal for this case:
+			//		 `rec.arr.2.mat.0.1` - reads `2.` and `0.1` as number tokens
+			//		 to fix this, stop the lexer from reading floats, just number sequences as unsigned integers
+			//		 that way I can parse the number properly as an integer or float, signed or unsigned in the
+			//		 p.number production method;
+			//		 plus, in the context of the selector, I can read only integers and this bug will not occurr
 			num, err := p.number()
 
 			if err != nil {

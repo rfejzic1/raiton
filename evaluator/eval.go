@@ -113,11 +113,7 @@ func (e *Evaluator) VisitSelector(s *ast.Selector) error {
 }
 
 func (e *Evaluator) VisitSelectorItem(i *ast.SelectorItem) error {
-	// take reference object off the stack
 	obj := e.results.pop()
-
-	// if object is record or array or module, depending on selector item, dig into it
-	// and push it to the stack
 
 	switch obj.Type() {
 	case object.RECORD:
@@ -244,7 +240,7 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 		}
 
 		// TODO: Better error handling
-		obj, err := function(objs...)
+		obj, err := function(e, objs...)
 
 		if err != nil {
 			return err
@@ -256,6 +252,24 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 	}
 
 	return nil
+}
+
+func (e *Evaluator) applyFunction(fn *object.Function, args ...object.Object) (object.Object, error) {
+	if len(args) != len(fn.Parameters) {
+		return nil, fmt.Errorf("function expects %d arguments, but got %d", len(fn.Parameters), len(args))
+	}
+
+	for i, p := range fn.Parameters {
+		ident := string(*p)
+		e.env.Define(ident, args[i])
+	}
+
+	if err := fn.Body.Accept(e); err != nil {
+		return nil, err
+	}
+
+	obj := e.results.pop()
+	return obj, nil
 }
 
 func (e *Evaluator) VisitFunction(f *ast.FunctionLiteral) error {
