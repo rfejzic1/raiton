@@ -10,14 +10,14 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/urfave/cli/v2"
 )
 
 type repl struct {
 	textInput textinput.Model
 	env       *object.Environment
-	err       error
-	result    object.Object
+	lines     []string
 }
 
 type errorMsg error
@@ -26,13 +26,13 @@ type resultMsg object.Object
 func initialModel() *repl {
 	ti := textinput.New()
 
-	ti.Placeholder = "Pikachu"
 	ti.Focus()
 	ti.CharLimit = 256
 
 	return &repl{
 		textInput: ti,
 		env:       object.NewEnvironment(),
+		lines:     []string{},
 	}
 }
 
@@ -49,22 +49,29 @@ func (m *repl) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC:
 			return m, tea.Quit
 		case tea.KeyEnter:
-			input := strings.TrimSpace(m.textInput.Value())
+			rawInput := m.textInput.Value()
+			input := strings.TrimSpace(rawInput)
+
 			m.textInput.Reset()
 
 			if input == "exit" {
 				return m, tea.Quit
 			}
 
+			line := fmt.Sprintf("> %s", rawInput)
+			m.lines = append(m.lines, line)
+
+			if input == "" {
+				return m, nil
+			}
+
 			return m, m.evaluateSource(input)
 		}
 	case resultMsg:
-		m.result = msg
-		m.err = nil
+		m.lines = append(m.lines, msg.Inspect())
 		return m, nil
 	case errorMsg:
-		m.result = nil
-		m.err = msg
+		m.lines = append(m.lines, msg.Error())
 		return m, nil
 	}
 
@@ -99,17 +106,14 @@ func (r *repl) evaluateSource(input string) tea.Cmd {
 func (m *repl) View() string {
 	var s strings.Builder
 
-	s.WriteString(m.textInput.View())
-	s.WriteString("\n")
+	s.WriteString(lipgloss.JoinVertical(lipgloss.Left, m.lines...))
 
-	if m.result != nil {
-		s.WriteString(m.result.Inspect())
-		s.WriteString("\n")
-	} else if m.err != nil {
-		s.WriteString(fmt.Sprintf("error: %s", m.err))
+	if len(m.lines) != 0 {
 		s.WriteString("\n")
 	}
 
+	s.WriteString(m.textInput.View())
+	s.WriteString("\n")
 	s.WriteString("(type 'exit' or ctrl+c to quit)")
 
 	return fmt.Sprintf(s.String())
