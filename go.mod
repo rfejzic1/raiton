@@ -1,4 +1,4 @@
-module github.com/rfejzic1/raiton
+module raiton
 
 go 1.21.0
 

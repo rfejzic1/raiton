@@ -1,6 +1,6 @@
 package lexer
 
-import "github.com/rfejzic1/raiton/token"
+import "raiton/token"
 
 type lexMode uint
 

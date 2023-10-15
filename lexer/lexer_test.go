@@ -3,7 +3,7 @@ package lexer
 import (
 	"testing"
 
-	"github.com/rfejzic1/raiton/token"
+	"raiton/token"
 )
 
 type test struct {

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rfejzic1/raiton/evaluator"
-	"github.com/rfejzic1/raiton/lexer"
-	"github.com/rfejzic1/raiton/object"
-	"github.com/rfejzic1/raiton/parser"
+	"raiton/evaluator"
+	"raiton/lexer"
+	"raiton/object"
+	"raiton/parser"
 	"github.com/urfave/cli/v2"
 )
 
