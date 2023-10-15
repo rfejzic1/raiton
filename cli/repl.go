@@ -1,66 +1,58 @@
 package cli
 
 import (
-	"bufio"
 	"fmt"
-	"strings"
 
-	"raiton/evaluator"
-	"raiton/lexer"
-	"raiton/object"
-	"raiton/parser"
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/urfave/cli/v2"
 )
 
-func repl(ctx *cli.Context) error {
-	in := ctx.App.Reader
-	out := ctx.App.Writer
+type repl struct {
+	textInput textinput.Model
+}
 
-	scanner := bufio.NewScanner(in)
-	env := object.NewEnvironment()
+func initialModel() *repl {
+	ti := textinput.New()
 
-	fmt.Fprintf(out, "Raiton %s\n", VERSION)
+	ti.Placeholder = "Pikachu"
+	ti.Focus()
+	ti.CharLimit = 256
 
-	for {
-		fmt.Fprint(out, "> ")
+	return &repl{
+		textInput: ti,
+	}
+}
 
-		scanner.Scan()
+func (m *repl) Init() tea.Cmd {
+	return textinput.Blink
+}
 
-		if err := scanner.Err(); err != nil {
-			return err
+func (m *repl) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.Type {
+		case tea.KeyEnter, tea.KeyCtrlC, tea.KeyEsc:
+			return m, tea.Quit
 		}
+	}
 
-		input := strings.TrimSpace(scanner.Text())
+	m.textInput, cmd = m.textInput.Update(msg)
 
-		if input == "exit" {
-			break
-		}
+	return m, cmd
+}
 
-		lex := lexer.New(input)
-		par := parser.New(&lex)
+func (m *repl) View() string {
+	return fmt.Sprintf("%s\n(type 'exit' or ctrl+c to quit)", m.textInput.View())
+}
 
-		node, err := par.Parse()
+func runRepl(ctx *cli.Context) error {
+	p := tea.NewProgram(initialModel(), tea.WithAltScreen(), tea.WithMouseCellMotion())
 
-		if err != nil {
-			fmt.Fprintf(out, "error: %s\n", err)
-			continue
-		}
-
-		eval := evaluator.New(env)
-
-		obj, err := eval.Evaluate(node)
-
-		if err != nil {
-			fmt.Fprintf(out, "error: %s\n", err)
-			continue
-		}
-
-		if obj == nil {
-			fmt.Fprintln(out, "object is nil")
-			continue
-		}
-
-		fmt.Fprintf(out, "%s\n", obj.Inspect())
+	if _, err := p.Run(); err != nil {
+		return err
 	}
 
 	return nil

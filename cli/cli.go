@@ -17,7 +17,7 @@ func New() Cli {
 			{
 				Name:   "repl",
 				Usage:  "start the REPL",
-				Action: repl,
+				Action: runRepl,
 			},
 			{
 				Name:      "tokenize",
