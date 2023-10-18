@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"raiton/cli/repl"
+
 	"github.com/urfave/cli/v2"
 )
 
@@ -17,7 +19,7 @@ func New() Cli {
 			{
 				Name:   "repl",
 				Usage:  "start the REPL",
-				Action: runRepl,
+				Action: repl.Run,
 			},
 			{
 				Name:      "tokenize",

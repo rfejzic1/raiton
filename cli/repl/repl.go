@@ -1,4 +1,4 @@
-package cli
+package repl
 
 import (
 	"fmt"
@@ -184,7 +184,7 @@ func (m *repl) View() string {
 	return fmt.Sprintf(s.String())
 }
 
-func runRepl(ctx *cli.Context) error {
+func Run(ctx *cli.Context) error {
 	p := tea.NewProgram(initialModel(), tea.WithAltScreen(), tea.WithMouseCellMotion())
 
 	if _, err := p.Run(); err != nil {
