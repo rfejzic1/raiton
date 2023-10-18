@@ -162,7 +162,7 @@ func TestDefinitionWithScope(t *testing.T) {
 
 func TestFunctionDefinitionWithSingleExpression(t *testing.T) {
 	source := `
-	add_two x: (add x 2)
+	fn add_two x -> (add x 2)
 	`
 
 	expected := ast.Scope{
@@ -190,7 +190,7 @@ func TestFunctionDefinitionWithSingleExpression(t *testing.T) {
 
 func TestFunctionDefinitionWithScope(t *testing.T) {
 	source := `
-	add_three x { (add x 3) }
+	fn add_three x { (add x 3) }
 	`
 
 	expected := ast.Scope{
