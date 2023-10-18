@@ -40,8 +40,12 @@ raiton help
 
 The `raiton` tool is a toolchain that will have the option to compile code, as wall as a REPL (like [utop](https://github.com/ocaml-community/utop)
 
-for ocaml). The REPL mode (for now) is used to check whether the parser constructs the syntax tree properly and returns an error if there is one.
-This is only a temporary implementation for me to manually test the parser and lexer. 
+for ocaml). The REPL mode is used to evaluate the expressions and can report errors in case there are any.
+There are only two built-in functions for now:
+- `add` to add two integers
+- `map` to map elements of arrays and slices
+
+The plan is to extend the available built-in functions and objects.
 
 The tool also has a command called `tokenize` to tokenize a file and print out the tokens to `stdout`. This was also useful to manually test
 different cases and look at the stream of tokens produced.
