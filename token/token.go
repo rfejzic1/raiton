@@ -40,6 +40,7 @@ var SYMBOLS = map[string]TokenType{
 	"\\": BACKSLASH,
 	"-":  MINUS,
 	".":  DOT,
+	"->": ARROW,
 }
 
 const (
@@ -61,6 +62,7 @@ const (
 	BACKSLASH    = "backslash"
 	MINUS        = "minus"
 	DOT          = "dot"
+	ARROW        = "arrow"
 
 	EOF     = "eof"
 	ILLEGAL = "illegal"

@@ -86,14 +86,20 @@ func TestNumberLexing(t *testing.T) {
 
 	test.expect(source, []tokenExpect{
 		{token.NUMBER, `1`},
-		{token.NUMBER, `0.1`},
+		{token.NUMBER, `0`},
+		{token.DOT, `.`},
+		{token.NUMBER, `1`},
 		{token.MINUS, `-`},
-		{token.NUMBER, `0.1`},
+		{token.NUMBER, `0`},
+		{token.DOT, `.`},
+		{token.NUMBER, `1`},
 		{token.MINUS, `-`},
-		{token.NUMBER, `0.`},
+		{token.NUMBER, `0`},
+		{token.DOT, `.`},
 		{token.MINUS, `-`},
 		{token.NUMBER, `2`},
-		{token.NUMBER, `1.`},
+		{token.NUMBER, `1`},
+		{token.DOT, `.`},
 		{token.EOF, ``},
 	})
 }
@@ -116,7 +122,9 @@ func TestSkippingSpaces(t *testing.T) {
 
 	test.expect(source, []tokenExpect{
 		{token.IDENTIFIER, `println`},
-		{token.NUMBER, `123.1`},
+		{token.NUMBER, `123`},
+		{token.DOT, `.`},
+		{token.NUMBER, `1`},
 		{token.DOUBLE_QUOTE, `"`},
 		{token.STRING, `Raiton`},
 		{token.DOUBLE_QUOTE, `"`},
@@ -133,7 +141,9 @@ func TestSkippingNewlines(t *testing.T) {
 
 	test.expect(source, []tokenExpect{
 		{token.IDENTIFIER, `println`},
-		{token.NUMBER, `123.1`},
+		{token.NUMBER, `123`},
+		{token.DOT, `.`},
+		{token.NUMBER, `1`},
 		{token.DOUBLE_QUOTE, `"`},
 		{token.STRING, `Raiton`},
 		{token.DOUBLE_QUOTE, `"`},
@@ -159,7 +169,9 @@ func TestSkippingComments(t *testing.T) {
 		{token.DOUBLE_QUOTE, `"`},
 		{token.STRING, `Raiton`},
 		{token.DOUBLE_QUOTE, `"`},
-		{token.NUMBER, `3.14`},
+		{token.NUMBER, `3`},
+		{token.DOT, `.`},
+		{token.NUMBER, `14`},
 		{token.EOF, ``},
 	})
 }

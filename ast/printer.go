@@ -1,6 +1,9 @@
 package ast
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type Printer struct {
 	node Node
@@ -105,7 +108,7 @@ func (p *Printer) VisitSelectorItem(n *SelectorItem) error {
 	if n.Identifier != nil {
 		p.write(string(*n.Identifier))
 	} else {
-		p.write(string(*n.Index))
+		p.write(fmt.Sprintf("%d", *n.Index))
 	}
 
 	return nil
@@ -197,8 +200,13 @@ func (p *Printer) VisitSlice(n *SliceLiteral) error {
 	return nil
 }
 
-func (p *Printer) VisitNumber(n *NumberLiteral) error {
-	p.write(string(*n))
+func (p *Printer) VisitInteger(n *IntegerLiteral) error {
+	p.write(fmt.Sprintf("%d", *n))
+	return nil
+}
+
+func (p *Printer) VisitFloat(n *FloatLiteral) error {
+	p.write(fmt.Sprintf("%g", *n))
 	return nil
 }
 

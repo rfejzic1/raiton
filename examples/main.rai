@@ -1,15 +1,29 @@
 name: "John"
 
-greeter name {
+greeter: \name {
   greeting: "Hello, "
   (concat greeting name)
+}
+# or
+fn greeter name { 
+  greeting: "Hello, "
+  (concat greeting name)
+}
+
+exclaimed: \str -> (concat str "!")
+
+fn exclaimed str -> (concat str "!")
+
+fn exclaimed str {
+  suffix: "!"
+  (concat str suffix)
 }
 
 (println (greeter name))
 
 nums: [1 2 3]
 
-bigger_nums: (map nums \n: (add n 1))
+bigger_nums: (map nums \n -> (add n 1))
 
 (println bigger_nums)
 

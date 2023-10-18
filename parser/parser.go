@@ -211,7 +211,7 @@ func (p *Parser) identifierPath() (ast.Expression, error) {
 				return nil, err
 			}
 
-			item := ast.NewIndexSelector(num.(*ast.NumberLiteral))
+			item := ast.NewIndexSelector(num.(*ast.IntegerLiteral))
 			items = append(items, item)
 		} else {
 			return nil, p.unexpected()
@@ -227,7 +227,7 @@ func (p *Parser) number() (ast.Expression, error) {
 	numberStr := ""
 
 	if p.match(token.MINUS) {
-		numberStr += "-"
+		numberStr += p.token.Literal
 		p.consume(token.MINUS)
 	}
 
@@ -236,10 +236,35 @@ func (p *Parser) number() (ast.Expression, error) {
 	}
 
 	numberStr += p.token.Literal
-
-	num := ast.NewNumberLiteral(numberStr)
 	p.consume(token.NUMBER)
-	return num, nil
+
+	if p.match(token.DOT) {
+		numberStr += p.token.Literal
+		p.consume(token.DOT)
+
+		if err := p.expect(token.NUMBER); err != nil {
+			return nil, err
+		}
+
+		numberStr += p.token.Literal
+
+		value, err := strconv.ParseFloat(numberStr, 64)
+
+		if err != nil {
+			return nil, err
+		}
+
+		p.consume(token.NUMBER)
+		return ast.NewFloatLiteral(value), nil
+	}
+
+	value, err := strconv.ParseInt(numberStr, 0, 64)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ast.NewIntegerLiteral(value), nil
 }
 
 func (p *Parser) boolean() (ast.Expression, error) {

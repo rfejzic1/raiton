@@ -11,7 +11,8 @@ type Visitor interface {
 	VisitRecord(n *RecordLiteral) error
 	VisitArray(n *ArrayLiteral) error
 	VisitSlice(n *SliceLiteral) error
-	VisitNumber(n *NumberLiteral) error
+	VisitInteger(n *IntegerLiteral) error
+	VisitFloat(n *FloatLiteral) error
 	VisitString(n *StringLiteral) error
 	VisitCharacter(n *CharacterLiteral) error
 	VisitBoolean(n *BooleanLiteral) error
@@ -69,7 +70,7 @@ type Selector struct {
 
 type SelectorItem struct {
 	Identifier *Identifier
-	Index      *NumberLiteral
+	Index      *IntegerLiteral
 }
 
 func NewIdentifierSelector(ident *Identifier) *SelectorItem {
@@ -82,7 +83,7 @@ func (i *SelectorItem) Accept(visitor Visitor) error {
 	return visitor.VisitSelectorItem(i)
 }
 
-func NewIndexSelector(num *NumberLiteral) *SelectorItem {
+func NewIndexSelector(num *IntegerLiteral) *SelectorItem {
 	return &SelectorItem{
 		Index: num,
 	}
@@ -159,15 +160,26 @@ func (s *SliceLiteral) Accept(visitor Visitor) error {
 	return visitor.VisitSlice(s)
 }
 
-type NumberLiteral string
+type IntegerLiteral int64
 
-func NewNumberLiteral(value string) *NumberLiteral {
-	num := NumberLiteral(value)
+func NewIntegerLiteral(value int64) *IntegerLiteral {
+	num := IntegerLiteral(value)
 	return &num
 }
 
-func (n *NumberLiteral) Accept(visitor Visitor) error {
-	return visitor.VisitNumber(n)
+func (n *IntegerLiteral) Accept(visitor Visitor) error {
+	return visitor.VisitInteger(n)
+}
+
+type FloatLiteral float64
+
+func NewFloatLiteral(value float64) *FloatLiteral {
+	num := FloatLiteral(value)
+	return &num
+}
+
+func (n *FloatLiteral) Accept(visitor Visitor) error {
+	return visitor.VisitFloat(n)
 }
 
 type StringLiteral string
