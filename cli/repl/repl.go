@@ -2,10 +2,7 @@ package repl
 
 import (
 	"fmt"
-	"raiton/evaluator"
-	"raiton/lexer"
 	"raiton/object"
-	"raiton/parser"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -19,6 +16,7 @@ type repl struct {
 	loading   bool
 	width     int
 	height    int
+	keys      keyMap
 	viewport  viewport.Model
 	textInput textinput.Model
 	env       *object.Environment
@@ -27,35 +25,6 @@ type repl struct {
 
 type errorMsg error
 type resultMsg object.Object
-
-func viewportKeyMap() viewport.KeyMap {
-	return viewport.KeyMap{
-		// PageDown: key.NewBinding(
-		// 	key.WithKeys("pgdown", spacebar, "f"),
-		// 	key.WithHelp("f/pgdn", "page down"),
-		// ),
-		// PageUp: key.NewBinding(
-		// 	key.WithKeys("pgup", "b"),
-		// 	key.WithHelp("b/pgup", "page up"),
-		// ),
-		// HalfPageUp: key.NewBinding(
-		// 	key.WithKeys("u", "ctrl+u"),
-		// 	key.WithHelp("u", "½ page up"),
-		// ),
-		// HalfPageDown: key.NewBinding(
-		// 	key.WithKeys("d", "ctrl+d"),
-		// 	key.WithHelp("d", "½ page down"),
-		// ),
-		Up: key.NewBinding(
-			key.WithKeys("ctrl+k"),
-			key.WithHelp("ctrl+k", "up"),
-		),
-		Down: key.NewBinding(
-			key.WithKeys("ctrl+j"),
-			key.WithHelp("ctrl+j", "down"),
-		),
-	}
-}
 
 func initialModel() *repl {
 	vp := viewport.New(0, 0)
@@ -71,6 +40,7 @@ func initialModel() *repl {
 		loading:   true,
 		viewport:  vp,
 		textInput: ti,
+		keys:      defaultKeyMap(),
 		env:       object.NewEnvironment(),
 		lines:     lines,
 	}
@@ -92,10 +62,10 @@ func (m *repl) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		m.computeViewportHeight()
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC:
+		switch {
+		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
-		case tea.KeyEnter:
+		case key.Matches(msg, m.keys.Evaluate):
 			rawInput := m.textInput.Value()
 			input := strings.TrimSpace(rawInput)
 
@@ -139,29 +109,6 @@ func (r *repl) computeViewportHeight() {
 	const offset = 2
 	r.viewport.Width = r.width
 	r.viewport.Height = min(len(r.lines), r.height-offset)
-}
-
-func (r *repl) evaluateSource(input string) tea.Cmd {
-	return func() tea.Msg {
-		lex := lexer.New(input)
-		par := parser.New(&lex)
-
-		node, err := par.Parse()
-
-		if err != nil {
-			return errorMsg(err)
-		}
-
-		eval := evaluator.New(r.env)
-
-		result, err := eval.Evaluate(node)
-
-		if err != nil {
-			return errorMsg(err)
-		}
-
-		return resultMsg(result)
-	}
 }
 
 func (m *repl) View() string {
