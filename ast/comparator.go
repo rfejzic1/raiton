@@ -208,15 +208,29 @@ func (c *Comparator) VisitSlice(expected *SliceLiteral) error {
 	return nil
 }
 
-func (c *Comparator) VisitNumber(expected *NumberLiteral) error {
-	current, ok := c.current.(*NumberLiteral)
+func (c *Comparator) VisitInteger(expected *IntegerLiteral) error {
+	current, ok := c.current.(*IntegerLiteral)
 
 	if !ok {
 		return nodeTypeError("NumberLiteral")
 	}
 
-	if string(*current) != string(*expected) {
-		return fmt.Errorf("expected `%s`, but got `%s`", string(*expected), string(*current))
+	if *current != *expected {
+		return fmt.Errorf("expected `%d`, but got `%d`", *expected, *current)
+	}
+
+	return nil
+}
+
+func (c *Comparator) VisitFloat(expected *FloatLiteral) error {
+	current, ok := c.current.(*FloatLiteral)
+
+	if !ok {
+		return nodeTypeError("FloatLiteral")
+	}
+
+	if *current != *expected {
+		return fmt.Errorf("expected `%g`, but got `%f`", *expected, *current)
 	}
 
 	return nil

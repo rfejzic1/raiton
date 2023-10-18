@@ -141,11 +141,7 @@ func (e *Evaluator) VisitSelectorItem(i *ast.SelectorItem) error {
 			return fmt.Errorf("can only access array elements with index")
 		}
 
-		index, err := strconv.ParseInt(string(*i.Index), 0, 64)
-
-		if err != nil {
-			return err
-		}
+		index := int64(*i.Index)
 
 		if index > int64(len(array.Value)) {
 			return fmt.Errorf("index %d is out of bounds", index)
@@ -164,11 +160,7 @@ func (e *Evaluator) VisitSelectorItem(i *ast.SelectorItem) error {
 			return fmt.Errorf("can only access array elements with index")
 		}
 
-		index, err := strconv.ParseInt(string(*i.Index), 0, 64)
-
-		if err != nil {
-			return err
-		}
+		index := int64(*i.Index)
 
 		if index > int64(len(array.Value)) {
 			return fmt.Errorf("index %d is out of bounds", index)
@@ -359,16 +351,19 @@ func (e *Evaluator) VisitSlice(s *ast.SliceLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitNumber(n *ast.NumberLiteral) error {
-	// TODO: Floats
-	value, err := strconv.ParseInt(string(*n), 0, 64)
-
-	if err != nil {
-		return err
+func (e *Evaluator) VisitInteger(n *ast.IntegerLiteral) error {
+	result := &object.Integer{
+		Value: int64(*n),
 	}
 
-	result := &object.Integer{
-		Value: value,
+	e.results.push(result)
+
+	return nil
+}
+
+func (e *Evaluator) VisitFloat(n *ast.FloatLiteral) error {
+	result := &object.Float{
+		Value: float64(*n),
 	}
 
 	e.results.push(result)

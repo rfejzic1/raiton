@@ -57,13 +57,17 @@ func TestExpressionNumber(t *testing.T) {
 
 	# number expression; negative integer
 	-1
+
+	# number expression; negative float
+	-3.14
 	`
 
 	expected := ast.Scope{
 		Expressions: []ast.Expression{
-			ast.NewNumberLiteral("5"),
-			ast.NewNumberLiteral("2.65"),
-			ast.NewNumberLiteral("-1"),
+			ast.NewIntegerLiteral(5),
+			ast.NewFloatLiteral(2.65),
+			ast.NewIntegerLiteral(-1),
+			ast.NewFloatLiteral(-3.14),
 		},
 	}
 
@@ -77,9 +81,9 @@ func TestExpressionArray(t *testing.T) {
 		Expressions: []ast.Expression{
 			ast.NewArrayLiteral(
 				3,
-				ast.NewNumberLiteral("1"),
-				ast.NewNumberLiteral("2"),
-				ast.NewNumberLiteral("3"),
+				ast.NewIntegerLiteral(1),
+				ast.NewIntegerLiteral(2),
+				ast.NewIntegerLiteral(3),
 			),
 		},
 	}
@@ -93,9 +97,9 @@ func TestExpressionSlice(t *testing.T) {
 	expected := ast.Scope{
 		Expressions: []ast.Expression{
 			ast.NewSliceLiteral(
-				ast.NewNumberLiteral("1"),
-				ast.NewNumberLiteral("2"),
-				ast.NewNumberLiteral("3"),
+				ast.NewIntegerLiteral(1),
+				ast.NewIntegerLiteral(2),
+				ast.NewIntegerLiteral(3),
 			),
 		},
 	}
@@ -146,7 +150,7 @@ func TestDefinitionWithScope(t *testing.T) {
 				Identifier: ast.Identifier("age"),
 				Expression: &ast.Scope{
 					Expressions: []ast.Expression{
-						ast.NewNumberLiteral("24"),
+						ast.NewIntegerLiteral(24),
 					},
 				},
 			},
@@ -158,7 +162,7 @@ func TestDefinitionWithScope(t *testing.T) {
 
 func TestFunctionDefinitionWithSingleExpression(t *testing.T) {
 	source := `
-	add_two x: (add x 2)
+	fn add_two x -> (add x 2)
 	`
 
 	expected := ast.Scope{
@@ -173,7 +177,7 @@ func TestFunctionDefinitionWithSingleExpression(t *testing.T) {
 						ast.NewApplication(
 							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("add"))),
 							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("x"))),
-							ast.NewNumberLiteral("2"),
+							ast.NewIntegerLiteral(2),
 						),
 					),
 				},
@@ -186,7 +190,7 @@ func TestFunctionDefinitionWithSingleExpression(t *testing.T) {
 
 func TestFunctionDefinitionWithScope(t *testing.T) {
 	source := `
-	add_three x { (add x 3) }
+	fn add_three x { (add x 3) }
 	`
 
 	expected := ast.Scope{
@@ -201,7 +205,7 @@ func TestFunctionDefinitionWithScope(t *testing.T) {
 						ast.NewApplication(
 							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("add"))),
 							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("x"))),
-							ast.NewNumberLiteral("3"),
+							ast.NewIntegerLiteral(3),
 						),
 					),
 				},

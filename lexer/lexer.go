@@ -111,15 +111,6 @@ func (l *Lexer) numberToken() token.Token {
 		lexeme += string(char)
 	}
 
-	if char, ok := l.current(); ok && char == '.' {
-		lexeme += "."
-		l.next()
-
-		for char, ok := l.current(); ok && isDigit(char); char, ok = l.next() {
-			lexeme += string(char)
-		}
-	}
-
 	return l.longToken(token.NUMBER, lexeme)
 }
 
