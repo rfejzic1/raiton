@@ -8,13 +8,18 @@ import (
 	"raiton/parser"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/urfave/cli/v2"
 )
 
 type repl struct {
+	loading   bool
+	width     int
+	height    int
+	viewport  viewport.Model
 	textInput textinput.Model
 	env       *object.Environment
 	lines     []string
@@ -23,16 +28,51 @@ type repl struct {
 type errorMsg error
 type resultMsg object.Object
 
+func viewportKeyMap() viewport.KeyMap {
+	return viewport.KeyMap{
+		// PageDown: key.NewBinding(
+		// 	key.WithKeys("pgdown", spacebar, "f"),
+		// 	key.WithHelp("f/pgdn", "page down"),
+		// ),
+		// PageUp: key.NewBinding(
+		// 	key.WithKeys("pgup", "b"),
+		// 	key.WithHelp("b/pgup", "page up"),
+		// ),
+		// HalfPageUp: key.NewBinding(
+		// 	key.WithKeys("u", "ctrl+u"),
+		// 	key.WithHelp("u", "½ page up"),
+		// ),
+		// HalfPageDown: key.NewBinding(
+		// 	key.WithKeys("d", "ctrl+d"),
+		// 	key.WithHelp("d", "½ page down"),
+		// ),
+		Up: key.NewBinding(
+			key.WithKeys("ctrl+k"),
+			key.WithHelp("ctrl+k", "up"),
+		),
+		Down: key.NewBinding(
+			key.WithKeys("ctrl+j"),
+			key.WithHelp("ctrl+j", "down"),
+		),
+	}
+}
+
 func initialModel() *repl {
+	vp := viewport.New(0, 0)
 	ti := textinput.New()
 
 	ti.Focus()
-	ti.CharLimit = 256
+	vp.KeyMap = viewportKeyMap()
+
+	lines := []string{"Raiton v0.0.1"}
+	vp.SetContent(strings.Join(lines, "\n"))
 
 	return &repl{
+		loading:   true,
+		viewport:  vp,
 		textInput: ti,
 		env:       object.NewEnvironment(),
-		lines:     []string{},
+		lines:     lines,
 	}
 }
 
@@ -41,9 +81,16 @@ func (m *repl) Init() tea.Cmd {
 }
 
 func (m *repl) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
+	var tiCmd, vpCmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		if m.loading {
+			m.loading = false
+		}
+		m.width = msg.Width
+		m.height = msg.Height
+		m.computeViewportHeight()
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC:
@@ -59,7 +106,7 @@ func (m *repl) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			line := fmt.Sprintf("> %s", rawInput)
-			m.lines = append(m.lines, line)
+			m.addLine(line)
 
 			if input == "" {
 				return m, nil
@@ -68,16 +115,30 @@ func (m *repl) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.evaluateSource(input)
 		}
 	case resultMsg:
-		m.lines = append(m.lines, msg.Inspect())
+		m.addLine(msg.Inspect())
 		return m, nil
 	case errorMsg:
-		m.lines = append(m.lines, msg.Error())
+		m.addLine(msg.Error())
 		return m, nil
 	}
 
-	m.textInput, cmd = m.textInput.Update(msg)
+	m.textInput, tiCmd = m.textInput.Update(msg)
+	m.viewport, vpCmd = m.viewport.Update(msg)
 
-	return m, cmd
+	return m, tea.Batch(tiCmd, vpCmd)
+}
+
+func (r *repl) addLine(line string) {
+	r.lines = append(r.lines, line)
+	r.computeViewportHeight()
+	r.viewport.SetContent(strings.Join(r.lines, "\n"))
+	r.viewport.GotoBottom()
+}
+
+func (r *repl) computeViewportHeight() {
+	const offset = 2
+	r.viewport.Width = r.width
+	r.viewport.Height = min(len(r.lines), r.height-offset)
 }
 
 func (r *repl) evaluateSource(input string) tea.Cmd {
@@ -104,11 +165,15 @@ func (r *repl) evaluateSource(input string) tea.Cmd {
 }
 
 func (m *repl) View() string {
+	if m.loading {
+		return "Loading..."
+	}
+
 	var s strings.Builder
 
-	s.WriteString(lipgloss.JoinVertical(lipgloss.Left, m.lines...))
+	s.WriteString(m.viewport.View())
 
-	if len(m.lines) != 0 {
+	if len(m.lines) > 0 {
 		s.WriteString("\n")
 	}
 
