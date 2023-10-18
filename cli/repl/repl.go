@@ -17,10 +17,11 @@ type repl struct {
 	width     int
 	height    int
 	keys      keyMap
+	lines     []string
 	viewport  viewport.Model
 	textInput textinput.Model
+	history   history
 	env       *object.Environment
-	lines     []string
 }
 
 type errorMsg error
@@ -38,11 +39,12 @@ func initialModel() *repl {
 
 	return &repl{
 		loading:   true,
+		keys:      defaultKeyMap(),
+		lines:     lines,
 		viewport:  vp,
 		textInput: ti,
-		keys:      defaultKeyMap(),
 		env:       object.NewEnvironment(),
-		lines:     lines,
+		history:   newHistory(),
 	}
 }
 
@@ -65,24 +67,12 @@ func (m *repl) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
+		case key.Matches(msg, m.keys.Up):
+			return m.previousItem(msg)
+		case key.Matches(msg, m.keys.Down):
+			return m.nextItem(msg)
 		case key.Matches(msg, m.keys.Evaluate):
-			rawInput := m.textInput.Value()
-			input := strings.TrimSpace(rawInput)
-
-			m.textInput.Reset()
-
-			if input == "exit" {
-				return m, tea.Quit
-			}
-
-			line := fmt.Sprintf("> %s", rawInput)
-			m.addLine(line)
-
-			if input == "" {
-				return m, nil
-			}
-
-			return m, m.evaluateSource(input)
+			return m.evaluate(msg)
 		}
 	case resultMsg:
 		m.addLine(msg.Inspect())
@@ -98,8 +88,43 @@ func (m *repl) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(tiCmd, vpCmd)
 }
 
+func (m *repl) evaluate(msg tea.Msg) (*repl, tea.Cmd) {
+	rawInput := m.textInput.Value()
+	input := strings.TrimSpace(rawInput)
+
+	m.textInput.Reset()
+
+	if input == "exit" {
+		return m, tea.Quit
+	}
+
+	line := fmt.Sprintf("> %s", rawInput)
+	m.addLine(line)
+
+	if input == "" {
+		return m, nil
+	}
+
+	m.history.add(input)
+
+	return m, m.evaluateSource(input)
+}
+
+func (m *repl) previousItem(msg tea.Msg) (*repl, tea.Cmd) {
+	line := m.history.previous()
+	m.textInput.SetValue(line)
+	return m, nil
+}
+
+func (m *repl) nextItem(msg tea.Msg) (*repl, tea.Cmd) {
+	line := m.history.next()
+	m.textInput.SetValue(line)
+	return m, nil
+}
+
 func (r *repl) addLine(line string) {
 	r.lines = append(r.lines, line)
+	r.history.reset()
 	r.computeViewportHeight()
 	r.viewport.SetContent(strings.Join(r.lines, "\n"))
 	r.viewport.GotoBottom()
