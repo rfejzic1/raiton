@@ -70,11 +70,36 @@ func (p *Parser) scope() (*ast.Scope, error) {
 
 func (p *Parser) scopeItem(scope *ast.Scope) error {
 	if p.match(token.IDENTIFIER) {
-		definition, err := p.definition()
+		ident := p.identifier()
+
+		switch {
+		case p.match(token.DOT):
+			selector, err := p.selector(ident)
+
+			if err != nil {
+				return err
+			}
+
+			scope.Expressions = append(scope.Expressions, selector)
+		case p.match(token.COLON) || p.match(token.OPEN_BRACE):
+			definition, err := p.definition(ident)
+
+			if err != nil {
+				return err
+			}
+
+			scope.Definitions = append(scope.Definitions, definition)
+		default:
+			scope.Expressions = append(scope.Expressions, ident)
+		}
+	} else if p.match(token.FUNCTION) {
+		funcDef, err := p.functionDefinition()
+
 		if err != nil {
 			return err
 		}
-		scope.Definitions = append(scope.Definitions, definition)
+
+		scope.Definitions = append(scope.Definitions, funcDef)
 	} else {
 		expression, err := p.expression()
 		if err != nil {
@@ -86,7 +111,44 @@ func (p *Parser) scopeItem(scope *ast.Scope) error {
 	return nil
 }
 
-func (p *Parser) definition() (*ast.Definition, error) {
+func (p *Parser) definition(ident *ast.Identifier) (*ast.Definition, error) {
+	if p.match(token.COLON) {
+		p.consume(token.COLON)
+
+		expr, err := p.expression()
+
+		if err != nil {
+			return nil, err
+		}
+
+		return &ast.Definition{
+			Identifier: *ident,
+			Expression: expr,
+		}, nil
+	} else if p.match(token.OPEN_BRACE) {
+		scope, err := p.scope()
+		expr := ast.Expression(scope)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return &ast.Definition{
+			Identifier: *ident,
+			Expression: expr,
+		}, nil
+	} else {
+		return nil, p.unexpected()
+	}
+}
+
+func (p *Parser) functionDefinition() (*ast.Definition, error) {
+	if err := p.expect(token.FUNCTION); err != nil {
+		return nil, err
+	}
+
+	p.consume(token.FUNCTION)
+
 	if err := p.expect(token.IDENTIFIER); err != nil {
 		return nil, err
 	}
@@ -98,15 +160,13 @@ func (p *Parser) definition() (*ast.Definition, error) {
 	parameters := []*ast.Identifier{}
 
 	for p.match(token.IDENTIFIER) {
-		param := ast.Identifier(p.token.Literal)
-		parameters = append(parameters, &param)
+		param := ast.NewIdentifier(p.token.Literal)
+		parameters = append(parameters, param)
 		p.consume(token.IDENTIFIER)
 	}
 
-	is_function := len(parameters) > 0
-
-	if p.match(token.COLON) {
-		p.consume(token.COLON)
+	if p.match(token.ARROW) {
+		p.consume(token.ARROW)
 
 		expr, err := p.expression()
 
@@ -114,11 +174,9 @@ func (p *Parser) definition() (*ast.Definition, error) {
 			return nil, err
 		}
 
-		if is_function {
-			expr = &ast.FunctionLiteral{
-				Parameters: parameters,
-				Body:       ast.ScopeExpressions(expr),
-			}
+		expr = &ast.FunctionLiteral{
+			Parameters: parameters,
+			Body:       ast.ScopeExpressions(expr),
 		}
 
 		return &ast.Definition{
@@ -133,11 +191,9 @@ func (p *Parser) definition() (*ast.Definition, error) {
 			return nil, err
 		}
 
-		if is_function {
-			expr = &ast.FunctionLiteral{
-				Parameters: parameters,
-				Body:       scope,
-			}
+		expr = &ast.FunctionLiteral{
+			Parameters: parameters,
+			Body:       scope,
 		}
 
 		return &ast.Definition{
@@ -151,7 +207,7 @@ func (p *Parser) definition() (*ast.Definition, error) {
 
 func (p *Parser) expression() (ast.Expression, error) {
 	if p.match(token.IDENTIFIER) {
-		return p.identifierPath()
+		return p.selector(nil)
 	} else if p.match(token.NUMBER) || p.match(token.MINUS) {
 		return p.number()
 	} else if p.match(token.BOOLEAN) {
@@ -179,16 +235,19 @@ func (p *Parser) identifier() *ast.Identifier {
 	return &ident
 }
 
-func (p *Parser) identifierPath() (ast.Expression, error) {
+func (p *Parser) selector(ident *ast.Identifier) (ast.Expression, error) {
 	items := []*ast.SelectorItem{}
 
-	if err := p.expect(token.IDENTIFIER); err != nil {
-		return nil, err
+	if ident == nil {
+		if err := p.expect(token.IDENTIFIER); err != nil {
+			return nil, err
+		}
+
+		ident = ast.NewIdentifier(p.token.Literal)
+		p.consume(token.IDENTIFIER)
 	}
 
-	first := p.identifier()
-	firstItem := ast.NewIdentifierSelector(first)
-
+	firstItem := ast.NewIdentifierSelector(ident)
 	items = append(items, firstItem)
 
 	for p.match(token.DOT) {
@@ -199,19 +258,13 @@ func (p *Parser) identifierPath() (ast.Expression, error) {
 			item := ast.NewIdentifierSelector(ident)
 			items = append(items, item)
 		} else if p.match(token.NUMBER) {
-			// TODO: the lexer reads decimal numbers as well, which is not ideal for this case:
-			//		 `rec.arr.2.mat.0.1` - reads `2.` and `0.1` as number tokens
-			//		 to fix this, stop the lexer from reading floats, just number sequences as unsigned integers
-			//		 that way I can parse the number properly as an integer or float, signed or unsigned in the
-			//		 p.number production method;
-			//		 plus, in the context of the selector, I can read only integers and this bug will not occurr
-			num, err := p.number()
+			num, err := p.unsignedInteger()
 
 			if err != nil {
 				return nil, err
 			}
 
-			item := ast.NewIndexSelector(num.(*ast.NumberLiteral))
+			item := ast.NewIndexSelector(num.(*ast.IntegerLiteral))
 			items = append(items, item)
 		} else {
 			return nil, p.unexpected()
@@ -227,7 +280,7 @@ func (p *Parser) number() (ast.Expression, error) {
 	numberStr := ""
 
 	if p.match(token.MINUS) {
-		numberStr += "-"
+		numberStr += p.token.Literal
 		p.consume(token.MINUS)
 	}
 
@@ -236,10 +289,51 @@ func (p *Parser) number() (ast.Expression, error) {
 	}
 
 	numberStr += p.token.Literal
-
-	num := ast.NewNumberLiteral(numberStr)
 	p.consume(token.NUMBER)
-	return num, nil
+
+	if p.match(token.DOT) {
+		numberStr += p.token.Literal
+		p.consume(token.DOT)
+
+		if err := p.expect(token.NUMBER); err != nil {
+			return nil, err
+		}
+
+		numberStr += p.token.Literal
+
+		value, err := strconv.ParseFloat(numberStr, 64)
+
+		if err != nil {
+			return nil, err
+		}
+
+		p.consume(token.NUMBER)
+		return ast.NewFloatLiteral(value), nil
+	}
+
+	value, err := strconv.ParseInt(numberStr, 0, 64)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ast.NewIntegerLiteral(value), nil
+}
+
+func (p *Parser) unsignedInteger() (ast.Expression, error) {
+	if err := p.expect(token.NUMBER); err != nil {
+		return nil, err
+	}
+
+	value, err := strconv.ParseInt(p.token.Literal, 0, 64)
+
+	if err != nil {
+		return nil, err
+	}
+
+	p.consume(token.NUMBER)
+
+	return ast.NewIntegerLiteral(value), nil
 }
 
 func (p *Parser) boolean() (ast.Expression, error) {
@@ -405,31 +499,21 @@ func (p *Parser) function() (ast.Expression, error) {
 		Parameters: []*ast.Identifier{},
 	}
 
-	if err := p.expect(token.IDENTIFIER); err != nil {
-		return nil, err
-	}
-
-	functionLiteral.Parameters = append(functionLiteral.Parameters, ast.NewIdentifier(p.token.Literal))
-
-	p.consume(token.IDENTIFIER)
-
 	for p.match(token.IDENTIFIER) {
 		param := ast.Identifier(p.token.Literal)
 		functionLiteral.Parameters = append(functionLiteral.Parameters, &param)
 		p.consume(token.IDENTIFIER)
 	}
 
-	if p.match(token.COLON) {
-		p.consume(token.COLON)
+	if p.match(token.ARROW) {
+		p.consume(token.ARROW)
 		expr, err := p.expression()
 
 		if err != nil {
 			return &ast.Definition{}, err
 		}
 
-		functionLiteral.Body = &ast.Scope{
-			Expressions: []ast.Expression{expr},
-		}
+		functionLiteral.Body = ast.ScopeExpressions(expr)
 	} else if p.match(token.OPEN_BRACE) {
 		scope, err := p.scope()
 
