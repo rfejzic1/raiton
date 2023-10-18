@@ -51,7 +51,6 @@ different cases and look at the stream of tokens produced.
 
 For now, the language supports only a single file. The file itself is a `Scope`, which can contain on of the following:
 - a definition
-- a type definition
 - an expression
 
 ### Definitions
@@ -60,31 +59,24 @@ Definitions are function or value definitions, where an expression is bound to a
 ```bash
 # These are definitions
 
-<number>
 five: 5
 
-<string>
 greeting: "Hello, Raiton"
 
-<number -> number -> number>
-add_two a b: (add a b) 
+add_two: \a b -> (add a b)
+# or
+fn add_two a b -> (add a b)
 ```
 
 The `#` symbol denotes the start of a comment, spanning to the end of the line.
 
-The `<...>` syntax before the identifier is a type declaration for the definition. The first one is a `number`, the next one is of type `string`
-and the final definition is a function that takes two `number`s and returns a `number`, represented by `number -> number -> number`.
-If you're comming from Ocaml or Haskell, this function type expression should seem familiar.
-
-> Note that the explicit type declaration is temporary for now, but I plan to implement a decent inference system, like the one Ocaml has.
-
-After the identifier, the parser expects a optional list parameters, like shown above. In the case that a definition has parameters,
-it's considered a function. If it doesn't contain parameters, it's considered a value bind, but it's still lazily evaluated, which
-we'll talk about more later.
+Functions can be defined in two ways, as shown above. One way is to do default definitions and use a function expression
+or to use the `fn` keyword to define a function in a more explicit manner. Both have the same outcome, binding a function
+expression to a name.
 
 The definitions support mutliple expressions if denoted by a block, like this:
 ```bash
-greet name {
+fn greet name {
   # other nested definitions are supported
   greeting: "Hello"
   
@@ -98,35 +90,10 @@ literal syntax uses the curly braces as well. So for now the way to use a scope 
 colon. The last expression is the one to which the entire scope evaluates to, in this case a function invocation to concatinate
 the string arguments.
 
-### Type Definitions
-
-Type definitions are, as the name suggests, definition of user types. They start with the `type` keyword, followed by an identifier
-and a type expression after the colon (`:`). For example:
-```bash
-type person: {
-  name: string
-  age: number
-}
-
-<person>
-john: { name: "John" age: 24 }
-```
-This is an example of a record type named `person` and a definition named `john` of the `person` type. Alternatevly, we could cast the
-record literal to the person type like this:
-```bash
-jane: (person { name: "Jane", age: 24 })
-```
-
-This is basically a function call in LISP style `(func arg1 arg2 etc)`, calling the type name as a function, which expects a record of
-it's own type and returns it. Because of inference, this is basically a cast. Additionally, to get the value of a record field,
-you would do something like:
-```bash
-(person.name jane) # evaluates to "Jane"
-```
-
 ### Expressions
 
-Expressions are evaluated lazily. Here are some examples of expressions:
+Expressions are currently evaluated eagerly. The plan is to have them evaluated lazily in the future.
+Here are some examples of expressions:
 ```bash
 # number literal
 5
@@ -135,9 +102,9 @@ Expressions are evaluated lazily. Here are some examples of expressions:
 "John"
 
 # function literal
-\x: (square x)
+\x -> (square x)
 
-# invocation
+# function application
 (concat "Rai" "ton")
 
 # array literal
@@ -151,4 +118,10 @@ some_function
 
 # record litaral
 { attack_power: 100, health_point: 1000 }
+
+# selector
+person.name
+
+# array indexing via selector
+my_arr.0
 ```
