@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/urfave/cli/v2"
 )
 
@@ -27,14 +28,21 @@ type repl struct {
 type errorMsg error
 type resultMsg object.Object
 
+var titleStyle = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(105))
+var promptStyle = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(105))
+var dimmedStyle = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(8))
+var expressionStyle = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(7))
+var errorStyle = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(9))
+
 func initialModel() *repl {
 	vp := viewport.New(0, 0)
-	ti := textinput.New()
-
-	ti.Focus()
 	vp.KeyMap = viewportKeyMap()
 
-	lines := []string{"Raiton v0.0.1"}
+	ti := textinput.New()
+	ti.Focus()
+	ti.PromptStyle = promptStyle
+
+	lines := []string{"Raiton " + titleStyle.Render("v0.0.1")}
 	vp.SetContent(strings.Join(lines, "\n"))
 
 	return &repl{
@@ -78,7 +86,7 @@ func (m *repl) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.addLine(msg.Inspect())
 		return m, nil
 	case errorMsg:
-		m.addLine(msg.Error())
+		m.addLine(errorStyle.Render(msg.Error()))
 		return m, nil
 	}
 
@@ -98,7 +106,7 @@ func (m *repl) evaluate(msg tea.Msg) (*repl, tea.Cmd) {
 		return m, tea.Quit
 	}
 
-	line := fmt.Sprintf("> %s", rawInput)
+	line := fmt.Sprintf("%s %s", promptStyle.Render(">"), rawInput)
 	m.addLine(line)
 
 	if input == "" {
@@ -123,7 +131,7 @@ func (m *repl) nextItem(msg tea.Msg) (*repl, tea.Cmd) {
 }
 
 func (r *repl) addLine(line string) {
-	r.lines = append(r.lines, line)
+	r.lines = append(r.lines, expressionStyle.Render(line))
 	r.history.reset()
 	r.computeViewportHeight()
 	r.viewport.SetContent(strings.Join(r.lines, "\n"))
@@ -151,7 +159,7 @@ func (m *repl) View() string {
 
 	s.WriteString(m.textInput.View())
 	s.WriteString("\n")
-	s.WriteString("(type 'exit' or ctrl+c to quit)")
+	s.WriteString(dimmedStyle.Render("(type 'exit' or ctrl+c to quit)"))
 
 	return fmt.Sprintf(s.String())
 }
