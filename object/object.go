@@ -179,7 +179,7 @@ type Builtin struct {
 	Fn BuiltinFunction
 }
 
-func MakeBuiltin(fn BuiltinFunction) *Builtin {
+func NewBuiltin(fn BuiltinFunction) *Builtin {
 	return &Builtin{
 		Fn: fn,
 	}

@@ -244,3 +244,22 @@ func TestFunctionLexing(t *testing.T) {
 		{token.CLOSED_PAREN, `)`},
 	})
 }
+
+func TestIfExpressionLexing(t *testing.T) {
+	test := newTest(t, "TestFunctionLexing")
+	source := `if condition: "yes" else: "no"`
+
+	test.expect(source, []tokenExpect{
+		{token.IF, `if`},
+		{token.IDENTIFIER, `condition`},
+		{token.COLON, `:`},
+		{token.DOUBLE_QUOTE, `"`},
+		{token.STRING, `yes`},
+		{token.DOUBLE_QUOTE, `"`},
+		{token.ELSE, `else`},
+		{token.COLON, `:`},
+		{token.DOUBLE_QUOTE, `"`},
+		{token.STRING, `no`},
+		{token.DOUBLE_QUOTE, `"`},
+	})
+}

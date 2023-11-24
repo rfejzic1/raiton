@@ -8,8 +8,9 @@ import (
 )
 
 var builtins = map[string]*object.Builtin{
-	"add": object.MakeBuiltin(add),
-	"map": object.MakeBuiltin(mapfn),
+	"add": object.NewBuiltin(add),
+	"eq":  object.NewBuiltin(eq),
+	"map": object.NewBuiltin(mapfn),
 }
 
 func add(_ ast.Visitor, args ...object.Object) (object.Object, error) {
@@ -32,6 +33,36 @@ func add(_ ast.Visitor, args ...object.Object) (object.Object, error) {
 	return &object.Integer{
 		Value: result,
 	}, nil
+}
+
+func eq(_ ast.Visitor, args ...object.Object) (object.Object, error) {
+	if len(args) != 2 {
+		return nil, fmt.Errorf("expected two objects to compare")
+	}
+
+	first := args[0]
+	second := args[1]
+
+	if first.Type() != second.Type() {
+		return nil, fmt.Errorf("expected both arguments to be of same type, but got %s and %s", first.Type(), second.Type())
+	}
+
+	switch f := first.(type) {
+	case *object.Boolean:
+		s := second.(*object.Boolean)
+		return object.BoxBoolean(f.Value == s.Value), nil
+	case *object.Integer:
+		s := second.(*object.Integer)
+		return object.BoxBoolean(f.Value == s.Value), nil
+	case *object.Float:
+		s := second.(*object.Float)
+		return object.BoxBoolean(f.Value == s.Value), nil
+	case *object.String:
+		s := second.(*object.String)
+		return object.BoxBoolean(f.Value == s.Value), nil
+	default:
+		return nil, fmt.Errorf("unsuported equality operation for type %s", f.Type())
+	}
 }
 
 func mapfn(v ast.Visitor, args ...object.Object) (object.Object, error) {

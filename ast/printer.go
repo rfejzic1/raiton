@@ -130,6 +130,26 @@ func (p *Printer) VisitApplication(n *Application) error {
 	return nil
 }
 
+func (p *Printer) VisitConditional(n *Conditional) error {
+	p.write("if ")
+
+	if err := n.Condition.Accept(p); err != nil {
+		return err
+	}
+
+	if err := n.Consequence.Accept(p); err != nil {
+		return err
+	}
+
+	p.write(" else ")
+
+	if err := n.Alternative.Accept(p); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p *Printer) VisitFunction(n *Function) error {
 	p.write("\\")
 

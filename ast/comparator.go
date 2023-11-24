@@ -142,6 +142,34 @@ func (c *Comparator) VisitApplication(expected *Application) error {
 	return nil
 }
 
+func (c *Comparator) VisitConditional(expected *Conditional) error {
+	current, ok := c.current.(*Conditional)
+
+	if !ok {
+		return nodeTypeError("Conditional")
+	}
+
+	c.observe(current.Condition)
+
+	if err := c.Compare(expected.Condition); err != nil {
+		return err
+	}
+
+	c.observe(current.Consequence)
+
+	if err := c.Compare(expected.Consequence); err != nil {
+		return err
+	}
+
+	c.observe(current.Alternative)
+
+	if err := c.Compare(expected.Alternative); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (c *Comparator) VisitFunction(expected *Function) error {
 	current, ok := c.current.(*Function)
 

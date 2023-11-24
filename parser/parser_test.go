@@ -79,6 +79,24 @@ func TestExpressionArray(t *testing.T) {
 	parseAndCompare(t, source, &expected)
 }
 
+func TestExpressionArrayWithoutSize(t *testing.T) {
+	source := `[: 2 4 8 16]`
+
+	expected := ast.Scope{
+		Expressions: []ast.Expression{
+			ast.NewArray(
+				4,
+				ast.NewInteger(2),
+				ast.NewInteger(4),
+				ast.NewInteger(8),
+				ast.NewInteger(16),
+			),
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
 func TestExpressionList(t *testing.T) {
 	source := `[1 2 3]`
 
@@ -95,7 +113,7 @@ func TestExpressionList(t *testing.T) {
 	parseAndCompare(t, source, &expected)
 }
 
-func TestExpressionInvocation(t *testing.T) {
+func TestExpressionApplication(t *testing.T) {
 	source := `(println "Hello, World")`
 
 	expected := ast.Scope{
@@ -104,6 +122,38 @@ func TestExpressionInvocation(t *testing.T) {
 				ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("println"))),
 				ast.NewString("Hello, World"),
 			),
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestConditional(t *testing.T) {
+	source := `if condition: "yes" else: "no"`
+
+	expected := ast.Scope{
+		Expressions: []ast.Expression{
+			&ast.Conditional{
+				Condition:   ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("condition"))),
+				Consequence: ast.ScopeExpressions(ast.NewString("yes")),
+				Alternative: ast.ScopeExpressions(ast.NewString("no")),
+			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestConditionalScopes(t *testing.T) {
+	source := `if condition { "yes" } else { "no" }`
+
+	expected := ast.Scope{
+		Expressions: []ast.Expression{
+			&ast.Conditional{
+				Condition:   ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("condition"))),
+				Consequence: ast.ScopeExpressions(ast.NewString("yes")),
+				Alternative: ast.ScopeExpressions(ast.NewString("no")),
+			},
 		},
 	}
 

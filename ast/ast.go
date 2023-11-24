@@ -8,6 +8,7 @@ type Visitor interface {
 	VisitSelectorItem(n *SelectorItem) error
 	VisitApplication(n *Application) error
 	VisitFunction(n *Function) error
+	VisitConditional(n *Conditional) error
 	VisitRecord(n *Record) error
 	VisitArray(n *Array) error
 	VisitList(n *List) error
@@ -119,6 +120,16 @@ type Function struct {
 
 func (f *Function) Accept(visitor Visitor) error {
 	return visitor.VisitFunction(f)
+}
+
+type Conditional struct {
+	Condition   Expression
+	Consequence *Scope
+	Alternative *Scope
+}
+
+func (c *Conditional) Accept(visitor Visitor) error {
+	return visitor.VisitConditional(c)
 }
 
 type Record struct {

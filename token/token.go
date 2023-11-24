@@ -26,6 +26,8 @@ var KEYWORDS = map[string]TokenType{
 	"true":  BOOLEAN,
 	"false": BOOLEAN,
 	"fn":    FUNCTION,
+	"if":    IF,
+	"else":  ELSE,
 }
 
 var SYMBOLS = map[string]TokenType{
@@ -49,6 +51,8 @@ const (
 	NUMBER     = "number"
 	BOOLEAN    = "boolean"
 	FUNCTION   = "function"
+	IF         = "if"
+	ELSE       = "else"
 
 	OPEN_PAREN     = "left_paren"
 	CLOSED_PAREN   = "right_paren"

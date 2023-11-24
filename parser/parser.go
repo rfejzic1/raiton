@@ -201,6 +201,8 @@ func (p *Parser) expression() (ast.Expression, error) {
 		return p.function()
 	case p.match(token.OPEN_PAREN):
 		return p.invocation()
+	case p.match(token.IF):
+		return p.conditional()
 	default:
 		return nil, p.unexpected()
 	}
@@ -517,6 +519,40 @@ func (p *Parser) invocation() (ast.Expression, error) {
 	p.consume(token.CLOSED_PAREN)
 
 	return &invocation, nil
+}
+
+func (p *Parser) conditional() (ast.Expression, error) {
+	p.consume(token.IF)
+
+	condition, err := p.expression()
+
+	if err != nil {
+		return nil, err
+	}
+
+	consequence, err := p.scope()
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := p.expect(token.ELSE); err != nil {
+		return nil, err
+	}
+
+	p.consume(token.ELSE)
+
+	alternative, err := p.scope()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &ast.Conditional{
+		Condition:   condition,
+		Consequence: consequence,
+		Alternative: alternative,
+	}, nil
 }
 
 /*** Parser utility methods ***/

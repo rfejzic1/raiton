@@ -283,6 +283,32 @@ func (e *Evaluator) VisitFunction(f *ast.Function) error {
 	return nil
 }
 
+func (e *Evaluator) VisitConditional(c *ast.Conditional) error {
+	if err := c.Condition.Accept(e); err != nil {
+		return err
+	}
+
+	obj := e.results.pop()
+
+	condition, ok := obj.(*object.Boolean)
+
+	if !ok {
+		return fmt.Errorf("expected a boolean value in if-expression condition")
+	}
+
+	if condition.Value {
+		if err := c.Consequence.Accept(e); err != nil {
+			return nil
+		}
+	} else {
+		if err := c.Alternative.Accept(e); err != nil {
+			return nil
+		}
+	}
+
+	return nil
+}
+
 func (e *Evaluator) VisitRecord(r *ast.Record) error {
 	record := &object.Record{
 		Value: map[string]object.Object{},
