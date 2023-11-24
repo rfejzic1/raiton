@@ -142,8 +142,8 @@ func (c *Comparator) VisitApplication(expected *Application) error {
 	return nil
 }
 
-func (c *Comparator) VisitFunction(expected *FunctionLiteral) error {
-	current, ok := c.current.(*FunctionLiteral)
+func (c *Comparator) VisitFunction(expected *Function) error {
+	current, ok := c.current.(*Function)
 
 	if !ok {
 		return nodeTypeError("FunctionLiteral")
@@ -162,8 +162,8 @@ func (c *Comparator) VisitFunction(expected *FunctionLiteral) error {
 	return nil
 }
 
-func (c *Comparator) VisitRecord(expected *RecordLiteral) error {
-	current, ok := c.current.(*RecordLiteral)
+func (c *Comparator) VisitRecord(expected *Record) error {
+	current, ok := c.current.(*Record)
 
 	if !ok {
 		return nodeTypeError("RecordLiteral")
@@ -176,8 +176,8 @@ func (c *Comparator) VisitRecord(expected *RecordLiteral) error {
 	return nil
 }
 
-func (c *Comparator) VisitArray(expected *ArrayLiteral) error {
-	current, ok := c.current.(*ArrayLiteral)
+func (c *Comparator) VisitArray(expected *Array) error {
+	current, ok := c.current.(*Array)
 
 	if !ok {
 		return nodeTypeError("ArrayLiteral")
@@ -194,8 +194,8 @@ func (c *Comparator) VisitArray(expected *ArrayLiteral) error {
 	return nil
 }
 
-func (c *Comparator) VisitSlice(expected *SliceLiteral) error {
-	current, ok := c.current.(*SliceLiteral)
+func (c *Comparator) VisitSlice(expected *Slice) error {
+	current, ok := c.current.(*Slice)
 
 	if !ok {
 		return nodeTypeError("SliceLiteral")
@@ -208,8 +208,8 @@ func (c *Comparator) VisitSlice(expected *SliceLiteral) error {
 	return nil
 }
 
-func (c *Comparator) VisitInteger(expected *IntegerLiteral) error {
-	current, ok := c.current.(*IntegerLiteral)
+func (c *Comparator) VisitInteger(expected *Integer) error {
+	current, ok := c.current.(*Integer)
 
 	if !ok {
 		return nodeTypeError("NumberLiteral")
@@ -222,8 +222,8 @@ func (c *Comparator) VisitInteger(expected *IntegerLiteral) error {
 	return nil
 }
 
-func (c *Comparator) VisitFloat(expected *FloatLiteral) error {
-	current, ok := c.current.(*FloatLiteral)
+func (c *Comparator) VisitFloat(expected *Float) error {
+	current, ok := c.current.(*Float)
 
 	if !ok {
 		return nodeTypeError("FloatLiteral")
@@ -236,8 +236,8 @@ func (c *Comparator) VisitFloat(expected *FloatLiteral) error {
 	return nil
 }
 
-func (c *Comparator) VisitBoolean(expected *BooleanLiteral) error {
-	current, ok := c.current.(*BooleanLiteral)
+func (c *Comparator) VisitBoolean(expected *Boolean) error {
+	current, ok := c.current.(*Boolean)
 
 	if !ok {
 		return nodeTypeError("BooleanLiteral")
@@ -250,8 +250,8 @@ func (c *Comparator) VisitBoolean(expected *BooleanLiteral) error {
 	return nil
 }
 
-func (c *Comparator) VisitString(expected *StringLiteral) error {
-	current, ok := c.current.(*StringLiteral)
+func (c *Comparator) VisitString(expected *String) error {
+	current, ok := c.current.(*String)
 
 	if !ok {
 		return nodeTypeError("StringLiteral")

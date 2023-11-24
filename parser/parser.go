@@ -173,7 +173,7 @@ func (p *Parser) functionDefinition() (*ast.Definition, error) {
 		return nil, err
 	}
 
-	function := &ast.FunctionLiteral{
+	function := &ast.Function{
 		Parameters: params,
 		Body:       scope,
 	}
@@ -243,7 +243,7 @@ func (p *Parser) selector(ident *ast.Identifier) (ast.Expression, error) {
 				return nil, err
 			}
 
-			item := ast.NewIndexSelector(num.(*ast.IntegerLiteral))
+			item := ast.NewIndexSelector(num.(*ast.Integer))
 			items = append(items, item)
 		} else {
 			return nil, p.unexpected()
@@ -287,7 +287,7 @@ func (p *Parser) number() (ast.Expression, error) {
 		}
 
 		p.consume(token.NUMBER)
-		return ast.NewFloatLiteral(value), nil
+		return ast.NewFloat(value), nil
 	}
 
 	value, err := strconv.ParseInt(numberStr, 0, 64)
@@ -296,7 +296,7 @@ func (p *Parser) number() (ast.Expression, error) {
 		return nil, err
 	}
 
-	return ast.NewIntegerLiteral(value), nil
+	return ast.NewInteger(value), nil
 }
 
 func (p *Parser) unsignedInteger() (ast.Expression, error) {
@@ -312,13 +312,13 @@ func (p *Parser) unsignedInteger() (ast.Expression, error) {
 
 	p.consume(token.NUMBER)
 
-	return ast.NewIntegerLiteral(value), nil
+	return ast.NewInteger(value), nil
 }
 
 func (p *Parser) boolean() (ast.Expression, error) {
 	value := p.token.Literal
 	p.consume(token.BOOLEAN)
-	return ast.NewBooleanLiteral(value), nil
+	return ast.NewBoolean(value), nil
 }
 
 func (p *Parser) string() (ast.Expression, error) {
@@ -330,7 +330,7 @@ func (p *Parser) string() (ast.Expression, error) {
 		return nil, err
 	}
 
-	str := ast.NewStringLiteral(p.token.Literal)
+	str := ast.NewString(p.token.Literal)
 
 	p.consume(token.STRING)
 
@@ -396,7 +396,7 @@ func (p *Parser) array() (ast.Expression, error) {
 
 	p.consume(token.COLON)
 
-	array := &ast.ArrayLiteral{
+	array := &ast.Array{
 		Size:     size,
 		Elements: []ast.Expression{},
 	}
@@ -414,7 +414,7 @@ func (p *Parser) array() (ast.Expression, error) {
 }
 
 func (p *Parser) slice() (ast.Expression, error) {
-	slice := &ast.SliceLiteral{
+	slice := &ast.Slice{
 		Elements: []ast.Expression{},
 	}
 
@@ -433,7 +433,7 @@ func (p *Parser) slice() (ast.Expression, error) {
 func (p *Parser) record() (ast.Expression, error) {
 	p.consume(token.OPEN_BRACE)
 
-	recordLiteral := ast.RecordLiteral{
+	record := ast.Record{
 		Fields: map[ast.Identifier]ast.Expression{},
 	}
 
@@ -453,7 +453,7 @@ func (p *Parser) record() (ast.Expression, error) {
 			return nil, err
 		}
 
-		recordLiteral.Fields[field] = expression
+		record.Fields[field] = expression
 	}
 
 	if err := p.expect(token.CLOSED_BRACE); err != nil {
@@ -462,7 +462,7 @@ func (p *Parser) record() (ast.Expression, error) {
 
 	p.consume(token.CLOSED_BRACE)
 
-	return &recordLiteral, nil
+	return &record, nil
 }
 
 func (p *Parser) function() (ast.Expression, error) {
@@ -481,7 +481,7 @@ func (p *Parser) function() (ast.Expression, error) {
 		return nil, err
 	}
 
-	return &ast.FunctionLiteral{
+	return &ast.Function{
 		Parameters: params,
 		Body:       scope,
 	}, nil

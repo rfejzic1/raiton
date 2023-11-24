@@ -28,7 +28,7 @@ func TestExpressionString(t *testing.T) {
 
 	expected := ast.Scope{
 		Expressions: []ast.Expression{
-			ast.NewStringLiteral("this is a string"),
+			ast.NewString("this is a string"),
 		},
 	}
 
@@ -52,10 +52,10 @@ func TestExpressionNumber(t *testing.T) {
 
 	expected := ast.Scope{
 		Expressions: []ast.Expression{
-			ast.NewIntegerLiteral(5),
-			ast.NewFloatLiteral(2.65),
-			ast.NewIntegerLiteral(-1),
-			ast.NewFloatLiteral(-3.14),
+			ast.NewInteger(5),
+			ast.NewFloat(2.65),
+			ast.NewInteger(-1),
+			ast.NewFloat(-3.14),
 		},
 	}
 
@@ -67,11 +67,11 @@ func TestExpressionArray(t *testing.T) {
 
 	expected := ast.Scope{
 		Expressions: []ast.Expression{
-			ast.NewArrayLiteral(
+			ast.NewArray(
 				3,
-				ast.NewIntegerLiteral(1),
-				ast.NewIntegerLiteral(2),
-				ast.NewIntegerLiteral(3),
+				ast.NewInteger(1),
+				ast.NewInteger(2),
+				ast.NewInteger(3),
 			),
 		},
 	}
@@ -84,10 +84,10 @@ func TestExpressionSlice(t *testing.T) {
 
 	expected := ast.Scope{
 		Expressions: []ast.Expression{
-			ast.NewSliceLiteral(
-				ast.NewIntegerLiteral(1),
-				ast.NewIntegerLiteral(2),
-				ast.NewIntegerLiteral(3),
+			ast.NewSlice(
+				ast.NewInteger(1),
+				ast.NewInteger(2),
+				ast.NewInteger(3),
 			),
 		},
 	}
@@ -102,7 +102,7 @@ func TestExpressionInvocation(t *testing.T) {
 		Expressions: []ast.Expression{
 			ast.NewApplication(
 				ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("println"))),
-				ast.NewStringLiteral("Hello, World"),
+				ast.NewString("Hello, World"),
 			),
 		},
 	}
@@ -119,7 +119,7 @@ func TestDefinitionWithSingleExpression(t *testing.T) {
 		Definitions: []*ast.Definition{
 			{
 				Identifier: ast.Identifier("name"),
-				Expression: ast.NewStringLiteral("Tojuro"),
+				Expression: ast.NewString("Tojuro"),
 			},
 		},
 	}
@@ -136,7 +136,7 @@ func TestFunctionDefinitionWithSingleExpression(t *testing.T) {
 		Definitions: []*ast.Definition{
 			{
 				Identifier: ast.Identifier("add_two"),
-				Expression: &ast.FunctionLiteral{
+				Expression: &ast.Function{
 					Parameters: []*ast.Identifier{
 						ast.NewIdentifier("x"),
 					},
@@ -144,7 +144,7 @@ func TestFunctionDefinitionWithSingleExpression(t *testing.T) {
 						ast.NewApplication(
 							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("add"))),
 							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("x"))),
-							ast.NewIntegerLiteral(2),
+							ast.NewInteger(2),
 						),
 					),
 				},
@@ -164,7 +164,7 @@ func TestFunctionDefinitionWithScope(t *testing.T) {
 		Definitions: []*ast.Definition{
 			{
 				Identifier: ast.Identifier("add_three"),
-				Expression: &ast.FunctionLiteral{
+				Expression: &ast.Function{
 					Parameters: []*ast.Identifier{
 						ast.NewIdentifier("x"),
 					},
@@ -172,7 +172,7 @@ func TestFunctionDefinitionWithScope(t *testing.T) {
 						ast.NewApplication(
 							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("add"))),
 							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("x"))),
-							ast.NewIntegerLiteral(3),
+							ast.NewInteger(3),
 						),
 					),
 				},

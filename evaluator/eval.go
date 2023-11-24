@@ -264,7 +264,7 @@ func (e *Evaluator) applyFunction(fn *object.Function, args ...object.Object) (o
 	return obj, nil
 }
 
-func (e *Evaluator) VisitFunction(f *ast.FunctionLiteral) error {
+func (e *Evaluator) VisitFunction(f *ast.Function) error {
 	obj := &object.Function{
 		Parameters:  f.Parameters,
 		Body:        f.Body,
@@ -276,7 +276,7 @@ func (e *Evaluator) VisitFunction(f *ast.FunctionLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitRecord(r *ast.RecordLiteral) error {
+func (e *Evaluator) VisitRecord(r *ast.Record) error {
 	record := &object.Record{
 		Value: map[string]object.Object{},
 	}
@@ -295,7 +295,7 @@ func (e *Evaluator) VisitRecord(r *ast.RecordLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitArray(a *ast.ArrayLiteral) error {
+func (e *Evaluator) VisitArray(a *ast.Array) error {
 	objs := []object.Object{}
 
 	for _, elem := range a.Elements {
@@ -323,7 +323,7 @@ func (e *Evaluator) VisitArray(a *ast.ArrayLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitSlice(s *ast.SliceLiteral) error {
+func (e *Evaluator) VisitSlice(s *ast.Slice) error {
 	objs := []object.Object{}
 
 	for _, elem := range s.Elements {
@@ -351,7 +351,7 @@ func (e *Evaluator) VisitSlice(s *ast.SliceLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitInteger(n *ast.IntegerLiteral) error {
+func (e *Evaluator) VisitInteger(n *ast.Integer) error {
 	result := &object.Integer{
 		Value: int64(*n),
 	}
@@ -361,7 +361,7 @@ func (e *Evaluator) VisitInteger(n *ast.IntegerLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitFloat(n *ast.FloatLiteral) error {
+func (e *Evaluator) VisitFloat(n *ast.Float) error {
 	result := &object.Float{
 		Value: float64(*n),
 	}
@@ -371,7 +371,7 @@ func (e *Evaluator) VisitFloat(n *ast.FloatLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitString(s *ast.StringLiteral) error {
+func (e *Evaluator) VisitString(s *ast.String) error {
 	result := &object.String{
 		Value: string(*s),
 	}
@@ -381,7 +381,7 @@ func (e *Evaluator) VisitString(s *ast.StringLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitBoolean(b *ast.BooleanLiteral) error {
+func (e *Evaluator) VisitBoolean(b *ast.Boolean) error {
 	value, err := strconv.ParseBool(string(*b))
 
 	if err != nil {

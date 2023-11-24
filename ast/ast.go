@@ -7,14 +7,14 @@ type Visitor interface {
 	VisitSelector(n *Selector) error
 	VisitSelectorItem(n *SelectorItem) error
 	VisitApplication(n *Application) error
-	VisitFunction(n *FunctionLiteral) error
-	VisitRecord(n *RecordLiteral) error
-	VisitArray(n *ArrayLiteral) error
-	VisitSlice(n *SliceLiteral) error
-	VisitInteger(n *IntegerLiteral) error
-	VisitFloat(n *FloatLiteral) error
-	VisitString(n *StringLiteral) error
-	VisitBoolean(n *BooleanLiteral) error
+	VisitFunction(n *Function) error
+	VisitRecord(n *Record) error
+	VisitArray(n *Array) error
+	VisitSlice(n *Slice) error
+	VisitInteger(n *Integer) error
+	VisitFloat(n *Float) error
+	VisitString(n *String) error
+	VisitBoolean(n *Boolean) error
 }
 
 type Node interface {
@@ -69,7 +69,7 @@ type Selector struct {
 
 type SelectorItem struct {
 	Identifier *Identifier
-	Index      *IntegerLiteral
+	Index      *Integer
 }
 
 func NewIdentifierSelector(ident *Identifier) *SelectorItem {
@@ -82,7 +82,7 @@ func (i *SelectorItem) Accept(visitor Visitor) error {
 	return visitor.VisitSelectorItem(i)
 }
 
-func NewIndexSelector(num *IntegerLiteral) *SelectorItem {
+func NewIndexSelector(num *Integer) *SelectorItem {
 	return &SelectorItem{
 		Index: num,
 	}
@@ -112,93 +112,93 @@ func (i *Application) Accept(visitor Visitor) error {
 	return visitor.VisitApplication(i)
 }
 
-type FunctionLiteral struct {
+type Function struct {
 	Parameters []*Identifier
 	Body       *Scope
 }
 
-func (f *FunctionLiteral) Accept(visitor Visitor) error {
+func (f *Function) Accept(visitor Visitor) error {
 	return visitor.VisitFunction(f)
 }
 
-type RecordLiteral struct {
+type Record struct {
 	Fields map[Identifier]Expression
 }
 
-func (r *RecordLiteral) Accept(visitor Visitor) error {
+func (r *Record) Accept(visitor Visitor) error {
 	return visitor.VisitRecord(r)
 }
 
-type ArrayLiteral struct {
+type Array struct {
 	Size     uint64
 	Elements []Expression
 }
 
-func NewArrayLiteral(size uint64, elements ...Expression) *ArrayLiteral {
-	return &ArrayLiteral{
+func NewArray(size uint64, elements ...Expression) *Array {
+	return &Array{
 		Size:     size,
 		Elements: elements,
 	}
 }
 
-func (a *ArrayLiteral) Accept(visitor Visitor) error {
+func (a *Array) Accept(visitor Visitor) error {
 	return visitor.VisitArray(a)
 }
 
-type SliceLiteral struct {
+type Slice struct {
 	Elements []Expression
 }
 
-func NewSliceLiteral(elements ...Expression) *SliceLiteral {
-	return &SliceLiteral{
+func NewSlice(elements ...Expression) *Slice {
+	return &Slice{
 		Elements: elements,
 	}
 }
 
-func (s *SliceLiteral) Accept(visitor Visitor) error {
+func (s *Slice) Accept(visitor Visitor) error {
 	return visitor.VisitSlice(s)
 }
 
-type IntegerLiteral int64
+type Integer int64
 
-func NewIntegerLiteral(value int64) *IntegerLiteral {
-	num := IntegerLiteral(value)
+func NewInteger(value int64) *Integer {
+	num := Integer(value)
 	return &num
 }
 
-func (n *IntegerLiteral) Accept(visitor Visitor) error {
+func (n *Integer) Accept(visitor Visitor) error {
 	return visitor.VisitInteger(n)
 }
 
-type FloatLiteral float64
+type Float float64
 
-func NewFloatLiteral(value float64) *FloatLiteral {
-	num := FloatLiteral(value)
+func NewFloat(value float64) *Float {
+	num := Float(value)
 	return &num
 }
 
-func (n *FloatLiteral) Accept(visitor Visitor) error {
+func (n *Float) Accept(visitor Visitor) error {
 	return visitor.VisitFloat(n)
 }
 
-type StringLiteral string
+type String string
 
-func NewStringLiteral(value string) *StringLiteral {
-	string := StringLiteral(value)
+func NewString(value string) *String {
+	string := String(value)
 	return &string
 }
 
-func (s *StringLiteral) Accept(visitor Visitor) error {
+func (s *String) Accept(visitor Visitor) error {
 	return visitor.VisitString(s)
 }
 
-type BooleanLiteral string
+type Boolean string
 
-func NewBooleanLiteral(value string) *BooleanLiteral {
-	bool := BooleanLiteral(value)
+func NewBoolean(value string) *Boolean {
+	bool := Boolean(value)
 	return &bool
 }
 
-func (b *BooleanLiteral) Accept(visitor Visitor) error {
+func (b *Boolean) Accept(visitor Visitor) error {
 	return visitor.VisitBoolean(b)
 }
