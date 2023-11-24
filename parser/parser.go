@@ -194,7 +194,7 @@ func (p *Parser) expression() (ast.Expression, error) {
 	} else if p.match(token.DOUBLE_QUOTE) {
 		return p.string()
 	} else if p.match(token.SINGLE_QUOTE) {
-		return p.character()
+		return p.string()
 	} else if p.match(token.OPEN_BRACKET) {
 		return p.arrayOrSlice()
 	} else if p.match(token.OPEN_BRACE) {
@@ -322,31 +322,25 @@ func (p *Parser) boolean() (ast.Expression, error) {
 }
 
 func (p *Parser) string() (ast.Expression, error) {
-	p.consume(token.DOUBLE_QUOTE)
-	if err := p.expect(token.STRING); err != nil {
-		return nil, err
-	}
-	str := ast.NewStringLiteral(p.token.Literal)
-	p.consume(token.STRING)
-	if err := p.expect(token.DOUBLE_QUOTE); err != nil {
-		return nil, err
-	}
-	p.consume(token.DOUBLE_QUOTE)
-	return str, nil
-}
+	quote := p.token.Type
 
-func (p *Parser) character() (ast.Expression, error) {
-	p.consume(token.SINGLE_QUOTE)
+	p.consume(quote)
+
 	if err := p.expect(token.STRING); err != nil {
 		return nil, err
 	}
-	char := ast.NewCharacterLiteral(p.token.Literal)
+
+	str := ast.NewStringLiteral(p.token.Literal)
+
 	p.consume(token.STRING)
-	if err := p.expect(token.SINGLE_QUOTE); err != nil {
+
+	if err := p.expect(quote); err != nil {
 		return nil, err
 	}
-	p.consume(token.SINGLE_QUOTE)
-	return char, nil
+
+	p.consume(quote)
+
+	return str, nil
 }
 
 func (p *Parser) arrayOrSlice() (ast.Expression, error) {

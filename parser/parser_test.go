@@ -35,18 +35,6 @@ func TestExpressionString(t *testing.T) {
 	parseAndCompare(t, source, &expected)
 }
 
-func TestExpressionCharacter(t *testing.T) {
-	source := `'c'`
-
-	expected := ast.Scope{
-		Expressions: []ast.Expression{
-			ast.NewCharacterLiteral("c"),
-		},
-	}
-
-	parseAndCompare(t, source, &expected)
-}
-
 func TestExpressionNumber(t *testing.T) {
 	source := `
 	# number expression; positive integer

@@ -215,11 +215,6 @@ func (p *Printer) VisitString(n *StringLiteral) error {
 	return nil
 }
 
-func (p *Printer) VisitCharacter(n *CharacterLiteral) error {
-	p.write(string(*n))
-	return nil
-}
-
 func (p *Printer) VisitBoolean(n *BooleanLiteral) error {
 	p.write(string(*n))
 	return nil

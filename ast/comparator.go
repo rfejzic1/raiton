@@ -264,20 +264,6 @@ func (c *Comparator) VisitString(expected *StringLiteral) error {
 	return nil
 }
 
-func (c *Comparator) VisitCharacter(expected *CharacterLiteral) error {
-	current, ok := c.current.(*CharacterLiteral)
-
-	if !ok {
-		return nodeTypeError("CharacterLiteral")
-	}
-
-	if string(*current) != string(*expected) {
-		return fmt.Errorf("expected `%s`, but got `%s`", string(*expected), string(*current))
-	}
-
-	return nil
-}
-
 /*** Helper Functions ***/
 
 func nodeTypeError(expected string) error {

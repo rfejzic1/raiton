@@ -14,7 +14,6 @@ type Visitor interface {
 	VisitInteger(n *IntegerLiteral) error
 	VisitFloat(n *FloatLiteral) error
 	VisitString(n *StringLiteral) error
-	VisitCharacter(n *CharacterLiteral) error
 	VisitBoolean(n *BooleanLiteral) error
 }
 
@@ -191,17 +190,6 @@ func NewStringLiteral(value string) *StringLiteral {
 
 func (s *StringLiteral) Accept(visitor Visitor) error {
 	return visitor.VisitString(s)
-}
-
-type CharacterLiteral string
-
-func NewCharacterLiteral(value string) *CharacterLiteral {
-	char := CharacterLiteral(value)
-	return &char
-}
-
-func (c *CharacterLiteral) Accept(visitor Visitor) error {
-	return visitor.VisitCharacter(c)
 }
 
 type BooleanLiteral string

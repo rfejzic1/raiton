@@ -381,16 +381,6 @@ func (e *Evaluator) VisitString(s *ast.StringLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitCharacter(c *ast.CharacterLiteral) error {
-	result := &object.Character{
-		Value: string(*c),
-	}
-
-	e.results.push(result)
-
-	return nil
-}
-
 func (e *Evaluator) VisitBoolean(b *ast.BooleanLiteral) error {
 	value, err := strconv.ParseBool(string(*b))
 
