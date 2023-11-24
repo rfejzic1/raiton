@@ -33,8 +33,13 @@ person
 # string = '"' {<any*>} '"'
 "Raiton"
 
-# array = '[' {expression} ']'
-[1 2 3]
+# array = '[' [integer] ':' {expression} ']'
+[: 1 2 3]
+[3: 4 5 6]
+
+# list = '[' {expression} ']'
+["Raiton" "is" "awesome"]
+[4 5 6]
 
 # record = '{' {identifier ':' expression} '}'
 { name : "Tojuro" age : 25 }

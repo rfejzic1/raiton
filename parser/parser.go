@@ -10,9 +10,8 @@ import (
 )
 
 type Parser struct {
-	lex       *lexer.Lexer
-	token     token.Token
-	peekToken *token.Token
+	lex   *lexer.Lexer
+	token token.Token
 }
 
 func New(lex *lexer.Lexer) Parser {
@@ -185,25 +184,24 @@ func (p *Parser) functionDefinition() (*ast.Definition, error) {
 }
 
 func (p *Parser) expression() (ast.Expression, error) {
-	if p.match(token.IDENTIFIER) {
+	switch {
+	case p.match(token.IDENTIFIER):
 		return p.selector(nil)
-	} else if p.match(token.NUMBER) || p.match(token.MINUS) {
+	case p.match(token.NUMBER) || p.match(token.MINUS):
 		return p.number()
-	} else if p.match(token.BOOLEAN) {
+	case p.match(token.BOOLEAN):
 		return p.boolean()
-	} else if p.match(token.DOUBLE_QUOTE) {
+	case p.match(token.DOUBLE_QUOTE) || p.match(token.SINGLE_QUOTE):
 		return p.string()
-	} else if p.match(token.SINGLE_QUOTE) {
-		return p.string()
-	} else if p.match(token.OPEN_BRACKET) {
+	case p.match(token.OPEN_BRACKET):
 		return p.arrayOrList()
-	} else if p.match(token.OPEN_BRACE) {
+	case p.match(token.OPEN_BRACE):
 		return p.record()
-	} else if p.match(token.BACKSLASH) {
+	case p.match(token.BACKSLASH):
 		return p.function()
-	} else if p.match(token.OPEN_PAREN) {
+	case p.match(token.OPEN_PAREN):
 		return p.invocation()
-	} else {
+	default:
 		return nil, p.unexpected()
 	}
 }
@@ -345,29 +343,42 @@ func (p *Parser) string() (ast.Expression, error) {
 
 func (p *Parser) arrayOrList() (ast.Expression, error) {
 	var expression ast.Expression
+	var err error
 
 	p.consume(token.OPEN_BRACKET)
 
-	if p.match(token.NUMBER) {
-		p.peek()
+	if p.match(token.COLON) {
+		if expression, err = p.array(nil); err != nil {
+			return nil, err
+		}
+	} else if p.match(token.NUMBER) {
+		numberStr := p.token.Literal
+		p.consume(token.NUMBER)
 
-		if p.peekMatch(token.COLON) {
-			var err error
-
-			expression, err = p.array()
+		if p.match(token.COLON) {
+			size, err := parseArraySize(numberStr)
 
 			if err != nil {
 				return nil, err
 			}
+
+			if expression, err = p.array(&size); err != nil {
+				return nil, err
+			}
+		} else {
+			value, err := strconv.ParseInt(numberStr, 0, 64)
+			number := ast.NewInteger(value)
+
+			if err != nil {
+				return nil, err
+			}
+
+			if expression, err = p.list(number); err != nil {
+				return nil, err
+			}
 		}
-	}
-
-	if expression == nil {
-		var err error
-
-		expression, err = p.list()
-
-		if err != nil {
+	} else {
+		if expression, err = p.list(nil); err != nil {
 			return nil, err
 		}
 	}
@@ -381,19 +392,7 @@ func (p *Parser) arrayOrList() (ast.Expression, error) {
 	return expression, nil
 }
 
-func (p *Parser) array() (ast.Expression, error) {
-	size, err := parseArraySize(p.token.Literal)
-
-	if err != nil {
-		return nil, err
-	}
-
-	p.consume(token.NUMBER)
-
-	if err := p.expect(token.COLON); err != nil {
-		return nil, err
-	}
-
+func (p *Parser) array(size *uint64) (ast.Expression, error) {
 	p.consume(token.COLON)
 
 	array := &ast.Array{
@@ -410,12 +409,21 @@ func (p *Parser) array() (ast.Expression, error) {
 		array.Elements = append(array.Elements, element)
 	}
 
+	if array.Size == nil {
+		size := uint64(len(array.Elements))
+		array.Size = &size
+	}
+
 	return array, nil
 }
 
-func (p *Parser) list() (ast.Expression, error) {
+func (p *Parser) list(first ast.Expression) (ast.Expression, error) {
 	list := &ast.List{
 		Elements: []ast.Expression{},
+	}
+
+	if first != nil {
+		list.Elements = append(list.Elements, first)
 	}
 
 	for !p.match(token.EOF) && !p.match(token.CLOSED_BRACKET) {
@@ -514,7 +522,7 @@ func (p *Parser) invocation() (ast.Expression, error) {
 /*** Parser utility methods ***/
 
 func parseArraySize(literal string) (uint64, error) {
-	size, err := strconv.ParseUint(literal, 10, 0)
+	size, err := strconv.ParseUint(literal, 10, 64)
 
 	if err != nil {
 		return 0, fmt.Errorf("expected a non-negative integer, but got %s", literal)
@@ -532,12 +540,7 @@ func (p *Parser) consume(tokenType token.TokenType) {
 		panic(err)
 	}
 
-	if p.peekToken != nil {
-		p.token = *p.peekToken
-		p.peekToken = nil
-	} else {
-		p.nextToken()
-	}
+	p.nextToken()
 }
 
 func (p *Parser) match(tokenType token.TokenType) bool {
@@ -550,17 +553,6 @@ func (p *Parser) expect(tokenType token.TokenType) error {
 	}
 
 	return nil
-}
-
-func (p *Parser) peek() {
-	if p.peekToken == nil {
-		t := p.lex.Next()
-		p.peekToken = &t
-	}
-}
-
-func (p *Parser) peekMatch(tokenType token.TokenType) bool {
-	return p.peekToken.Type == tokenType
 }
 
 func (p *Parser) nextToken() {

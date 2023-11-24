@@ -316,7 +316,7 @@ func (e *Evaluator) VisitArray(a *ast.Array) error {
 
 	size := uint64(len(objs))
 
-	if size != a.Size {
+	if size != *a.Size {
 		return fmt.Errorf("expected array of size %d, but got %d", a.Size, size)
 	}
 

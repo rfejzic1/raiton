@@ -130,13 +130,13 @@ func (r *Record) Accept(visitor Visitor) error {
 }
 
 type Array struct {
-	Size     uint64
+	Size     *uint64
 	Elements []Expression
 }
 
 func NewArray(size uint64, elements ...Expression) *Array {
 	return &Array{
-		Size:     size,
+		Size:     &size,
 		Elements: elements,
 	}
 }

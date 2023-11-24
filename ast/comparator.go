@@ -183,7 +183,7 @@ func (c *Comparator) VisitArray(expected *Array) error {
 		return nodeTypeError("Array")
 	}
 
-	if expected.Size != current.Size {
+	if *expected.Size != *current.Size {
 		return fmt.Errorf("expected array of size %d, but got size %d", expected.Size, current.Size)
 	}
 
