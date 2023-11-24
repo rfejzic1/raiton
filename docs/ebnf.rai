@@ -1,0 +1,69 @@
+### Extended Backus-Naur Form
+
+# scopes(blocks) are not expressions!!!
+# a scope enables the grouping of definitions and expressions
+
+# scope = '{' {definition | expression} '}' | ':' expression
+
+# definitions are not expressions!!!
+# definitions are a part of a scope to allow easier binding of names to values
+
+# definition = identifier ':' expression
+
+awesome: "Raiton"
+
+# expressions always evaluate to a value
+
+# expression = selector | number | string | array | record | function | if
+
+# selector = identifier {'.' (identifier | integer)}
+person.skills.0.description
+
+# identifier = ('_' | <alpha>) {'_' | <alpha> | <digit>}
+person
+
+# number = ['-'] (integer | float)
+
+# float = integer '.' integer
+2.71
+
+# integer = <digit>{<digit>}
+25
+
+# string = '"' {<any*>} '"'
+"Raiton"
+
+# array = '[' {expression} ']'
+[1 2 3]
+
+# record = '{' {identifier ':' expression} '}'
+{ name : "Tojuro" age : 25 }
+
+# function = '\' {identifier} scope
+
+\a b { (add a b) }
+
+\a b: (add a b)
+
+# if = 'if' expression scope 'else' scope
+
+# to conditionally evaluate expressions, use an if-expression
+# which evaluates to the given scope based on whether the condition is true or not
+
+if condition { "yes" } else { "no" }
+if condition: "yes" else: "no"
+
+answer: if condition: "yes" else: "no"
+(println answer)
+
+## Function Definition
+
+# the line below defines a function, binding the expression to a name
+add_5: \x: (add x 5)
+
+# because functions are used a lot, there is a simpler function definition syntax
+
+# function_definition = 'fn' identifier {identifier} scope
+
+fn add_5 x: (add x 5)
+
