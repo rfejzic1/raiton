@@ -184,7 +184,7 @@ func (p *Printer) VisitArray(n *Array) error {
 	return nil
 }
 
-func (p *Printer) VisitSlice(n *Slice) error {
+func (p *Printer) VisitList(n *List) error {
 	p.write("[ ")
 
 	for _, expr := range n.Elements {

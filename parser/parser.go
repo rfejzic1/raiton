@@ -196,7 +196,7 @@ func (p *Parser) expression() (ast.Expression, error) {
 	} else if p.match(token.SINGLE_QUOTE) {
 		return p.string()
 	} else if p.match(token.OPEN_BRACKET) {
-		return p.arrayOrSlice()
+		return p.arrayOrList()
 	} else if p.match(token.OPEN_BRACE) {
 		return p.record()
 	} else if p.match(token.BACKSLASH) {
@@ -343,7 +343,7 @@ func (p *Parser) string() (ast.Expression, error) {
 	return str, nil
 }
 
-func (p *Parser) arrayOrSlice() (ast.Expression, error) {
+func (p *Parser) arrayOrList() (ast.Expression, error) {
 	var expression ast.Expression
 
 	p.consume(token.OPEN_BRACKET)
@@ -365,7 +365,7 @@ func (p *Parser) arrayOrSlice() (ast.Expression, error) {
 	if expression == nil {
 		var err error
 
-		expression, err = p.slice()
+		expression, err = p.list()
 
 		if err != nil {
 			return nil, err
@@ -413,8 +413,8 @@ func (p *Parser) array() (ast.Expression, error) {
 	return array, nil
 }
 
-func (p *Parser) slice() (ast.Expression, error) {
-	slice := &ast.Slice{
+func (p *Parser) list() (ast.Expression, error) {
+	list := &ast.List{
 		Elements: []ast.Expression{},
 	}
 
@@ -424,10 +424,10 @@ func (p *Parser) slice() (ast.Expression, error) {
 			return nil, err
 		}
 
-		slice.Elements = append(slice.Elements, element)
+		list.Elements = append(list.Elements, element)
 	}
 
-	return slice, nil
+	return list, nil
 }
 
 func (p *Parser) record() (ast.Expression, error) {

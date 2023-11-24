@@ -21,7 +21,7 @@ const (
 	FLOAT     = "float"
 	STRING    = "string"
 	ARRAY     = "array"
-	SLICE     = "slice"
+	LIST      = "list"
 	RECORD    = "record"
 	FUNCTION  = "function"
 	BUILTIN   = "builtin"
@@ -96,21 +96,37 @@ func (a *Array) Inspect() string {
 
 func (a *Array) Type() ObjectType { return ARRAY }
 
-type Slice struct {
-	Value *Array
+type List struct {
+	Size uint64
+	Head *ListNode
 }
 
-func (s *Slice) Inspect() string {
-	strs := []string{}
+type ListNode struct {
+	Value Object
+	Next  *ListNode
+}
 
-	for _, o := range s.Value.Value {
-		strs = append(strs, o.Inspect())
+func (l *List) Inspect() string {
+	var s strings.Builder
+
+	s.WriteByte('[')
+
+	for head := l.Head; head != nil; head = head.Next {
+		if head != nil {
+			s.WriteString(head.Value.Inspect())
+		}
+
+		if head.Next != nil {
+			s.WriteRune(' ')
+		}
 	}
 
-	return fmt.Sprintf("[%s]", strings.Join(strs, " "))
+	s.WriteRune(']')
+
+	return s.String()
 }
 
-func (s *Slice) Type() ObjectType { return SLICE }
+func (s *List) Type() ObjectType { return LIST }
 
 type Record struct {
 	Value map[string]Object

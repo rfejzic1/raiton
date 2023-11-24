@@ -152,23 +152,30 @@ func (e *Evaluator) VisitSelectorItem(i *ast.SelectorItem) error {
 		e.results.push(obj)
 
 		return nil
-	case object.SLICE:
-		slice := obj.(*object.Slice)
-		array := slice.Value
+	case object.LIST:
+		list := obj.(*object.List)
 
 		if i.Index == nil {
-			return fmt.Errorf("can only access array elements with index")
+			return fmt.Errorf("can only access list elements with index")
 		}
 
 		index := int64(*i.Index)
 
-		if index > int64(len(array.Value)) {
+		if index > int64(list.Size) {
 			return fmt.Errorf("index %d is out of bounds", index)
 		}
 
-		obj := array.Value[index]
+		head := list.Head
+		counter := int64(0)
 
-		e.results.push(obj)
+		for head != nil {
+			if counter == index {
+				e.results.push(head.Value)
+				return nil
+			}
+
+			head = head.Next
+		}
 
 		return nil
 	default:
@@ -323,30 +330,36 @@ func (e *Evaluator) VisitArray(a *ast.Array) error {
 	return nil
 }
 
-func (e *Evaluator) VisitSlice(s *ast.Slice) error {
-	objs := []object.Object{}
+func (e *Evaluator) VisitList(s *ast.List) error {
+	list := &object.List{}
+
+	var head *object.ListNode
+	size := 0
 
 	for _, elem := range s.Elements {
 		if err := elem.Accept(e); err != nil {
 			return err
 		}
 
+		size += 1
+
 		obj := e.results.pop()
-		objs = append(objs, obj)
+
+		node := &object.ListNode{
+			Value: obj,
+		}
+
+		if head == nil {
+			head = node
+			list.Head = head
+			continue
+		}
+
+		head.Next = node
+		head = node
 	}
 
-	size := uint64(len(objs))
-
-	array := &object.Array{
-		Value: objs,
-		Size:  size,
-	}
-
-	slice := &object.Slice{
-		Value: array,
-	}
-
-	e.results.push(slice)
+	e.results.push(list)
 
 	return nil
 }

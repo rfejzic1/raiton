@@ -146,7 +146,7 @@ func (c *Comparator) VisitFunction(expected *Function) error {
 	current, ok := c.current.(*Function)
 
 	if !ok {
-		return nodeTypeError("FunctionLiteral")
+		return nodeTypeError("Function")
 	}
 
 	if err := compareSlices(c, "parameters", expected.Parameters, current.Parameters); err != nil {
@@ -166,7 +166,7 @@ func (c *Comparator) VisitRecord(expected *Record) error {
 	current, ok := c.current.(*Record)
 
 	if !ok {
-		return nodeTypeError("RecordLiteral")
+		return nodeTypeError("Record")
 	}
 
 	if err := compareMaps(c, expected.Fields, current.Fields); err != nil {
@@ -180,7 +180,7 @@ func (c *Comparator) VisitArray(expected *Array) error {
 	current, ok := c.current.(*Array)
 
 	if !ok {
-		return nodeTypeError("ArrayLiteral")
+		return nodeTypeError("Array")
 	}
 
 	if expected.Size != current.Size {
@@ -194,11 +194,11 @@ func (c *Comparator) VisitArray(expected *Array) error {
 	return nil
 }
 
-func (c *Comparator) VisitSlice(expected *Slice) error {
-	current, ok := c.current.(*Slice)
+func (c *Comparator) VisitList(expected *List) error {
+	current, ok := c.current.(*List)
 
 	if !ok {
-		return nodeTypeError("SliceLiteral")
+		return nodeTypeError("List")
 	}
 
 	if err := compareSlices(c, "elements", expected.Elements, current.Elements); err != nil {
@@ -212,7 +212,7 @@ func (c *Comparator) VisitInteger(expected *Integer) error {
 	current, ok := c.current.(*Integer)
 
 	if !ok {
-		return nodeTypeError("NumberLiteral")
+		return nodeTypeError("Number")
 	}
 
 	if *current != *expected {
@@ -226,7 +226,7 @@ func (c *Comparator) VisitFloat(expected *Float) error {
 	current, ok := c.current.(*Float)
 
 	if !ok {
-		return nodeTypeError("FloatLiteral")
+		return nodeTypeError("Float")
 	}
 
 	if *current != *expected {
@@ -240,7 +240,7 @@ func (c *Comparator) VisitBoolean(expected *Boolean) error {
 	current, ok := c.current.(*Boolean)
 
 	if !ok {
-		return nodeTypeError("BooleanLiteral")
+		return nodeTypeError("Boolean")
 	}
 
 	if string(*current) != string(*expected) {
@@ -254,7 +254,7 @@ func (c *Comparator) VisitString(expected *String) error {
 	current, ok := c.current.(*String)
 
 	if !ok {
-		return nodeTypeError("StringLiteral")
+		return nodeTypeError("String")
 	}
 
 	if string(*current) != string(*expected) {

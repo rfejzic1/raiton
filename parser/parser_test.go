@@ -79,12 +79,12 @@ func TestExpressionArray(t *testing.T) {
 	parseAndCompare(t, source, &expected)
 }
 
-func TestExpressionSlice(t *testing.T) {
+func TestExpressionList(t *testing.T) {
 	source := `[1 2 3]`
 
 	expected := ast.Scope{
 		Expressions: []ast.Expression{
-			ast.NewSlice(
+			ast.NewList(
 				ast.NewInteger(1),
 				ast.NewInteger(2),
 				ast.NewInteger(3),

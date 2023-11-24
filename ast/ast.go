@@ -10,7 +10,7 @@ type Visitor interface {
 	VisitFunction(n *Function) error
 	VisitRecord(n *Record) error
 	VisitArray(n *Array) error
-	VisitSlice(n *Slice) error
+	VisitList(n *List) error
 	VisitInteger(n *Integer) error
 	VisitFloat(n *Float) error
 	VisitString(n *String) error
@@ -145,18 +145,18 @@ func (a *Array) Accept(visitor Visitor) error {
 	return visitor.VisitArray(a)
 }
 
-type Slice struct {
+type List struct {
 	Elements []Expression
 }
 
-func NewSlice(elements ...Expression) *Slice {
-	return &Slice{
+func NewList(elements ...Expression) *List {
+	return &List{
 		Elements: elements,
 	}
 }
 
-func (s *Slice) Accept(visitor Visitor) error {
-	return visitor.VisitSlice(s)
+func (s *List) Accept(visitor Visitor) error {
+	return visitor.VisitList(s)
 }
 
 type Integer int64
