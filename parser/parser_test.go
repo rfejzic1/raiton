@@ -139,30 +139,9 @@ func TestDefinitionWithSingleExpression(t *testing.T) {
 	parseAndCompare(t, source, &expected)
 }
 
-func TestDefinitionWithScope(t *testing.T) {
-	source := `
-	age { 24 }
-	`
-
-	expected := ast.Scope{
-		Definitions: []*ast.Definition{
-			{
-				Identifier: ast.Identifier("age"),
-				Expression: &ast.Scope{
-					Expressions: []ast.Expression{
-						ast.NewIntegerLiteral(24),
-					},
-				},
-			},
-		},
-	}
-
-	parseAndCompare(t, source, &expected)
-}
-
 func TestFunctionDefinitionWithSingleExpression(t *testing.T) {
 	source := `
-	fn add_two x -> (add x 2)
+	fn add_two x: (add x 2)
 	`
 
 	expected := ast.Scope{
