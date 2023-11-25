@@ -10,9 +10,9 @@ fn greeter name {
   (concat greeting name)
 }
 
-exclaimed: \str -> (concat str "!")
+exclaimed: \str: (concat str "!")
 
-fn exclaimed str -> (concat str "!")
+fn exclaimed str: (concat str "!")
 
 fn exclaimed str {
   suffix: "!"
@@ -23,7 +23,7 @@ fn exclaimed str {
 
 nums: [1 2 3]
 
-bigger_nums: (map nums \n -> (add n 1))
+bigger_nums: (map nums \n: (add n 1))
 
 (println bigger_nums)
 

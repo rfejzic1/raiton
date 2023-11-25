@@ -6,16 +6,11 @@ A toolchain for the Raiton language.
 
 > Colorless green ideas sleep furiously. - Noam Chomsky
 
-Raiton is a language that is the successor of the [Katon](https://github.com/rfejzic1/katon) language I implemented
-with a friend as a project for a university course about programming languages. Back then, I had just started learning about
-compilers and interpreters when I started the Katon project, so it's not so well implemented (plus it's a
-simple tree-walking interpreter). I learned a lot from implementing the interpreter, but there's still so much to learn.
-
-Enter *Raiton*. I wanted this to be a simple language influenced by procedural and functional langauges
-such as Go, Rust, C, Haskell, Ocaml, Clojure, etc. I imagined a functional language, not pure like Haskell, but with some
-procedural elements like Ocaml has. I'll probably implement a transpiler to Ocaml first, then decide whether to implement
-a VM with bytecode to run on it or to just compile to native code. I prefer the latter, because I'd like to implement
-a fast compiler (hopefully) and produce machine code directly. Who knows, maybe add C interop later down the road.
+I imagined Raiton to be a simple language, leaning more to the functional side,
+but having procedural elements and side-effects.
+I'll decide whether to implement a VM with bytecode to run on it or to just compile
+to native code. I prefer the latter, because I'd like to implement a fast compiler (hopefully) and
+produce machine code directly. Maybe I'll add C interop later down the road. (Maybe too ambitious, but we'll see)
 
 This is a pet project for now, but I hope other people will like the language in time as much as I do.
 
@@ -29,7 +24,7 @@ This will probably work with some older versions, but this is the one I worked w
 After cloning the repository, run `make build` to build the tool. You should get the
 `raiton` binary in the `./build` directory.
 
-> Note: This is only built for linux for now. In the future I'll probably add support for other platforms and architectrues.
+> Note: This tool is only built for x86 linux for now. In the future I'll probably add support for other platforms and architectrues.
 
 To get help, run:
 ```
@@ -39,10 +34,11 @@ raiton help
 ## The `raiton` tool
 
 The `raiton` tool is a toolchain that will have the option to compile code, as wall as a REPL (like [utop](https://github.com/ocaml-community/utop)
-
 for ocaml). The REPL mode is used to evaluate the expressions and can report errors in case there are any.
+
 There are only two built-in functions for now:
 - `add` to add two integers
+- `eq` to compare two values for equality
 - `map` to map elements of arrays and slices
 
 The plan is to extend the available built-in functions and objects.
@@ -53,13 +49,14 @@ different cases and look at the stream of tokens produced.
 
 ## Syntax
 
-For now, the language supports only a single file. The file itself is a `Scope`, which can contain on of the following:
-- a definition
-- an expression
+For now, the language supports only a single file. The file itself is a `Scope`, which can have *definitions* and *expressions*.
 
 ### Definitions
 
-Definitions are function or value definitions, where an expression is bound to a name. For example:
+Definitions are a part of a scope which simply binds a name to an expression. Definitions themselves are not expressions,
+meaning they don't yield a value. They are intended to simplify the expressions that are evaluated from a scope,
+by binding parts of the expression to names.
+
 ```bash
 # These are definitions
 
@@ -67,15 +64,15 @@ five: 5
 
 greeting: "Hello, Raiton"
 
-add_two: \a b -> (add a b)
+add_two: \a b: (add a b)
 # or
-fn add_two a b -> (add a b)
+fn add_two a b: (add a b)
 ```
 
 The `#` symbol denotes the start of a comment, spanning to the end of the line.
 
-Functions can be defined in two ways, as shown above. One way is to do default definitions and use a function expression
-or to use the `fn` keyword to define a function in a more explicit manner. Both have the same outcome, binding a function
+Functions can be defined in two ways, as shown above. One way is to do definitions as is and use a function expression
+or to use the `fn` keyword to define a function in a simpler manner. Both have the same outcome, binding a function
 expression to a name.
 
 The definitions support mutliple expressions if denoted by a block, like this:
@@ -89,14 +86,25 @@ fn greet name {
 }
 ```
 
-If you notice, the block is just a scope, like the one at the file level! The colon (`:`) is omitted, because the record
-literal syntax uses the curly braces as well. So for now the way to use a scope expression with a definition is to omitt the
-colon. The last expression is the one to which the entire scope evaluates to, in this case a function invocation to concatinate
-the string arguments.
+If you notice, the block is just a scope, like the one at the file level. Because scopes are *not* expressions, they're
+not constructable anywhere in the code. Except for the file-level scope, scopes are expected as blocks in function expressions
+and in the consequence and altenative parts of if-expressions. Sintacticaly scopes are wrapped in curly-braces
+like this `{ (add 1 2) }`, but if you have a single expression where you need to provide a scope, you can just use the
+colon followed by a single expression, like this `: (add 1 2)`. The colon syntax still denotes a scope, but it's just
+syntax sugar to not wrap the single expression with braces.
+
+Here is a side-by-side example of this:
+```bash
+fn greet name { (concat "Hello, " name) }
+fn greet name: (concat "Hello, " name)
+
+if condition { "yes" } else { "no" }
+if condition: "yes" else: "no"
+```
+
 
 ### Expressions
 
-Expressions are currently evaluated eagerly. The plan is to have them evaluated lazily in the future.
 Here are some examples of expressions:
 ```bash
 # number literal
@@ -106,26 +114,26 @@ Here are some examples of expressions:
 "John"
 
 # function literal
-\x -> (square x)
+\x: (square x)
 
 # function application
 (concat "Rai" "ton")
 
-# array literal
+# array literal (like arrays in c/c++)
 [3: 1 2 3]
 
-# slice literal
+# list literal (linked-list)
 [1 2 3]
 
 # identifier
 some_function
 
 # record litaral
-{ attack_power: 100, health_point: 1000 }
+{ attack_power: 100 health_point: 1000 }
 
 # selector
 person.name
 
-# array indexing via selector
+# array or list indexing via selector
 my_arr.0
 ```
