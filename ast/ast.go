@@ -15,6 +15,7 @@ type Visitor interface {
 	VisitInteger(n *Integer) error
 	VisitFloat(n *Float) error
 	VisitString(n *String) error
+	VisitKeyword(n *Keyword) error
 	VisitBoolean(n *Boolean) error
 }
 
@@ -173,8 +174,8 @@ func (s *List) Accept(visitor Visitor) error {
 type Integer int64
 
 func NewInteger(value int64) *Integer {
-	num := Integer(value)
-	return &num
+	i := Integer(value)
+	return &i
 }
 
 func (n *Integer) Accept(visitor Visitor) error {
@@ -184,8 +185,8 @@ func (n *Integer) Accept(visitor Visitor) error {
 type Float float64
 
 func NewFloat(value float64) *Float {
-	num := Float(value)
-	return &num
+	f := Float(value)
+	return &f
 }
 
 func (n *Float) Accept(visitor Visitor) error {
@@ -195,19 +196,30 @@ func (n *Float) Accept(visitor Visitor) error {
 type String string
 
 func NewString(value string) *String {
-	string := String(value)
-	return &string
+	s := String(value)
+	return &s
 }
 
 func (s *String) Accept(visitor Visitor) error {
 	return visitor.VisitString(s)
 }
 
+type Keyword string
+
+func NewKeyword(value string) *Keyword {
+	k := Keyword(value)
+	return &k
+}
+
+func (s *Keyword) Accept(visitor Visitor) error {
+	return visitor.VisitKeyword(s)
+}
+
 type Boolean string
 
 func NewBoolean(value string) *Boolean {
-	bool := Boolean(value)
-	return &bool
+	b := Boolean(value)
+	return &b
 }
 
 func (b *Boolean) Accept(visitor Visitor) error {

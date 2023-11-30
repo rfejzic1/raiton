@@ -176,6 +176,22 @@ func TestSkippingComments(t *testing.T) {
 	})
 }
 
+func TestKeywordLexing(t *testing.T) {
+	test := newTest(t, "KeywordLexing")
+	source := `:key : key :: :{`
+
+	test.expect(source, []tokenExpect{
+		{token.KEYWORD, `:key`},
+		{token.COLON, `:`},
+		{token.IDENTIFIER, `key`},
+		{token.COLON, `:`},
+		{token.COLON, `:`},
+		{token.COLON, `:`},
+		{token.OPEN_BRACE, `{`},
+		{token.EOF, ``},
+	})
+}
+
 func TestParenBracketBraceAngleLexing(t *testing.T) {
 	test := newTest(t, "TestParenBracketBraceAngleLexing")
 	source := `()[]{}`

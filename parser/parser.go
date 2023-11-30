@@ -191,6 +191,8 @@ func (p *Parser) expression() (ast.Expression, error) {
 		return p.number()
 	case p.match(token.BOOLEAN):
 		return p.boolean()
+	case p.match(token.KEYWORD):
+		return p.keyword()
 	case p.match(token.DOUBLE_QUOTE) || p.match(token.SINGLE_QUOTE):
 		return p.string()
 	case p.match(token.OPEN_BRACKET):
@@ -319,6 +321,12 @@ func (p *Parser) boolean() (ast.Expression, error) {
 	value := p.token.Literal
 	p.consume(token.BOOLEAN)
 	return ast.NewBoolean(value), nil
+}
+
+func (p *Parser) keyword() (ast.Expression, error) {
+	value := p.token.Literal
+	p.consume(token.KEYWORD)
+	return ast.NewKeyword(value), nil
 }
 
 func (p *Parser) string() (ast.Expression, error) {

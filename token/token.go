@@ -48,6 +48,7 @@ var SYMBOLS = map[string]TokenType{
 const (
 	IDENTIFIER = "identifier"
 	STRING     = "string"
+	KEYWORD    = "keyword"
 	NUMBER     = "number"
 	BOOLEAN    = "boolean"
 	FUNCTION   = "function"

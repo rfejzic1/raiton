@@ -231,6 +231,11 @@ func (p *Printer) VisitFloat(n *Float) error {
 }
 
 func (p *Printer) VisitString(n *String) error {
+	p.write(fmt.Sprintf("\"%s\"", *n))
+	return nil
+}
+
+func (p *Printer) VisitKeyword(n *Keyword) error {
 	p.write(string(*n))
 	return nil
 }

@@ -20,6 +20,7 @@ const (
 	INTEGER   = "integer"
 	FLOAT     = "float"
 	STRING    = "string"
+	KEYWORD   = "keyword"
 	ARRAY     = "array"
 	LIST      = "list"
 	RECORD    = "record"
@@ -78,6 +79,14 @@ type String struct {
 func (s *String) Inspect() string { return fmt.Sprintf(`"%s"`, s.Value) }
 
 func (s *String) Type() ObjectType { return STRING }
+
+type Keyword struct {
+	Value string
+}
+
+func (k *Keyword) Inspect() string { return string(k.Value) }
+
+func (k *Keyword) Type() ObjectType { return KEYWORD }
 
 type Array struct {
 	Value []Object

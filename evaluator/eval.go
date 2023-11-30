@@ -420,6 +420,16 @@ func (e *Evaluator) VisitString(s *ast.String) error {
 	return nil
 }
 
+func (e *Evaluator) VisitKeyword(s *ast.Keyword) error {
+	result := &object.Keyword{
+		Value: string(*s),
+	}
+
+	e.results.push(result)
+
+	return nil
+}
+
 func (e *Evaluator) VisitBoolean(b *ast.Boolean) error {
 	value, err := strconv.ParseBool(string(*b))
 

@@ -292,6 +292,20 @@ func (c *Comparator) VisitString(expected *String) error {
 	return nil
 }
 
+func (c *Comparator) VisitKeyword(expected *Keyword) error {
+	current, ok := c.current.(*Keyword)
+
+	if !ok {
+		return nodeTypeError("Keyword")
+	}
+
+	if string(*current) != string(*expected) {
+		return fmt.Errorf("expected `%s`, but got `%s`", string(*expected), string(*current))
+	}
+
+	return nil
+}
+
 /*** Helper Functions ***/
 
 func nodeTypeError(expected string) error {

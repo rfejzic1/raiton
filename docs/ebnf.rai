@@ -61,6 +61,10 @@ if condition: "yes" else: "no"
 answer: if condition: "yes" else: "no"
 (println answer)
 
+# keyword = ':'<identifier>
+# notice that there is no space between the colon and the identifier
+:key1
+
 ## Function Definition
 
 # the line below defines a function, binding the expression to a name
