@@ -1,0 +1,178 @@
+### Extended Backus-Naur Form Draft
+
+# scopes(blocks) are not expressions!!!
+# a scope enables the grouping of definitions and expressions
+
+# scope = '{' {definition | expression} '}' | ':' expression
+
+# definitions are not expressions!!!
+# definitions are a part of a scope to allow easier binding of names to values
+
+# definition = identifier ':' expression
+
+awesome: "Raiton"
+
+# expressions always evaluate to a value
+
+# expression = selector | number | string | array | record | function | if
+
+# selector = identifier {'.' (identifier | integer)}
+person.skills.0.description
+
+# identifier = ('_' | <alpha>) {'_' | <alpha> | <digit>}
+person
+
+# number = ['-'] (integer | float)
+
+# float = integer '.' integer
+2.71
+
+# integer = <digit>{<digit>}
+25
+
+# string = '"' {<any*>} '"'
+"Raiton"
+
+# array = '[' [integer] ':' {expression} ']'
+[: 1 2 3]
+[3: 4 5 6]
+
+# list = '[' {expression} ']'
+["Raiton" "is" "awesome"]
+[4 5 6]
+
+# record = '{' {identifier ':' expression} '}'
+{ name : "Tojuro" age : 25 }
+
+# function = '\' {identifier} scope
+
+\a b { (add a b) }
+
+\a b: (add a b)
+
+# if = 'if' expression scope 'else' scope
+
+# to conditionally evaluate expressions, use an if-expression
+# which evaluates to the given scope based on whether the condition is true or not
+
+if condition { "yes" } else { "no" }
+if condition: "yes" else: "no"
+
+answer: if condition: "yes" else: "no"
+(println answer)
+
+# keyword = ':'<identifier>
+# notice that there is no space between the colon and the identifier
+:key1
+
+# NOTE: This is just an idea for unified collection literals
+# collection_literal = '{' {expression} ''}'
+
+# untyped collection literal, type is needed if it's not clear from context
+{ :key1 :key2 :key3 }
+
+# some use cases:
+@(map _ _) -> (seq _)
+fn keys m { ... }
+(keys { :k1 "v1" :k2 "v2" }) # in this case, because of the definition, the type of the collection literal is `map`
+
+@(list _) -> int
+fn len ls { ... }
+(len {1 2 3}) # in this case, the collection literal type is `list`
+
+@map { "key1" "value1" "key2" "value2" } # typeof map string to string
+@map { :key1 "value1" :key2 "value2" } # typeof map keyword to string
+
+@person {
+  :name "Tojuro"
+  :age 25
+} # typeof person record
+
+@list{1 2 3} # typeof linked list of numbers same as [1 2 3]
+
+@array{1 2 3} # typeof array of numbers, same as [: 1 2 3]
+
+@set{1 2 3} # typeof set of numbers
+
+## Function Definition
+
+# the line below defines a function, binding the expression to a name
+add_5: \x: (add x 5)
+
+# because functions are used a lot, there is a simpler function definition syntax
+
+# function_definition = 'fn' identifier {identifier} scope
+
+fn add_5 x: (add x 5)
+
+### Types
+
+# NOTE: This is just an idea for type declarations and compile time annotations with the `@` symbol
+
+# types can be inferred because of the `add` function, taking two ints and returning an int
+fn add_nums a b: (add a b)
+
+# types can be specified for an expression or definition (implies that it's referring to the expression of the definition)
+@int -> int -> int
+fn add_two a b: (add a b)
+
+# function type that takes int and returns int
+@int -> int
+add_5: \x: (add x 5)
+
+@string
+name: "What is this?"
+
+@(array int)
+nums: {1 2 3}
+
+# It's possible to define new types using the @type annotation
+
+# @type is applied to definitions only;
+# @type applied to a function definition allows for parametrized types (generics);
+
+# F and S are type parameters
+@type
+fn pair F S: (tuple {F S})
+
+# this is just a basic type alias
+@type
+mystring: string
+
+# and it's applied like any other comptime function, with the type parameters passed in:
+@(pair string integer)
+score: {"Tojuro" 100}
+
+# the construct is basically a @record comptime annotation to a `person` definition of a map;
+# the @record annotation expects the map to map keywords to other types and will fail to compile otherwise;
+# this is how to create a new record type:
+@record
+person: {
+  :name string
+  :age int
+}
+
+# using the comptime constant to hint the compiler of the type of the definition/expression
+@person
+tojuro: { :name "Tojuro" :age 25 }
+
+# TODO: Figure out if I should allow for compile time annotations to be applied to
+#       function parameters? Look at the comptime function below for reference...
+
+# @comptime is an annotation applied to a function to let it be invoked on compile time
+# to manipulate the AST. The function has to take an AST Node as the first parameter
+# and can have other parameters as required. It must return a new AST Node which
+# will replace the target of the comptime function application.
+@comptime
+fn changeval @(ast definition) target @string value {
+  # create new definition with :value property set to value
+  (definition target { :value value })
+}
+
+# apply the compile time function on some piece of code, the first argument is always the targeted AST node
+@(changeval "the new value")
+myval: "the old value" # at compilation time should have "the new value"
+
+# TODO: Have the `int` type be an unsized integer, something like BigInt in java or BigDecimal for `float`
+#       When a size is specified by the type int8, int16, int32, int64 then use those widths; same for float32, float64...
+

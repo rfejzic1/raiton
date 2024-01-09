@@ -152,23 +152,30 @@ func (e *Evaluator) VisitSelectorItem(i *ast.SelectorItem) error {
 		e.results.push(obj)
 
 		return nil
-	case object.SLICE:
-		slice := obj.(*object.Slice)
-		array := slice.Value
+	case object.LIST:
+		list := obj.(*object.List)
 
 		if i.Index == nil {
-			return fmt.Errorf("can only access array elements with index")
+			return fmt.Errorf("can only access list elements with index")
 		}
 
 		index := int64(*i.Index)
 
-		if index > int64(len(array.Value)) {
+		if index > int64(list.Size) {
 			return fmt.Errorf("index %d is out of bounds", index)
 		}
 
-		obj := array.Value[index]
+		head := list.Head
+		counter := int64(0)
 
-		e.results.push(obj)
+		for head != nil {
+			if counter == index {
+				e.results.push(head.Value)
+				return nil
+			}
+
+			head = head.Next
+		}
 
 		return nil
 	default:
@@ -264,7 +271,7 @@ func (e *Evaluator) applyFunction(fn *object.Function, args ...object.Object) (o
 	return obj, nil
 }
 
-func (e *Evaluator) VisitFunction(f *ast.FunctionLiteral) error {
+func (e *Evaluator) VisitFunction(f *ast.Function) error {
 	obj := &object.Function{
 		Parameters:  f.Parameters,
 		Body:        f.Body,
@@ -276,7 +283,33 @@ func (e *Evaluator) VisitFunction(f *ast.FunctionLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitRecord(r *ast.RecordLiteral) error {
+func (e *Evaluator) VisitConditional(c *ast.Conditional) error {
+	if err := c.Condition.Accept(e); err != nil {
+		return err
+	}
+
+	obj := e.results.pop()
+
+	condition, ok := obj.(*object.Boolean)
+
+	if !ok {
+		return fmt.Errorf("expected a boolean value in if-expression condition")
+	}
+
+	if condition.Value {
+		if err := c.Consequence.Accept(e); err != nil {
+			return nil
+		}
+	} else {
+		if err := c.Alternative.Accept(e); err != nil {
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func (e *Evaluator) VisitRecord(r *ast.Record) error {
 	record := &object.Record{
 		Value: map[string]object.Object{},
 	}
@@ -295,7 +328,7 @@ func (e *Evaluator) VisitRecord(r *ast.RecordLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitArray(a *ast.ArrayLiteral) error {
+func (e *Evaluator) VisitArray(a *ast.Array) error {
 	objs := []object.Object{}
 
 	for _, elem := range a.Elements {
@@ -309,7 +342,7 @@ func (e *Evaluator) VisitArray(a *ast.ArrayLiteral) error {
 
 	size := uint64(len(objs))
 
-	if size != a.Size {
+	if size != *a.Size {
 		return fmt.Errorf("expected array of size %d, but got %d", a.Size, size)
 	}
 
@@ -323,35 +356,41 @@ func (e *Evaluator) VisitArray(a *ast.ArrayLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitSlice(s *ast.SliceLiteral) error {
-	objs := []object.Object{}
+func (e *Evaluator) VisitList(s *ast.List) error {
+	list := &object.List{}
+
+	var head *object.ListNode
+	size := 0
 
 	for _, elem := range s.Elements {
 		if err := elem.Accept(e); err != nil {
 			return err
 		}
 
+		size += 1
+
 		obj := e.results.pop()
-		objs = append(objs, obj)
+
+		node := &object.ListNode{
+			Value: obj,
+		}
+
+		if head == nil {
+			head = node
+			list.Head = head
+			continue
+		}
+
+		head.Next = node
+		head = node
 	}
 
-	size := uint64(len(objs))
-
-	array := &object.Array{
-		Value: objs,
-		Size:  size,
-	}
-
-	slice := &object.Slice{
-		Value: array,
-	}
-
-	e.results.push(slice)
+	e.results.push(list)
 
 	return nil
 }
 
-func (e *Evaluator) VisitInteger(n *ast.IntegerLiteral) error {
+func (e *Evaluator) VisitInteger(n *ast.Integer) error {
 	result := &object.Integer{
 		Value: int64(*n),
 	}
@@ -361,7 +400,7 @@ func (e *Evaluator) VisitInteger(n *ast.IntegerLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitFloat(n *ast.FloatLiteral) error {
+func (e *Evaluator) VisitFloat(n *ast.Float) error {
 	result := &object.Float{
 		Value: float64(*n),
 	}
@@ -371,7 +410,7 @@ func (e *Evaluator) VisitFloat(n *ast.FloatLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitString(s *ast.StringLiteral) error {
+func (e *Evaluator) VisitString(s *ast.String) error {
 	result := &object.String{
 		Value: string(*s),
 	}
@@ -381,9 +420,9 @@ func (e *Evaluator) VisitString(s *ast.StringLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitCharacter(c *ast.CharacterLiteral) error {
-	result := &object.Character{
-		Value: string(*c),
+func (e *Evaluator) VisitKeyword(s *ast.Keyword) error {
+	result := &object.Keyword{
+		Value: string(*s),
 	}
 
 	e.results.push(result)
@@ -391,7 +430,7 @@ func (e *Evaluator) VisitCharacter(c *ast.CharacterLiteral) error {
 	return nil
 }
 
-func (e *Evaluator) VisitBoolean(b *ast.BooleanLiteral) error {
+func (e *Evaluator) VisitBoolean(b *ast.Boolean) error {
 	value, err := strconv.ParseBool(string(*b))
 
 	if err != nil {

@@ -58,6 +58,8 @@ func (l *Lexer) normalMode() token.Token {
 		l.mode = SEQUENCE_MODE
 		l.modeChar = char
 		return token
+	} else if isColon(char) {
+		return l.keywordOrSpecialToken()
 	} else {
 		return l.specialToken()
 	}
@@ -144,6 +146,34 @@ func (l *Lexer) stringToken() token.Token {
 	}
 
 	return l.longToken(token.STRING, lexeme)
+}
+
+func (l *Lexer) keywordOrSpecialToken() token.Token {
+	lexeme := ":"
+	l.next()
+
+	char, ok := l.current()
+
+	if !ok || isWhitespace(char) {
+		return l.token(token.COLON, lexeme)
+	}
+
+	if isAlpha(char) || isUnderscore(char) {
+		for char, ok := l.current(); ok && (isAlpha(char) || isUnderscore(char) || isDigit(char)); char, ok = l.next() {
+			lexeme += string(char)
+		}
+
+		return l.longToken(token.KEYWORD, lexeme)
+	}
+
+	extended := lexeme + string(char)
+
+	if tokenType, ok := token.SYMBOLS[extended]; ok {
+		l.next()
+		return l.longToken(tokenType, extended)
+	}
+
+	return l.token(token.COLON, lexeme)
 }
 
 func (l *Lexer) specialToken() token.Token {
@@ -237,6 +267,10 @@ func isDash(c byte) bool {
 
 func isUnderscore(c byte) bool {
 	return c == '_'
+}
+
+func isColon(c byte) bool {
+	return c == ':'
 }
 
 func isQuote(c byte) bool {

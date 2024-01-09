@@ -130,7 +130,27 @@ func (p *Printer) VisitApplication(n *Application) error {
 	return nil
 }
 
-func (p *Printer) VisitFunction(n *FunctionLiteral) error {
+func (p *Printer) VisitConditional(n *Conditional) error {
+	p.write("if ")
+
+	if err := n.Condition.Accept(p); err != nil {
+		return err
+	}
+
+	if err := n.Consequence.Accept(p); err != nil {
+		return err
+	}
+
+	p.write(" else ")
+
+	if err := n.Alternative.Accept(p); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Printer) VisitFunction(n *Function) error {
 	p.write("\\")
 
 	for _, param := range n.Parameters {
@@ -149,7 +169,7 @@ func (p *Printer) VisitFunction(n *FunctionLiteral) error {
 	return nil
 }
 
-func (p *Printer) VisitRecord(n *RecordLiteral) error {
+func (p *Printer) VisitRecord(n *Record) error {
 	p.write("{ ")
 
 	for ident, expr := range n.Fields {
@@ -168,7 +188,7 @@ func (p *Printer) VisitRecord(n *RecordLiteral) error {
 	return nil
 }
 
-func (p *Printer) VisitArray(n *ArrayLiteral) error {
+func (p *Printer) VisitArray(n *Array) error {
 	p.write("[ ")
 
 	for _, expr := range n.Elements {
@@ -184,7 +204,7 @@ func (p *Printer) VisitArray(n *ArrayLiteral) error {
 	return nil
 }
 
-func (p *Printer) VisitSlice(n *SliceLiteral) error {
+func (p *Printer) VisitList(n *List) error {
 	p.write("[ ")
 
 	for _, expr := range n.Elements {
@@ -200,27 +220,27 @@ func (p *Printer) VisitSlice(n *SliceLiteral) error {
 	return nil
 }
 
-func (p *Printer) VisitInteger(n *IntegerLiteral) error {
+func (p *Printer) VisitInteger(n *Integer) error {
 	p.write(fmt.Sprintf("%d", *n))
 	return nil
 }
 
-func (p *Printer) VisitFloat(n *FloatLiteral) error {
+func (p *Printer) VisitFloat(n *Float) error {
 	p.write(fmt.Sprintf("%g", *n))
 	return nil
 }
 
-func (p *Printer) VisitString(n *StringLiteral) error {
+func (p *Printer) VisitString(n *String) error {
+	p.write(fmt.Sprintf("\"%s\"", *n))
+	return nil
+}
+
+func (p *Printer) VisitKeyword(n *Keyword) error {
 	p.write(string(*n))
 	return nil
 }
 
-func (p *Printer) VisitCharacter(n *CharacterLiteral) error {
-	p.write(string(*n))
-	return nil
-}
-
-func (p *Printer) VisitBoolean(n *BooleanLiteral) error {
+func (p *Printer) VisitBoolean(n *Boolean) error {
 	p.write(string(*n))
 	return nil
 }
