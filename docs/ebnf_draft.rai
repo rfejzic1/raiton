@@ -1,4 +1,4 @@
-### Extended Backus-Naur Form Draft
+### Extended Backus-Naur Form - Draft
 
 # scopes(blocks) are not expressions!!!
 # a scope enables the grouping of definitions and expressions
@@ -8,13 +8,14 @@
 # definitions are not expressions!!!
 # definitions are a part of a scope to allow easier binding of names to values
 
-# definition = identifier ':' expression
+# definition = [compiler_annotation] identifier ':' expression
 
 awesome: "Raiton"
 
 # expressions always evaluate to a value
 
-# expression = selector | number | string | array | record | function | if
+# expression = [compiler_annotation] (selector | literal | application | if)
+# literal = number | string | keyword | collection_literal | function
 
 # selector = identifier {'.' (identifier | integer)}
 person.skills.0.description
@@ -33,22 +34,51 @@ person
 # string = '"' {<any*>} '"'
 "Raiton"
 
-# array = '[' [integer] ':' {expression} ']'
-[: 1 2 3]
-[3: 4 5 6]
+# keyword = ':'<identifier>
+# notice that there is no space between the colon and the identifier
+:key1
 
-# list = '[' {expression} ']'
-["Raiton" "is" "awesome"]
-[4 5 6]
+# collection_literal = '{' {expression} ''}'
+{ :key1 :key2 :key3 }
 
-# record = '{' {identifier ':' expression} '}'
-{ name : "Tojuro" age : 25 }
+# Collection literals are unified syntax to express collections of values.
+# The type of the collection is inferred from the context, but if it's not possible
+# to do so, you can apply a type annotation to specify the type. See the examaples below
+# for more insight:
+
+(keys { :k1 "v1" :k2 "v2" }) # the `keys` function expects a map, the collection literal is inferred to be a map
+
+(len {1 2 3}) # the `len` function expects a list/array, the collection literal is inferred to be the specific type
+
+@map { "key1" "value1" "key2" "value2" } # typeof map string to string
+@map { :key1 "value1" :key2 "value2" } # typeof map keyword to string
+
+@person {
+  :name "Tojuro"
+  :age 25
+} # typeof person record
+
+@list{1 2 3} # typeof linked list of numbers
+
+@array{1 2 3} # typeof array of numbers
+
+@set{1 2 3} # typeof set of numbers
 
 # function = '\' {identifier} scope
 
 \a b { (add a b) }
 
 \a b: (add a b)
+
+# application = '(' {expression} ')'
+(println "Hello, World")
+
+# just evaluates to itself; if there are no other expressions to be considered arguments
+# the first expression is not considered a function
+("anything goes here")
+
+# should be interpreted as literal of unit type
+()
 
 # if = 'if' expression scope 'else' scope
 
@@ -61,38 +91,6 @@ if condition: "yes" else: "no"
 answer: if condition: "yes" else: "no"
 (println answer)
 
-# keyword = ':'<identifier>
-# notice that there is no space between the colon and the identifier
-:key1
-
-# NOTE: This is just an idea for unified collection literals
-# collection_literal = '{' {expression} ''}'
-
-# untyped collection literal, type is needed if it's not clear from context
-{ :key1 :key2 :key3 }
-
-# some use cases:
-@(map _ _) -> (seq _)
-fn keys m { ... }
-(keys { :k1 "v1" :k2 "v2" }) # in this case, because of the definition, the type of the collection literal is `map`
-
-@(list _) -> int
-fn len ls { ... }
-(len {1 2 3}) # in this case, the collection literal type is `list`
-
-@map { "key1" "value1" "key2" "value2" } # typeof map string to string
-@map { :key1 "value1" :key2 "value2" } # typeof map keyword to string
-
-@person {
-  :name "Tojuro"
-  :age 25
-} # typeof person record
-
-@list{1 2 3} # typeof linked list of numbers same as [1 2 3]
-
-@array{1 2 3} # typeof array of numbers, same as [: 1 2 3]
-
-@set{1 2 3} # typeof set of numbers
 
 ## Function Definition
 
@@ -105,20 +103,18 @@ add_5: \x: (add x 5)
 
 fn add_5 x: (add x 5)
 
-### Types
 
-# NOTE: This is just an idea for type declarations and compile time annotations with the `@` symbol
+## Compile-time annotations
 
-# types can be inferred because of the `add` function, taking two ints and returning an int
-fn add_nums a b: (add a b)
+# Raiton allows you to write code that will be executed at compile-time.
+# This makes it possible to do meta programming without paying for it
+# at runtime.
 
-# types can be specified for an expression or definition (implies that it's referring to the expression of the definition)
-@int -> int -> int
-fn add_two a b: (add a b)
+# compiler_annotation = '@' compiler_expression
+# compiler_expression = type_expression
+# type_expression = (identifier | application) ['->' type_expression]
 
-# function type that takes int and returns int
-@int -> int
-add_5: \x: (add x 5)
+# Here are some examples of these compiler annotations:
 
 @string
 name: "What is this?"
@@ -126,52 +122,82 @@ name: "What is this?"
 @(array int)
 nums: {1 2 3}
 
-# It's possible to define new types using the @type annotation
+@int -> int -> int
+fn add_two a b: (add a b)
 
-# @type is applied to definitions only;
-# @type applied to a function definition allows for parametrized types (generics);
+# The `string` expression in the first example is a reference to the string type,
+# and applying it to the definition effectively indicates that the type of the
+# `name` definition should be a string. If it wasn't a string expression, it would compile-time error.
+#
+# The `(array int)` is used to indicate to the `array` type function that it's an array of integers.
+# If you just used `(array)` it would be a generic array and the compiler would infer the element types.
+# It's basically partial function application of the built-in `array` compile-time function type.
+#
+# The `int -> int -> int` is a reference to a function type that takes two integers and returns an integer.
+# The arrow symbol `->` can be thought of as the part of the name.
+# You could do something like `(list int) -> int` and it would result in a valid type annotation.
 
-# F and S are type parameters
-@type
-fn pair F S: (tuple {F S})
+# It's possible to define new types using the `@type` annotation:
 
-# this is just a basic type alias
 @type
 mystring: string
 
-# and it's applied like any other comptime function, with the type parameters passed in:
-@(pair string integer)
-score: {"Tojuro" 100}
+@type
+predicate: string -> bool
 
-# the construct is basically a @record comptime annotation to a `person` definition of a map;
-# the @record annotation expects the map to map keywords to other types and will fail to compile otherwise;
-# this is how to create a new record type:
+@type
+fn pair f s: (tuple {f s})
+
+# `type` is also a built-in compile-time function that defines a new type based on the target definition.
+# It expects the expression of the definition to be a reference to a type or a function that returns
+# a reference to a type. In the example above, `mystring` is just an alias to the `string` type; the
+# `predicate` definition defines a function type; `pair` defines a function with two type parameters
+# and creates a tuple type of those two type parameters.
+
+# To create a custom record (or struct or object) type with custom fields, use the `record` function:
+@type
+person: (record {
+  :name string
+  :age int
+})
+
+# or you can apply it directly to a map to get the equivalent:
 @record
 person: {
   :name string
   :age int
 }
 
-# using the comptime constant to hint the compiler of the type of the definition/expression
-@person
-tojuro: { :name "Tojuro" :age 25 }
+# So far, all the annotations had to do with types, but we can also do source code manipulation
+# via the `compiler` annotation:
 
-# TODO: Figure out if I should allow for compile time annotations to be applied to
-#       function parameters? Look at the comptime function below for reference...
-
-# @comptime is an annotation applied to a function to let it be invoked on compile time
-# to manipulate the AST. The function has to take an AST Node as the first parameter
-# and can have other parameters as required. It must return a new AST Node which
-# will replace the target of the comptime function application.
-@comptime
-fn changeval @(ast definition) target @string value {
-  # create new definition with :value property set to value
-  (definition target { :value value })
+@compiler
+fn do_nothing value target {
+  (println value)
+  target
 }
 
-# apply the compile time function on some piece of code, the first argument is always the targeted AST node
-@(changeval "the new value")
-myval: "the old value" # at compilation time should have "the new value"
+# The `compiler` annotation is only applied to function definitions which take an AST node as the
+# first parameter (optionally it can take more parameters) and it has to return a new AST node.
+# When the compiler function is invoked, it's going to replace the target AST node with a new one
+# before it proceeds to compile it further. This enables us to do compile-time operations on our
+# source code.
+#
+# Some useful things to do at compile-time could be generating additonal information with some type
+# or doing some verification on the environment, wrapping values in other values, etc.
+
+# To apply a compiler function, simply do as you would assume:
+@(do_nothing "this gets printed in compiler output")
+myval: "the old value"
+
+# The first argument is always the AST Node of the target, in the case above it's a `Definition` Node.
+
+### Considerations:
+
+# Implement evaluation at compile time similar to the current evaluator...
+# Then do semantic analysis on types etc.
+# Do AST optimizations where possible, remove unused code etc...
+# Implement compiler to emit code/instructions based on the AST...
 
 # TODO: Have the `int` type be an unsized integer, something like BigInt in java or BigDecimal for `float`
 #       When a size is specified by the type int8, int16, int32, int64 then use those widths; same for float32, float64...

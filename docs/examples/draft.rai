@@ -1,0 +1,68 @@
+use fmt
+use { serve get } from net.http
+use { parse_int } form strings
+
+@(get "/:name")
+fn greeting req {
+  name: (:name req.params)
+
+  @map {
+    :name name
+    :message (fmt.format "Hello, %s" name)
+  }
+}
+
+# calculate sum, ignore NaNs
+{ "1" "2" "3" "four" "" "-4a" }
+  | (map parse_int)
+  | (keep is_some)
+  | (map unwrap)
+  | sum
+
+# the pipe takes the left hand side value and passes it to the
+# right hand side function; the function should take a single value
+# and return a single value to be piped to the next function;
+# it is the exact equivalent of:
+(sum (map unwrap (keep is_some (map parse_int { "1" "2" "3" "four" "" "-4a" }))))
+
+(serve { :port 3000 })
+
+
+# With comptime you can create runtime function definitions:
+
+@compiler
+fn def_multiply identifier multiplier {
+  # some code here to create AST node for a function definition...
+}
+
+@(def_multiply 2)
+mul_by_two
+# creates:
+fn mul_by_two value: (mul value 2)
+
+@(def_multiply 42)
+mul_by_forty_two
+# creates:
+fn mul_by_forty_two value: (mul value 42)
+
+
+# This is an example of an html document in raiton collection representation:
+
+page: {
+  :html {
+    :head {
+      :meta {}
+    }
+    :body {
+      :h1 "Hello, world"
+      :input (attributes {
+        :id "name"
+        :type "name"
+        :placeholder "Enter your name..."
+      })
+    }
+  }
+}
+
+(render page) # produces html
+
