@@ -25,6 +25,7 @@ func (t *Token) Print(w io.Writer) {
 var KEYWORDS = map[string]TokenType{
 	"true":  BOOLEAN,
 	"false": BOOLEAN,
+	"let":   LET,
 	"fn":    FUNCTION,
 	"if":    IF,
 	"else":  ELSE,
@@ -51,6 +52,7 @@ const (
 	KEYWORD    = "keyword"
 	NUMBER     = "number"
 	BOOLEAN    = "boolean"
+	LET        = "let"
 	FUNCTION   = "function"
 	IF         = "if"
 	ELSE       = "else"

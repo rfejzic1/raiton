@@ -162,7 +162,7 @@ func TestConditionalScopes(t *testing.T) {
 
 func TestDefinitionWithSingleExpression(t *testing.T) {
 	source := `
-	name: "Tojuro"
+	let name "Tojuro"
 	`
 
 	expected := ast.Scope{

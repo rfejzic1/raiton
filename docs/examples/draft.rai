@@ -4,7 +4,7 @@ use { parse_int } form strings
 
 @(get "/:name")
 fn greeting req {
-  name: (:name req.params)
+  let name (dig req {:params :name})
 
   @map {
     :name name
@@ -12,7 +12,21 @@ fn greeting req {
   }
 }
 
-# calculate sum, ignore NaNs
+(serve { :port 3000 })
+
+# task: calculate sum, ignoring every string that's not a number
+@list
+input: { "1" "2" "3" "four" "" "-4a" }
+
+# solution 1:
+(sum (map unwrap (keep is_some (map parse_int input))))
+
+# map - takes a function to apply to elements of the list
+# unwrap - unwraps option, panics if no value is present (none)
+# keep - filters values from a collection, keeping those that satisfy the predicate function
+# is_some - returns true if the value is present (some)
+# parse_int - tries to parse a string into an int, returning an option of int
+
 { "1" "2" "3" "four" "" "-4a" }
   | (map parse_int)
   | (keep is_some)
@@ -22,10 +36,16 @@ fn greeting req {
 # the pipe takes the left hand side value and passes it to the
 # right hand side function; the function should take a single value
 # and return a single value to be piped to the next function;
-# it is the exact equivalent of:
-(sum (map unwrap (keep is_some (map parse_int { "1" "2" "3" "four" "" "-4a" }))))
+# the pipe operator is left-associative, meaning (value | fn1) | fn2 <=> value | fn1 | fn2
 
-(serve { :port 3000 })
+# (g (f x)) is the same as (g * f x)
+(println * greeter name)
+(println (greeter name))
+
+(sum * (map unwrap) * (keep is_some) * (map parse_int) { "1" "2" "3" "four" "" "-4a" })
+
+# this is also valid
+{ "1" "2" "3" "four" "" "-4a" } | sum * (map unwrap) * (keep is_some) * (map parse_int)
 
 
 # With comptime you can create runtime function definitions:
@@ -47,20 +67,17 @@ fn mul_by_forty_two value: (mul value 42)
 
 
 # This is an example of an html document in raiton collection representation:
-
-page: {
-  :html {
-    :head {
-      :meta {}
-    }
-    :body {
-      :h1 "Hello, world"
-      :input (attributes {
-        :id "name"
-        :type "name"
-        :placeholder "Enter your name..."
-      })
-    }
+let page {
+  :head {
+    :meta {}
+  }
+  :body {
+    :h1 "Hello, world"
+    :input (attributes {
+      :id "name"
+      :type "name"
+      :placeholder "Enter your name..."
+    })
   }
 }
 

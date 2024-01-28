@@ -1,29 +1,36 @@
-name: "John"
+let name "John"
 
-greeter: \name {
-  greeting: "Hello, "
+let public_name "Jonathan"
+
+let greeter \name {
+  let greeting "Hello, "
   (concat greeting name)
 }
 
-fn greeter name { 
-  greeting: "Hello, "
+fn greeter name {
+  let greeting "Hello, "
   (concat greeting name)
 }
 
-exclaimed: \str: (concat str "!")
+let exclaimed \str: (concat str "!")
 
 fn exclaimed str: (concat str "!")
 
+let exclaimed \str {
+  let suffix "!"
+  (concat str suffix)
+}
+
 fn exclaimed str {
-  suffix: "!"
+  let suffix "!"
   (concat str suffix)
 }
 
 (println (greeter name))
 
-nums: [1 2 3]
+let nums [1 2 3]
 
-bigger_nums: (map nums \n: (add n 1))
+let bigger_nums (map nums \n: (add n 1))
 
 (println bigger_nums)
 

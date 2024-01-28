@@ -89,50 +89,47 @@ func (p *Parser) scope() (*ast.Scope, error) {
 }
 
 func (p *Parser) scopeItem(scope *ast.Scope) error {
-	if p.match(token.IDENTIFIER) {
-		ident := p.identifier()
-
-		switch {
-		case p.match(token.DOT):
-			selector, err := p.selector(ident)
-
-			if err != nil {
-				return err
-			}
-
-			scope.Expressions = append(scope.Expressions, selector)
-		case p.match(token.COLON):
-			definition, err := p.definition(ident)
-
-			if err != nil {
-				return err
-			}
-
-			scope.Definitions = append(scope.Definitions, definition)
-		default:
-			scope.Expressions = append(scope.Expressions, ident)
-		}
-	} else if p.match(token.FUNCTION) {
-		funcDef, err := p.functionDefinition()
+	if p.match(token.LET) {
+		definition, err := p.definition()
 
 		if err != nil {
 			return err
 		}
 
-		scope.Definitions = append(scope.Definitions, funcDef)
+		scope.Definitions = append(scope.Definitions, definition)
+	} else if p.match(token.FUNCTION) {
+		functionDefinition, err := p.functionDefinition()
+
+		if err != nil {
+			return err
+		}
+
+		scope.Definitions = append(scope.Definitions, functionDefinition)
 	} else {
 		expression, err := p.expression()
+
 		if err != nil {
 			return err
 		}
+
 		scope.Expressions = append(scope.Expressions, expression)
 	}
 
 	return nil
 }
 
-func (p *Parser) definition(ident *ast.Identifier) (*ast.Definition, error) {
-	p.consume(token.COLON)
+func (p *Parser) definition() (*ast.Definition, error) {
+	if err := p.expect(token.LET); err != nil {
+		return nil, err
+	}
+
+	p.consume(token.LET)
+
+	if err := p.expect(token.IDENTIFIER); err != nil {
+		return nil, err
+	}
+
+	ident := p.identifier()
 
 	expr, err := p.expression()
 
@@ -186,7 +183,7 @@ func (p *Parser) functionDefinition() (*ast.Definition, error) {
 func (p *Parser) expression() (ast.Expression, error) {
 	switch {
 	case p.match(token.IDENTIFIER):
-		return p.selector(nil)
+		return p.selector()
 	case p.match(token.NUMBER) || p.match(token.MINUS):
 		return p.number()
 	case p.match(token.BOOLEAN):
@@ -216,20 +213,15 @@ func (p *Parser) identifier() *ast.Identifier {
 	return &ident
 }
 
-func (p *Parser) selector(ident *ast.Identifier) (ast.Expression, error) {
+func (p *Parser) selector() (ast.Expression, error) {
 	items := []*ast.SelectorItem{}
 
-	if ident == nil {
-		if err := p.expect(token.IDENTIFIER); err != nil {
-			return nil, err
-		}
-
-		ident = ast.NewIdentifier(p.token.Literal)
-		p.consume(token.IDENTIFIER)
+	if err := p.expect(token.IDENTIFIER); err != nil {
+		return nil, err
 	}
 
-	firstItem := ast.NewIdentifierSelector(ident)
-	items = append(items, firstItem)
+	ident := p.identifier()
+	items = append(items, ast.NewIdentifierSelector(ident))
 
 	for p.match(token.DOT) {
 		p.consume(token.DOT)

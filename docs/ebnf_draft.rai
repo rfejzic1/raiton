@@ -8,9 +8,9 @@
 # definitions are not expressions!!!
 # definitions are a part of a scope to allow easier binding of names to values
 
-# definition = [compiler_annotation] identifier ':' expression
+# definition = [compiler_annotation] 'let' identifier expression
 
-awesome: "Raiton"
+let awesome "Raiton"
 
 # expressions always evaluate to a value
 
