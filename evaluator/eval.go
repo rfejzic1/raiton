@@ -185,7 +185,8 @@ func (e *Evaluator) VisitSelectorItem(i *ast.SelectorItem) error {
 
 func (e *Evaluator) VisitApplication(a *ast.Application) error {
 	if len(a.Arguments) < 1 {
-		return fmt.Errorf("expected at least one expression")
+		e.results.push(object.THE_UNIT)
+		return nil
 	}
 
 	if err := a.Arguments[0].Accept(e); err != nil {

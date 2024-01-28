@@ -8,13 +8,14 @@
 # definitions are not expressions!!!
 # definitions are a part of a scope to allow easier binding of names to values
 
-# definition = 'let' identifier expression
+# definition = [compiler_annotation] 'let' identifier expression
 
 let awesome "Raiton"
 
 # expressions always evaluate to a value
 
-# expression = selector | number | string | array | record | function | if
+# expression = [compiler_annotation] (selector | literal | application | if)
+# literal = number | string | keyword | collection_literal | function
 
 # selector = identifier {'.' (identifier | integer)}
 person.skills.0.description
@@ -33,6 +34,10 @@ person
 # string = '"' {<any*>} '"'
 "Raiton"
 
+# keyword = ':'<identifier>
+# notice that there is no space between the colon and the identifier
+:key1
+
 # array = '[' [integer] ':' {expression} ']'
 [: 1 2 3]
 [3: 4 5 6]
@@ -50,6 +55,16 @@ person
 
 \a b: (add a b)
 
+# application = '(' {expression} ')'
+(println "Hello, World")
+
+# just evaluates to itself; if there are no other expressions to be considered arguments
+# the first expression is not considered a function
+("anything goes here")
+
+# should be interpreted as literal of unit type
+()
+
 # if = 'if' expression scope 'else' scope
 
 # to conditionally evaluate expressions, use an if-expression
@@ -61,9 +76,6 @@ if condition: "yes" else: "no"
 let answer if condition: "yes" else: "no"
 (println answer)
 
-# keyword = ':'<identifier>
-# notice that there is no space between the colon and the identifier
-:key1
 
 ## Function Definition
 

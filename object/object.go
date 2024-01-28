@@ -15,6 +15,7 @@ type Object interface {
 }
 
 const (
+	UNIT      = "unit"
 	BOOLEAN   = "boolean"
 	CHARACTER = "character"
 	INTEGER   = "integer"
@@ -28,6 +29,12 @@ const (
 	BUILTIN   = "builtin"
 )
 
+type Unit struct{}
+
+func (u *Unit) Inspect() string { return "()" }
+
+func (u *Unit) Type() ObjectType { return UNIT }
+
 type Boolean struct {
 	Value bool
 }
@@ -37,8 +44,9 @@ func (b *Boolean) Inspect() string { return fmt.Sprintf("%t", b.Value) }
 func (b *Boolean) Type() ObjectType { return BOOLEAN }
 
 var (
-	TRUE  = &Boolean{Value: true}
-	FALSE = &Boolean{Value: false}
+	THE_UNIT = &Unit{}
+	TRUE     = &Boolean{Value: true}
+	FALSE    = &Boolean{Value: false}
 )
 
 func BoxBoolean(value bool) *Boolean {
