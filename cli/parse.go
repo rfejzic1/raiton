@@ -6,10 +6,10 @@ import (
 	"os"
 	"path"
 
+	"github.com/urfave/cli/v2"
 	"raiton/ast"
 	"raiton/lexer"
 	"raiton/parser"
-	"github.com/urfave/cli/v2"
 )
 
 func parse(ctx *cli.Context) error {

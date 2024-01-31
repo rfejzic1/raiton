@@ -3,17 +3,34 @@ package evaluator
 import (
 	"fmt"
 
-	"raiton/ast"
 	"raiton/object"
 )
 
-var builtins = map[string]*object.Builtin{
-	"add": object.NewBuiltin(add),
-	"eq":  object.NewBuiltin(eq),
-	"map": object.NewBuiltin(mapfn),
+type builtins struct {
+	eval    *Evaluator
+	mapping map[string]*object.Builtin
 }
 
-func add(_ ast.Visitor, args ...object.Object) (object.Object, error) {
+func newBuiltins(e *Evaluator) builtins {
+	b := builtins{eval: e}
+
+	b.mapping = map[string]*object.Builtin{
+		"add": object.NewBuiltin(add),
+		"eq":  object.NewBuiltin(eq),
+		"map": object.NewBuiltin(b.mapfn),
+	}
+
+	return b
+}
+
+func (b *builtins) lookup(name string) (*object.Builtin, bool) {
+	obj, ok := b.mapping[name]
+	return obj, ok
+}
+
+/*** Functions ***/
+
+func add(args ...object.Object) (object.Object, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf("expected two integers")
 	}
@@ -35,7 +52,7 @@ func add(_ ast.Visitor, args ...object.Object) (object.Object, error) {
 	}, nil
 }
 
-func eq(_ ast.Visitor, args ...object.Object) (object.Object, error) {
+func eq(args ...object.Object) (object.Object, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf("expected two objects to compare")
 	}
@@ -65,7 +82,7 @@ func eq(_ ast.Visitor, args ...object.Object) (object.Object, error) {
 	}
 }
 
-func mapfn(v ast.Visitor, args ...object.Object) (object.Object, error) {
+func (b *builtins) mapfn(args ...object.Object) (object.Object, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf("expected mapping function and array or list")
 	}
@@ -76,12 +93,6 @@ func mapfn(v ast.Visitor, args ...object.Object) (object.Object, error) {
 		return nil, fmt.Errorf("expected first argument to be a function, but got %s", args[0].Type())
 	}
 
-	eval, ok := v.(*Evaluator)
-
-	if !ok {
-		return nil, fmt.Errorf("expected Evaluator visitor")
-	}
-
 	switch v := args[1].(type) {
 	case *object.Array:
 		newArray := &object.Array{
@@ -89,7 +100,7 @@ func mapfn(v ast.Visitor, args ...object.Object) (object.Object, error) {
 		}
 
 		for _, arg := range v.Value {
-			obj, err := eval.applyBuiltin(fn, arg)
+			obj, err := b.eval.applyBuiltin(fn, arg)
 
 			if err != nil {
 				return nil, err
@@ -110,7 +121,7 @@ func mapfn(v ast.Visitor, args ...object.Object) (object.Object, error) {
 		var newHead *object.ListNode
 
 		for head != nil {
-			value, err := eval.applyBuiltin(fn, head.Value)
+			value, err := b.eval.applyBuiltin(fn, head.Value)
 
 			if err != nil {
 				return nil, err

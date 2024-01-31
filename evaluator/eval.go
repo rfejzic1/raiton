@@ -9,29 +9,73 @@ import (
 )
 
 type Evaluator struct {
-	env     *object.Environment
-	results stack
+	env      *object.Environment
+	results  stack
+	builtins builtins
 }
 
 func New(env *object.Environment) Evaluator {
-	return Evaluator{
+	e := Evaluator{
 		env: env,
 	}
+
+	e.builtins = newBuiltins(&e)
+
+	return e
 }
 
 func (e *Evaluator) Evaluate(node ast.Node) (object.Object, error) {
-	if err := node.Accept(e); err != nil {
+	if err := e.evaluate(node); err != nil {
 		return nil, err
 	}
 
 	return e.results.popSafe()
 }
 
-/*** Visitor Methods ***/
+func (e *Evaluator) evaluate(node ast.Node) error {
+	switch n := node.(type) {
+	case *ast.Scope:
+		return e.scope(n)
+	case *ast.Definition:
+		return e.definition(n)
+	case *ast.Identifier:
+		return e.identifier(n)
+	case *ast.Selector:
+		return e.selector(n)
+	case *ast.SelectorItem:
+		return e.selectorItem(n)
+	case *ast.Application:
+		return e.application(n)
+	case *ast.Function:
+		return e.function(n)
+	case *ast.Conditional:
+		return e.conditional(n)
+	case *ast.Record:
+		return e.record(n)
+	case *ast.Array:
+		return e.array(n)
+	case *ast.List:
+		return e.list(n)
+	case *ast.String:
+		return e.string(n)
+	case *ast.Integer:
+		return e.integer(n)
+	case *ast.Float:
+		return e.float(n)
+	case *ast.Keyword:
+		return e.keyword(n)
+	case *ast.Boolean:
+		return e.boolean(n)
+	default:
+		panic("unhandled ast type")
+	}
+}
 
-func (e *Evaluator) VisitScope(s *ast.Scope) error {
+/*** Evaluator Methods ***/
+
+func (e *Evaluator) scope(s *ast.Scope) error {
 	for _, def := range s.Definitions {
-		if err := def.Accept(e); err != nil {
+		if err := e.evaluate(def); err != nil {
 			return nil
 		}
 	}
@@ -39,7 +83,7 @@ func (e *Evaluator) VisitScope(s *ast.Scope) error {
 	var returnValue object.Object
 
 	for _, expr := range s.Expressions {
-		if err := expr.Accept(e); err != nil {
+		if err := e.evaluate(expr); err != nil {
 			return err
 		}
 		returnValue = e.results.pop()
@@ -53,10 +97,10 @@ func (e *Evaluator) VisitScope(s *ast.Scope) error {
 	return nil
 }
 
-func (e *Evaluator) VisitDefinition(d *ast.Definition) error {
+func (e *Evaluator) definition(d *ast.Definition) error {
 	ident := string(d.Identifier)
 
-	if err := d.Expression.Accept(e); err != nil {
+	if err := e.evaluate(d.Expression); err != nil {
 		return err
 	}
 
@@ -69,7 +113,7 @@ func (e *Evaluator) VisitDefinition(d *ast.Definition) error {
 	return nil
 }
 
-func (e *Evaluator) VisitIdentifier(i *ast.Identifier) error {
+func (e *Evaluator) identifier(i *ast.Identifier) error {
 	ident := string(*i)
 
 	if obj, ok := e.env.Lookup(ident); ok {
@@ -77,7 +121,7 @@ func (e *Evaluator) VisitIdentifier(i *ast.Identifier) error {
 		return nil
 	}
 
-	if obj, ok := builtins[ident]; ok {
+	if obj, ok := e.builtins.lookup(ident); ok {
 		e.results.push(obj)
 		return nil
 	}
@@ -85,7 +129,7 @@ func (e *Evaluator) VisitIdentifier(i *ast.Identifier) error {
 	return fmt.Errorf("'%s' not defined", ident)
 }
 
-func (e *Evaluator) VisitSelector(s *ast.Selector) error {
+func (e *Evaluator) selector(s *ast.Selector) error {
 	if len(s.Items) < 1 || s.Items[0].Identifier == nil {
 		return fmt.Errorf("expected first selector item to be an identifier")
 	}
@@ -96,7 +140,7 @@ func (e *Evaluator) VisitSelector(s *ast.Selector) error {
 	var ok bool
 
 	if obj, ok = e.env.Lookup(ident); !ok {
-		if obj, ok = builtins[ident]; !ok {
+		if obj, ok = e.builtins.lookup(ident); !ok {
 			return fmt.Errorf("'%s' not defined", ident)
 		}
 	}
@@ -104,7 +148,7 @@ func (e *Evaluator) VisitSelector(s *ast.Selector) error {
 	e.results.push(obj)
 
 	for _, i := range s.Items[1:] {
-		if err := i.Accept(e); err != nil {
+		if err := e.evaluate(i); err != nil {
 			return err
 		}
 	}
@@ -112,7 +156,7 @@ func (e *Evaluator) VisitSelector(s *ast.Selector) error {
 	return nil
 }
 
-func (e *Evaluator) VisitSelectorItem(i *ast.SelectorItem) error {
+func (e *Evaluator) selectorItem(i *ast.SelectorItem) error {
 	obj := e.results.pop()
 
 	switch obj.Type() {
@@ -183,13 +227,13 @@ func (e *Evaluator) VisitSelectorItem(i *ast.SelectorItem) error {
 	}
 }
 
-func (e *Evaluator) VisitApplication(a *ast.Application) error {
+func (e *Evaluator) application(a *ast.Application) error {
 	if len(a.Arguments) < 1 {
 		e.results.push(object.THE_UNIT)
 		return nil
 	}
 
-	if err := a.Arguments[0].Accept(e); err != nil {
+	if err := e.evaluate(a.Arguments[0]); err != nil {
 		return err
 	}
 
@@ -214,7 +258,7 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 			for i, arg := range args {
 				param := boundParams[i]
 
-				if err := arg.Accept(e); err != nil {
+				if err := e.evaluate(arg); err != nil {
 					return err
 				}
 
@@ -234,7 +278,7 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 		for i, p := range function.Parameters {
 			arg := args[i]
 
-			if err := arg.Accept(e); err != nil {
+			if err := e.evaluate(arg); err != nil {
 				return err
 			}
 
@@ -244,7 +288,7 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 			e.env.Define(ident, obj)
 		}
 
-		if err := function.Body.Accept(e); err != nil {
+		if err := e.evaluate(function.Body); err != nil {
 			return err
 		}
 
@@ -256,7 +300,7 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 
 		// TODO: Partial function application here as well...
 		for _, a := range a.Arguments[1:] {
-			if err := a.Accept(e); err != nil {
+			if err := e.evaluate(a); err != nil {
 				return err
 			}
 
@@ -265,7 +309,7 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 		}
 
 		// TODO: Better error handling
-		obj, err := function(e, objs...)
+		obj, err := function(objs...)
 
 		if err != nil {
 			return err
@@ -289,7 +333,7 @@ func (e *Evaluator) applyBuiltin(fn *object.Function, args ...object.Object) (ob
 		e.env.Define(ident, args[i])
 	}
 
-	if err := fn.Body.Accept(e); err != nil {
+	if err := e.evaluate(fn.Body); err != nil {
 		return nil, err
 	}
 
@@ -297,7 +341,7 @@ func (e *Evaluator) applyBuiltin(fn *object.Function, args ...object.Object) (ob
 	return obj, nil
 }
 
-func (e *Evaluator) VisitFunction(f *ast.Function) error {
+func (e *Evaluator) function(f *ast.Function) error {
 	obj := &object.Function{
 		Parameters:  f.Parameters,
 		Body:        f.Body,
@@ -309,8 +353,8 @@ func (e *Evaluator) VisitFunction(f *ast.Function) error {
 	return nil
 }
 
-func (e *Evaluator) VisitConditional(c *ast.Conditional) error {
-	if err := c.Condition.Accept(e); err != nil {
+func (e *Evaluator) conditional(c *ast.Conditional) error {
+	if err := e.evaluate(c.Condition); err != nil {
 		return err
 	}
 
@@ -323,11 +367,11 @@ func (e *Evaluator) VisitConditional(c *ast.Conditional) error {
 	}
 
 	if condition.Value {
-		if err := c.Consequence.Accept(e); err != nil {
+		if err := e.evaluate(c.Consequence); err != nil {
 			return nil
 		}
 	} else {
-		if err := c.Alternative.Accept(e); err != nil {
+		if err := e.evaluate(c.Alternative); err != nil {
 			return nil
 		}
 	}
@@ -335,13 +379,13 @@ func (e *Evaluator) VisitConditional(c *ast.Conditional) error {
 	return nil
 }
 
-func (e *Evaluator) VisitRecord(r *ast.Record) error {
+func (e *Evaluator) record(r *ast.Record) error {
 	record := &object.Record{
 		Value: map[string]object.Object{},
 	}
 
 	for field, value := range r.Fields {
-		if err := value.Accept(e); err != nil {
+		if err := e.evaluate(value); err != nil {
 			return err
 		}
 
@@ -354,11 +398,11 @@ func (e *Evaluator) VisitRecord(r *ast.Record) error {
 	return nil
 }
 
-func (e *Evaluator) VisitArray(a *ast.Array) error {
+func (e *Evaluator) array(a *ast.Array) error {
 	objs := []object.Object{}
 
 	for _, elem := range a.Elements {
-		if err := elem.Accept(e); err != nil {
+		if err := e.evaluate(elem); err != nil {
 			return err
 		}
 
@@ -382,14 +426,14 @@ func (e *Evaluator) VisitArray(a *ast.Array) error {
 	return nil
 }
 
-func (e *Evaluator) VisitList(s *ast.List) error {
+func (e *Evaluator) list(s *ast.List) error {
 	list := &object.List{}
 
 	var head *object.ListNode
 	size := 0
 
 	for _, elem := range s.Elements {
-		if err := elem.Accept(e); err != nil {
+		if err := e.evaluate(elem); err != nil {
 			return err
 		}
 
@@ -416,7 +460,7 @@ func (e *Evaluator) VisitList(s *ast.List) error {
 	return nil
 }
 
-func (e *Evaluator) VisitInteger(n *ast.Integer) error {
+func (e *Evaluator) integer(n *ast.Integer) error {
 	result := &object.Integer{
 		Value: int64(*n),
 	}
@@ -426,7 +470,7 @@ func (e *Evaluator) VisitInteger(n *ast.Integer) error {
 	return nil
 }
 
-func (e *Evaluator) VisitFloat(n *ast.Float) error {
+func (e *Evaluator) float(n *ast.Float) error {
 	result := &object.Float{
 		Value: float64(*n),
 	}
@@ -436,7 +480,7 @@ func (e *Evaluator) VisitFloat(n *ast.Float) error {
 	return nil
 }
 
-func (e *Evaluator) VisitString(s *ast.String) error {
+func (e *Evaluator) string(s *ast.String) error {
 	result := &object.String{
 		Value: string(*s),
 	}
@@ -446,7 +490,7 @@ func (e *Evaluator) VisitString(s *ast.String) error {
 	return nil
 }
 
-func (e *Evaluator) VisitKeyword(s *ast.Keyword) error {
+func (e *Evaluator) keyword(s *ast.Keyword) error {
 	result := &object.Keyword{
 		Value: string(*s),
 	}
@@ -456,7 +500,7 @@ func (e *Evaluator) VisitKeyword(s *ast.Keyword) error {
 	return nil
 }
 
-func (e *Evaluator) VisitBoolean(b *ast.Boolean) error {
+func (e *Evaluator) boolean(b *ast.Boolean) error {
 	value, err := strconv.ParseBool(string(*b))
 
 	if err != nil {

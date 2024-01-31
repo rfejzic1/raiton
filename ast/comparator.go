@@ -29,16 +29,55 @@ func (c *Comparator) Compare(expected Node) error {
 		return fmt.Errorf("unexpected nil")
 	}
 
-	return expected.Accept(c)
+	return c.compare(expected)
 }
 
 func (c *Comparator) observe(node Node) {
 	c.current = node
 }
 
-/*** Visitor Methods ***/
+func (e *Comparator) compare(node Node) error {
+	switch n := node.(type) {
+	case *Scope:
+		return e.scope(n)
+	case *Definition:
+		return e.definition(n)
+	case *Identifier:
+		return e.identifier(n)
+	case *Selector:
+		return e.selector(n)
+	case *SelectorItem:
+		return e.selectorItem(n)
+	case *Application:
+		return e.application(n)
+	case *Function:
+		return e.function(n)
+	case *Conditional:
+		return e.conditional(n)
+	case *Record:
+		return e.record(n)
+	case *Array:
+		return e.array(n)
+	case *List:
+		return e.list(n)
+	case *String:
+		return e.string(n)
+	case *Integer:
+		return e.integer(n)
+	case *Float:
+		return e.float(n)
+	case *Keyword:
+		return e.keyword(n)
+	case *Boolean:
+		return e.boolean(n)
+	default:
+		panic("unhandled ast type")
+	}
+}
 
-func (c *Comparator) VisitScope(expected *Scope) error {
+/*** Comparator Methods ***/
+
+func (c *Comparator) scope(expected *Scope) error {
 	current, ok := c.current.(*Scope)
 
 	if !ok {
@@ -56,7 +95,7 @@ func (c *Comparator) VisitScope(expected *Scope) error {
 	return nil
 }
 
-func (c *Comparator) VisitDefinition(expected *Definition) error {
+func (c *Comparator) definition(expected *Definition) error {
 	current, ok := c.current.(*Definition)
 
 	if !ok {
@@ -71,14 +110,14 @@ func (c *Comparator) VisitDefinition(expected *Definition) error {
 
 	c.observe(current.Expression)
 
-	if err := expected.Expression.Accept(c); err != nil {
+	if err := c.compare(expected.Expression); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *Comparator) VisitIdentifier(expected *Identifier) error {
+func (c *Comparator) identifier(expected *Identifier) error {
 	current, ok := c.current.(*Identifier)
 
 	if !ok {
@@ -92,7 +131,7 @@ func (c *Comparator) VisitIdentifier(expected *Identifier) error {
 	return nil
 }
 
-func (c *Comparator) VisitSelector(expected *Selector) error {
+func (c *Comparator) selector(expected *Selector) error {
 	current, ok := c.current.(*Selector)
 
 	if !ok {
@@ -106,7 +145,7 @@ func (c *Comparator) VisitSelector(expected *Selector) error {
 	return nil
 }
 
-func (c *Comparator) VisitSelectorItem(expected *SelectorItem) error {
+func (c *Comparator) selectorItem(expected *SelectorItem) error {
 	current, ok := c.current.(*SelectorItem)
 
 	if !ok {
@@ -128,7 +167,7 @@ func (c *Comparator) VisitSelectorItem(expected *SelectorItem) error {
 	return nil
 }
 
-func (c *Comparator) VisitApplication(expected *Application) error {
+func (c *Comparator) application(expected *Application) error {
 	current, ok := c.current.(*Application)
 
 	if !ok {
@@ -142,7 +181,7 @@ func (c *Comparator) VisitApplication(expected *Application) error {
 	return nil
 }
 
-func (c *Comparator) VisitConditional(expected *Conditional) error {
+func (c *Comparator) conditional(expected *Conditional) error {
 	current, ok := c.current.(*Conditional)
 
 	if !ok {
@@ -170,7 +209,7 @@ func (c *Comparator) VisitConditional(expected *Conditional) error {
 	return nil
 }
 
-func (c *Comparator) VisitFunction(expected *Function) error {
+func (c *Comparator) function(expected *Function) error {
 	current, ok := c.current.(*Function)
 
 	if !ok {
@@ -190,7 +229,7 @@ func (c *Comparator) VisitFunction(expected *Function) error {
 	return nil
 }
 
-func (c *Comparator) VisitRecord(expected *Record) error {
+func (c *Comparator) record(expected *Record) error {
 	current, ok := c.current.(*Record)
 
 	if !ok {
@@ -204,7 +243,7 @@ func (c *Comparator) VisitRecord(expected *Record) error {
 	return nil
 }
 
-func (c *Comparator) VisitArray(expected *Array) error {
+func (c *Comparator) array(expected *Array) error {
 	current, ok := c.current.(*Array)
 
 	if !ok {
@@ -222,7 +261,7 @@ func (c *Comparator) VisitArray(expected *Array) error {
 	return nil
 }
 
-func (c *Comparator) VisitList(expected *List) error {
+func (c *Comparator) list(expected *List) error {
 	current, ok := c.current.(*List)
 
 	if !ok {
@@ -236,7 +275,7 @@ func (c *Comparator) VisitList(expected *List) error {
 	return nil
 }
 
-func (c *Comparator) VisitInteger(expected *Integer) error {
+func (c *Comparator) integer(expected *Integer) error {
 	current, ok := c.current.(*Integer)
 
 	if !ok {
@@ -250,7 +289,7 @@ func (c *Comparator) VisitInteger(expected *Integer) error {
 	return nil
 }
 
-func (c *Comparator) VisitFloat(expected *Float) error {
+func (c *Comparator) float(expected *Float) error {
 	current, ok := c.current.(*Float)
 
 	if !ok {
@@ -264,7 +303,7 @@ func (c *Comparator) VisitFloat(expected *Float) error {
 	return nil
 }
 
-func (c *Comparator) VisitBoolean(expected *Boolean) error {
+func (c *Comparator) boolean(expected *Boolean) error {
 	current, ok := c.current.(*Boolean)
 
 	if !ok {
@@ -278,7 +317,7 @@ func (c *Comparator) VisitBoolean(expected *Boolean) error {
 	return nil
 }
 
-func (c *Comparator) VisitString(expected *String) error {
+func (c *Comparator) string(expected *String) error {
 	current, ok := c.current.(*String)
 
 	if !ok {
@@ -292,7 +331,7 @@ func (c *Comparator) VisitString(expected *String) error {
 	return nil
 }
 
-func (c *Comparator) VisitKeyword(expected *Keyword) error {
+func (c *Comparator) keyword(expected *Keyword) error {
 	current, ok := c.current.(*Keyword)
 
 	if !ok {

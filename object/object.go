@@ -190,7 +190,7 @@ func (f *Function) Inspect() string {
 
 func (f *Function) Type() ObjectType { return FUNCTION }
 
-type BuiltinFunction func(v ast.Visitor, args ...Object) (Object, error)
+type BuiltinFunction func(args ...Object) (Object, error)
 
 type Builtin struct {
 	Fn BuiltinFunction

@@ -5,9 +5,9 @@ import (
 	"os"
 	"path"
 
+	"github.com/urfave/cli/v2"
 	"raiton/lexer"
 	"raiton/token"
-	"github.com/urfave/cli/v2"
 )
 
 func tokenize(ctx *cli.Context) error {

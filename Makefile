@@ -16,6 +16,10 @@ run: build
 testall:
 	@go test ./...
 
+.PHONY: fmt
+fmt:
+	@go fmt ./...
+
 .PHONY: clean
 clean:
 	@go clean

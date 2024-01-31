@@ -17,7 +17,7 @@ func NewPrinter(node Node) *Printer {
 }
 
 func (p *Printer) String() string {
-	p.node.Accept(p)
+	p.print(p.node)
 	return p.sb.String()
 }
 
@@ -29,11 +29,50 @@ func (p *Printer) writeln() {
 	p.write("\n")
 }
 
-/*** Visitor Methods ***/
+func (e *Printer) print(node Node) error {
+	switch n := node.(type) {
+	case *Scope:
+		return e.scope(n)
+	case *Definition:
+		return e.definition(n)
+	case *Identifier:
+		return e.identifier(n)
+	case *Selector:
+		return e.selector(n)
+	case *SelectorItem:
+		return e.selectorItem(n)
+	case *Application:
+		return e.application(n)
+	case *Function:
+		return e.function(n)
+	case *Conditional:
+		return e.conditional(n)
+	case *Record:
+		return e.record(n)
+	case *Array:
+		return e.array(n)
+	case *List:
+		return e.list(n)
+	case *String:
+		return e.string(n)
+	case *Integer:
+		return e.integer(n)
+	case *Float:
+		return e.float(n)
+	case *Keyword:
+		return e.keyword(n)
+	case *Boolean:
+		return e.boolean(n)
+	default:
+		panic("unhandled ast type")
+	}
+}
 
-func (p *Printer) VisitScope(n *Scope) error {
+/*** Print Methods ***/
+
+func (p *Printer) scope(n *Scope) error {
 	for i, d := range n.Definitions {
-		if err := d.Accept(p); err != nil {
+		if err := p.print(d); err != nil {
 			return err
 		}
 		if i != len(n.Definitions)-1 {
@@ -46,7 +85,7 @@ func (p *Printer) VisitScope(n *Scope) error {
 	}
 
 	for i, e := range n.Expressions {
-		if err := e.Accept(p); err != nil {
+		if err := p.print(e); err != nil {
 			return err
 		}
 		if i != len(n.Expressions)-1 {
@@ -57,7 +96,7 @@ func (p *Printer) VisitScope(n *Scope) error {
 	return nil
 }
 
-func (p *Printer) VisitDefinition(n *Definition) error {
+func (p *Printer) definition(n *Definition) error {
 	p.write(string(n.Identifier))
 
 	_, is_scope := n.Expression.(*Scope)
@@ -65,7 +104,7 @@ func (p *Printer) VisitDefinition(n *Definition) error {
 	if is_scope {
 		p.write(" { ")
 
-		if err := n.Expression.Accept(p); err != nil {
+		if err := p.print(n.Expression); err != nil {
 			return err
 		}
 
@@ -73,7 +112,7 @@ func (p *Printer) VisitDefinition(n *Definition) error {
 		p.writeln()
 	} else {
 		p.write(": ")
-		if err := n.Expression.Accept(p); err != nil {
+		if err := p.print(n.Expression); err != nil {
 			return err
 		}
 		p.writeln()
@@ -82,16 +121,16 @@ func (p *Printer) VisitDefinition(n *Definition) error {
 	return nil
 }
 
-func (p *Printer) VisitIdentifier(n *Identifier) error {
+func (p *Printer) identifier(n *Identifier) error {
 	p.write(string(*n))
 	return nil
 }
 
-func (p *Printer) VisitSelector(n *Selector) error {
+func (p *Printer) selector(n *Selector) error {
 	l := len(n.Items)
 
 	for i, ip := range n.Items {
-		if err := ip.Accept(p); err != nil {
+		if err := p.print(ip); err != nil {
 			return nil
 		}
 
@@ -104,7 +143,7 @@ func (p *Printer) VisitSelector(n *Selector) error {
 	return nil
 }
 
-func (p *Printer) VisitSelectorItem(n *SelectorItem) error {
+func (p *Printer) selectorItem(n *SelectorItem) error {
 	if n.Identifier != nil {
 		p.write(string(*n.Identifier))
 	} else {
@@ -114,11 +153,11 @@ func (p *Printer) VisitSelectorItem(n *SelectorItem) error {
 	return nil
 }
 
-func (p *Printer) VisitApplication(n *Application) error {
+func (p *Printer) application(n *Application) error {
 	p.write("(")
 
 	for _, a := range n.Arguments {
-		if err := a.Accept(p); err != nil {
+		if err := p.print(a); err != nil {
 			return err
 		}
 
@@ -130,27 +169,27 @@ func (p *Printer) VisitApplication(n *Application) error {
 	return nil
 }
 
-func (p *Printer) VisitConditional(n *Conditional) error {
+func (p *Printer) conditional(n *Conditional) error {
 	p.write("if ")
 
-	if err := n.Condition.Accept(p); err != nil {
+	if err := p.print(n.Condition); err != nil {
 		return err
 	}
 
-	if err := n.Consequence.Accept(p); err != nil {
+	if err := p.print(n.Consequence); err != nil {
 		return err
 	}
 
 	p.write(" else ")
 
-	if err := n.Alternative.Accept(p); err != nil {
+	if err := p.print(n.Alternative); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (p *Printer) VisitFunction(n *Function) error {
+func (p *Printer) function(n *Function) error {
 	p.write("\\")
 
 	for _, param := range n.Parameters {
@@ -160,7 +199,7 @@ func (p *Printer) VisitFunction(n *Function) error {
 
 	p.write("{ ")
 
-	if err := n.Body.Accept(p); err != nil {
+	if err := p.print(n.Body); err != nil {
 		return err
 	}
 
@@ -169,14 +208,14 @@ func (p *Printer) VisitFunction(n *Function) error {
 	return nil
 }
 
-func (p *Printer) VisitRecord(n *Record) error {
+func (p *Printer) record(n *Record) error {
 	p.write("{ ")
 
 	for ident, expr := range n.Fields {
 		p.write(string(ident))
 		p.write(": ")
 
-		if err := expr.Accept(p); err != nil {
+		if err := p.print(expr); err != nil {
 			return err
 		}
 
@@ -188,11 +227,11 @@ func (p *Printer) VisitRecord(n *Record) error {
 	return nil
 }
 
-func (p *Printer) VisitArray(n *Array) error {
+func (p *Printer) array(n *Array) error {
 	p.write("[ ")
 
 	for _, expr := range n.Elements {
-		if err := expr.Accept(p); err != nil {
+		if err := p.print(expr); err != nil {
 			return err
 		}
 
@@ -204,11 +243,11 @@ func (p *Printer) VisitArray(n *Array) error {
 	return nil
 }
 
-func (p *Printer) VisitList(n *List) error {
+func (p *Printer) list(n *List) error {
 	p.write("[ ")
 
 	for _, expr := range n.Elements {
-		if err := expr.Accept(p); err != nil {
+		if err := p.print(expr); err != nil {
 			return err
 		}
 
@@ -220,27 +259,27 @@ func (p *Printer) VisitList(n *List) error {
 	return nil
 }
 
-func (p *Printer) VisitInteger(n *Integer) error {
+func (p *Printer) integer(n *Integer) error {
 	p.write(fmt.Sprintf("%d", *n))
 	return nil
 }
 
-func (p *Printer) VisitFloat(n *Float) error {
+func (p *Printer) float(n *Float) error {
 	p.write(fmt.Sprintf("%g", *n))
 	return nil
 }
 
-func (p *Printer) VisitString(n *String) error {
+func (p *Printer) string(n *String) error {
 	p.write(fmt.Sprintf("\"%s\"", *n))
 	return nil
 }
 
-func (p *Printer) VisitKeyword(n *Keyword) error {
+func (p *Printer) keyword(n *Keyword) error {
 	p.write(string(*n))
 	return nil
 }
 
-func (p *Printer) VisitBoolean(n *Boolean) error {
+func (p *Printer) boolean(n *Boolean) error {
 	p.write(string(*n))
 	return nil
 }
