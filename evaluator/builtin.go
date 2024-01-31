@@ -89,7 +89,7 @@ func mapfn(v ast.Visitor, args ...object.Object) (object.Object, error) {
 		}
 
 		for _, arg := range v.Value {
-			obj, err := eval.applyFunction(fn, arg)
+			obj, err := eval.applyBuiltin(fn, arg)
 
 			if err != nil {
 				return nil, err
@@ -110,7 +110,7 @@ func mapfn(v ast.Visitor, args ...object.Object) (object.Object, error) {
 		var newHead *object.ListNode
 
 		for head != nil {
-			value, err := eval.applyFunction(fn, head.Value)
+			value, err := eval.applyBuiltin(fn, head.Value)
 
 			if err != nil {
 				return nil, err

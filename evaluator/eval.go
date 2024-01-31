@@ -201,11 +201,35 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 
 		args := a.Arguments[1:]
 
-		if len(args) != len(function.Parameters) {
-			return fmt.Errorf("function expects %d arguments, but got %d", len(function.Parameters), len(args))
+		if len(args) < len(function.Parameters) {
+			boundParams := function.Parameters[:len(args)]
+			boundEnv := object.CloneEnvironment(function.Environment)
+
+			newFunction := &object.Function{
+				Parameters:  function.Parameters[len(args):],
+				Body:        function.Body,
+				Environment: boundEnv,
+			}
+
+			for i, arg := range args {
+				param := boundParams[i]
+
+				if err := arg.Accept(e); err != nil {
+					return err
+				}
+
+				ident := string(*param)
+				obj := e.results.pop()
+
+				newFunction.Environment.Define(ident, obj)
+			}
+
+			e.results.push(newFunction)
+
+			return nil
 		}
 
-		e.env = object.NewEnclosedEnvironment(e.env)
+		e.env = object.NewEnclosedEnvironment(function.Environment)
 
 		for i, p := range function.Parameters {
 			arg := args[i]
@@ -230,6 +254,7 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 
 		objs := []object.Object{}
 
+		// TODO: Partial function application here as well...
 		for _, a := range a.Arguments[1:] {
 			if err := a.Accept(e); err != nil {
 				return err
@@ -254,7 +279,7 @@ func (e *Evaluator) VisitApplication(a *ast.Application) error {
 	return nil
 }
 
-func (e *Evaluator) applyFunction(fn *object.Function, args ...object.Object) (object.Object, error) {
+func (e *Evaluator) applyBuiltin(fn *object.Function, args ...object.Object) (object.Object, error) {
 	if len(args) != len(fn.Parameters) {
 		return nil, fmt.Errorf("function expects %d arguments, but got %d", len(fn.Parameters), len(args))
 	}
@@ -276,7 +301,7 @@ func (e *Evaluator) VisitFunction(f *ast.Function) error {
 	obj := &object.Function{
 		Parameters:  f.Parameters,
 		Body:        f.Body,
-		Environment: e.env,
+		Environment: object.NewEnclosedEnvironment(e.env),
 	}
 
 	e.results.push(obj)
