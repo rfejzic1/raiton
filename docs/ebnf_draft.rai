@@ -88,14 +88,14 @@ person
 if condition { "yes" } else { "no" }
 if condition: "yes" else: "no"
 
-answer: if condition: "yes" else: "no"
+let answer if condition: "yes" else: "no"
 (println answer)
 
 
 ## Function Definition
 
 # the line below defines a function, binding the expression to a name
-add_5: \x: (add x 5)
+let add_5 \x: (add x 5)
 
 # because functions are used a lot, there is a simpler function definition syntax
 
@@ -117,10 +117,10 @@ fn add_5 x: (add x 5)
 # Here are some examples of these compiler annotations:
 
 @string
-name: "What is this?"
+let name "What is this?"
 
 @(array int)
-nums: {1 2 3}
+let nums {1 2 3}
 
 @int -> int -> int
 fn add_two a b: (add a b)
@@ -140,10 +140,10 @@ fn add_two a b: (add a b)
 # It's possible to define new types using the `@type` annotation:
 
 @type
-mystring: string
+let mystring: string
 
 @type
-predicate: string -> bool
+let predicate: string -> bool
 
 @type
 fn pair f s: (tuple {f s})
@@ -156,17 +156,28 @@ fn pair f s: (tuple {f s})
 
 # To create a custom record (or struct or object) type with custom fields, use the `record` function:
 @type
-person: (record {
+let person (record {
   :name string
   :age int
 })
 
 # or you can apply it directly to a map to get the equivalent:
 @record
-person: {
+let person {
   :name string
   :age int
 }
+
+struct person {
+  :name string
+  :age int
+}
+
+enum color { :red :green :blue }
+
+enum color
+
+
 
 # So far, all the annotations had to do with types, but we can also do source code manipulation
 # via the `compiler` annotation:
