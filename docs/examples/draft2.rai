@@ -13,6 +13,9 @@
 #       during compile time.
 #       What if I return closures of different sizes/structures/bindings? How would I compute what
 #       the size of such objects is during compile time?
+#
+#       NOTE: Allow mutability through special built-ins? Have them all be heap allocated? Do a timeline
+#       of objects like clojure does with refs?
 
 # top of the file is the module declaration
 module main
@@ -32,8 +35,8 @@ awesome : "Raiton"
 
 # this works because `@` is a compile time evaluation annotation, which passes the compiler context and the node
 # to which it is applied to the annotation expression;
-# like in the example above, `struct` would be a built-in function that get's partially applied already (the compiler context is bound first)
-# and then it's applied the node and then other parameters if it needs them (in this case no);
+# like in the example above, `struct` would be a built-in function that get's partially applied already (the compiler context
+# is bound first) and then it's applied the node and then other parameters if it needs them (in this case no);
 # func structFunc(ctx compiler.Context, node ast.Node) (ast.Node, error) { ... }
 
 # you can also define your own compiler functions:
@@ -50,25 +53,34 @@ person : {
   :age number
 }
 
-# this is how to do receiver functions/methods/bindings (functions that can be accessed on a type via a selector `.`)
-# it will help with the LSP experience:
-# TODO: Figure out what does the `.` (selector) operator do?
+# associated binding allows binding via a selector on an existing binding:
+name : "Rijad"
+name.capitalized : (string.capitalize name)
+
+# because the `person` binding is defined in the same module, this binding is valid in other modules as well (if public)
 person.info : fn self: `$(self.name)`
 
 person.eq : fn self other: (eq self.name other.name)
 
-# the selector is used to select an associated object to the object applied to; for example:
+# because the `string` binding is defined elsewhere, this binding is valid only for this module
+string.exclaimed : fn self: (concat self "!")
+
+exclaimed_name : (string.exclaimed "Raiton")
+
+# TODO: Do I even do this with the selector or just use selectors for modules? 
+# The selector is used to select an associated object to the object applied to; for example:
+# - on a module a selector selects a module member (public ones, which can be anything bound to a name or nested modules)
 # - on a struct a selector selects the field; (:name person) person.name
-# - on a map whose key is a keyword it accesses the member; (:key1 mymap) mymap.key1
-# - can be used in a binding to associate object to existing objects; person.eq : fn ... but the left operand has to be defined
 # - on an array can be used to access the element; (0 my_array) my_array.0
+# - can be used in a binding to associate object to existing objects; but the left operand has to be defined;
+#   this allows better name grouping (for example defining functions for a `person` struct, etc.)
 
 tojuro : @person {
   :name "Tojuro"
   :age 25
 }
 
-# what @person does:
+# what @person does (gets extended to this AST):
 tojuro_2 : (person.new { :name "Tojuro" :age 25 })
 
 tojuro_info : (person.info tojuro)
@@ -143,6 +155,25 @@ process_input : fn {
   (parse `(fmt.println "linux")`)
 else:
   (parse `(fmt.println "not linux")`)
+
+
+# if I were restrict module-level declarations to be in-order, this annotation could be used
+# to reserve a name for a binding that's comming later (consider @recursive for functions to
+# do a similar name binding and to help with type resolving?)
+@prebind
+node
+
+@struct
+tree : {
+  :root node
+}
+
+@struct
+node : {
+  :left node
+  :right node
+  :value string
+}
 
 
 # Rob Pike:
