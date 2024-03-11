@@ -1,0 +1,90 @@
+### Extended Backus-Naur Form
+
+# scopes(blocks) are not expressions!!!
+# a scope enables the grouping of definitions and expressions
+
+# scope = '{' {definition | expression} '}' | ':' expression
+
+# definitions are not expressions!!!
+# definitions are a part of a scope to allow easier binding of names to values
+
+# definition = [compiler_annotation] 'let' identifier expression
+
+let awesome "Raiton"
+
+# expressions always evaluate to a value
+
+# expression = [compiler_annotation] (selector | literal | application | if)
+# literal = number | string | keyword | collection_literal | function
+
+# selector = identifier {'.' (identifier | integer)}
+person.skills.0.description
+
+# identifier = ('_' | <alpha>) {'_' | <alpha> | <digit>}
+person
+
+# number = ['-'] (integer | float)
+
+# float = integer '.' integer
+2.71
+
+# integer = <digit>{<digit>}
+25
+
+# string = '"' {<any*>} '"'
+"Raiton"
+
+# keyword = ':'<identifier>
+# notice that there is no space between the colon and the identifier
+:key1
+
+# array = '[' [integer] ':' {expression} ']'
+[: 1 2 3]
+[3: 4 5 6]
+
+# list = '[' {expression} ']'
+["Raiton" "is" "awesome"]
+[4 5 6]
+
+# record = '{' {identifier ':' expression} '}'
+{ name : "Tojuro" age : 25 }
+
+# function = '\' {identifier} scope
+
+\a b { (add a b) }
+
+\a b: (add a b)
+
+# application = '(' {expression} ')'
+(println "Hello, World")
+
+# just evaluates to itself; if there are no other expressions to be considered arguments
+# the first expression is not considered a function
+("anything goes here")
+
+# should be interpreted as literal of unit type
+()
+
+# if = 'if' expression scope 'else' scope
+
+# to conditionally evaluate expressions, use an if-expression
+# which evaluates to the given scope based on whether the condition is true or not
+
+if condition { "yes" } else { "no" }
+if condition: "yes" else: "no"
+
+let answer if condition: "yes" else: "no"
+(println answer)
+
+
+## Function Definition
+
+# the line below defines a function, binding the expression to a name
+let add_5 \x: (add x 5)
+
+# because functions are used a lot, there is a simpler function definition syntax
+
+# function_definition = 'fn' identifier {identifier} scope
+
+fn add_5 x: (add x 5)
+

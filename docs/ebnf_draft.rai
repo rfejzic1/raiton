@@ -1,0 +1,215 @@
+### Extended Backus-Naur Form - Draft
+
+# scopes(blocks) are not expressions!!!
+# a scope enables the grouping of definitions and expressions
+
+# scope = '{' {definition | expression} '}' | ':' expression
+
+# definitions are not expressions!!!
+# definitions are a part of a scope to allow easier binding of names to values
+
+# definition = [compiler_annotation] 'let' identifier expression
+
+let awesome "Raiton"
+
+# expressions always evaluate to a value
+
+# expression = [compiler_annotation] (selector | literal | application | if)
+# literal = number | string | keyword | collection_literal | function
+
+# selector = identifier {'.' (identifier | integer)}
+person.skills.0.description
+
+# identifier = ('_' | <alpha>) {'_' | <alpha> | <digit>}
+person
+
+# number = ['-'] (integer | float)
+
+# float = integer '.' integer
+2.71
+
+# integer = <digit>{<digit>}
+25
+
+# string = '"' {<any*>} '"'
+"Raiton"
+
+# keyword = ':'<identifier>
+# notice that there is no space between the colon and the identifier
+:key1
+
+# collection_literal = '{' {expression} ''}'
+{ :key1 :key2 :key3 }
+
+# Collection literals are unified syntax to express collections of values.
+# The type of the collection is inferred from the context, but if it's not possible
+# to do so, you can apply a type annotation to specify the type. See the examaples below
+# for more insight:
+
+(keys { :k1 "v1" :k2 "v2" }) # the `keys` function expects a map, the collection literal is inferred to be a map
+
+(len {1 2 3}) # the `len` function expects a list/array, the collection literal is inferred to be the specific type
+
+@map { "key1" "value1" "key2" "value2" } # typeof map string to string
+@map { :key1 "value1" :key2 "value2" } # typeof map keyword to string
+
+@person {
+  :name "Tojuro"
+  :age 25
+} # typeof person record
+
+@list{1 2 3} # typeof linked list of numbers
+
+@array{1 2 3} # typeof array of numbers
+
+@set{1 2 3} # typeof set of numbers
+
+# function = '\' {identifier} scope
+
+\a b { (add a b) }
+
+\a b: (add a b)
+
+# application = '(' {expression} ')'
+(println "Hello, World")
+
+# just evaluates to itself; if there are no other expressions to be considered arguments
+# the first expression is not considered a function
+("anything goes here")
+
+# should be interpreted as literal of unit type
+()
+
+# if = 'if' expression scope 'else' scope
+
+# to conditionally evaluate expressions, use an if-expression
+# which evaluates to the given scope based on whether the condition is true or not
+
+if condition { "yes" } else { "no" }
+if condition: "yes" else: "no"
+
+let answer if condition: "yes" else: "no"
+(println answer)
+
+
+## Function Definition
+
+# the line below defines a function, binding the expression to a name
+let add_5 \x: (add x 5)
+
+# because functions are used a lot, there is a simpler function definition syntax
+
+# function_definition = 'fn' identifier {identifier} scope
+
+fn add_5 x: (add x 5)
+
+
+## Compile-time annotations
+
+# Raiton allows you to write code that will be executed at compile-time.
+# This makes it possible to do meta programming without paying for it
+# at runtime.
+
+# compiler_annotation = '@' compiler_expression
+# compiler_expression = type_expression
+# type_expression = (identifier | application) ['->' type_expression]
+
+# Here are some examples of these compiler annotations:
+
+@string
+let name "What is this?"
+
+@(array int)
+let nums {1 2 3}
+
+@int -> int -> int
+fn add_two a b: (add a b)
+
+# The `string` expression in the first example is a reference to the string type,
+# and applying it to the definition effectively indicates that the type of the
+# `name` definition should be a string. If it wasn't a string expression, it would compile-time error.
+#
+# The `(array int)` is used to indicate to the `array` type function that it's an array of integers.
+# If you just used `(array)` it would be a generic array and the compiler would infer the element types.
+# It's basically partial function application of the built-in `array` compile-time function type.
+#
+# The `int -> int -> int` is a reference to a function type that takes two integers and returns an integer.
+# The arrow symbol `->` can be thought of as the part of the name.
+# You could do something like `(list int) -> int` and it would result in a valid type annotation.
+
+# It's possible to define new types using the `@type` annotation:
+
+@type
+let mystring: string
+
+@type
+let predicate: string -> bool
+
+@type
+fn pair f s: (tuple {f s})
+
+# `type` is also a built-in compile-time function that defines a new type based on the target definition.
+# It expects the expression of the definition to be a reference to a type or a function that returns
+# a reference to a type. In the example above, `mystring` is just an alias to the `string` type; the
+# `predicate` definition defines a function type; `pair` defines a function with two type parameters
+# and creates a tuple type of those two type parameters.
+
+# To create a custom record (or struct or object) type with custom fields, use the `record` function:
+@type
+let person (record {
+  :name string
+  :age int
+})
+
+# or you can apply it directly to a map to get the equivalent:
+@record
+let person {
+  :name string
+  :age int
+}
+
+struct person {
+  :name string
+  :age int
+}
+
+enum color { :red :green :blue }
+
+enum color
+
+
+
+# So far, all the annotations had to do with types, but we can also do source code manipulation
+# via the `compiler` annotation:
+
+@compiler
+fn do_nothing value target {
+  (println value)
+  target
+}
+
+# The `compiler` annotation is only applied to function definitions which take an AST node as the
+# first parameter (optionally it can take more parameters) and it has to return a new AST node.
+# When the compiler function is invoked, it's going to replace the target AST node with a new one
+# before it proceeds to compile it further. This enables us to do compile-time operations on our
+# source code.
+#
+# Some useful things to do at compile-time could be generating additonal information with some type
+# or doing some verification on the environment, wrapping values in other values, etc.
+
+# To apply a compiler function, simply do as you would assume:
+@(do_nothing "this gets printed in compiler output")
+myval: "the old value"
+
+# The first argument is always the AST Node of the target, in the case above it's a `Definition` Node.
+
+### Considerations:
+
+# Implement evaluation at compile time similar to the current evaluator...
+# Then do semantic analysis on types etc.
+# Do AST optimizations where possible, remove unused code etc...
+# Implement compiler to emit code/instructions based on the AST...
+
+# TODO: Have the `int` type be an unsized integer, something like BigInt in java or BigDecimal for `float`
+#       When a size is specified by the type int8, int16, int32, int64 then use those widths; same for float32, float64...
+

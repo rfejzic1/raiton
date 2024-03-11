@@ -28,19 +28,7 @@ func TestExpressionString(t *testing.T) {
 
 	expected := ast.Scope{
 		Expressions: []ast.Expression{
-			ast.NewStringLiteral("this is a string"),
-		},
-	}
-
-	parseAndCompare(t, source, &expected)
-}
-
-func TestExpressionCharacter(t *testing.T) {
-	source := `'c'`
-
-	expected := ast.Scope{
-		Expressions: []ast.Expression{
-			ast.NewCharacterLiteral("c"),
+			ast.NewString("this is a string"),
 		},
 	}
 
@@ -64,10 +52,10 @@ func TestExpressionNumber(t *testing.T) {
 
 	expected := ast.Scope{
 		Expressions: []ast.Expression{
-			ast.NewIntegerLiteral(5),
-			ast.NewFloatLiteral(2.65),
-			ast.NewIntegerLiteral(-1),
-			ast.NewFloatLiteral(-3.14),
+			ast.NewInteger(5),
+			ast.NewFloat(2.65),
+			ast.NewInteger(-1),
+			ast.NewFloat(-3.14),
 		},
 	}
 
@@ -79,11 +67,11 @@ func TestExpressionArray(t *testing.T) {
 
 	expected := ast.Scope{
 		Expressions: []ast.Expression{
-			ast.NewArrayLiteral(
+			ast.NewArray(
 				3,
-				ast.NewIntegerLiteral(1),
-				ast.NewIntegerLiteral(2),
-				ast.NewIntegerLiteral(3),
+				ast.NewInteger(1),
+				ast.NewInteger(2),
+				ast.NewInteger(3),
 			),
 		},
 	}
@@ -91,15 +79,33 @@ func TestExpressionArray(t *testing.T) {
 	parseAndCompare(t, source, &expected)
 }
 
-func TestExpressionSlice(t *testing.T) {
+func TestExpressionArrayWithoutSize(t *testing.T) {
+	source := `[: 2 4 8 16]`
+
+	expected := ast.Scope{
+		Expressions: []ast.Expression{
+			ast.NewArray(
+				4,
+				ast.NewInteger(2),
+				ast.NewInteger(4),
+				ast.NewInteger(8),
+				ast.NewInteger(16),
+			),
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestExpressionList(t *testing.T) {
 	source := `[1 2 3]`
 
 	expected := ast.Scope{
 		Expressions: []ast.Expression{
-			ast.NewSliceLiteral(
-				ast.NewIntegerLiteral(1),
-				ast.NewIntegerLiteral(2),
-				ast.NewIntegerLiteral(3),
+			ast.NewList(
+				ast.NewInteger(1),
+				ast.NewInteger(2),
+				ast.NewInteger(3),
 			),
 		},
 	}
@@ -107,15 +113,47 @@ func TestExpressionSlice(t *testing.T) {
 	parseAndCompare(t, source, &expected)
 }
 
-func TestExpressionInvocation(t *testing.T) {
+func TestExpressionApplication(t *testing.T) {
 	source := `(println "Hello, World")`
 
 	expected := ast.Scope{
 		Expressions: []ast.Expression{
 			ast.NewApplication(
 				ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("println"))),
-				ast.NewStringLiteral("Hello, World"),
+				ast.NewString("Hello, World"),
 			),
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestConditional(t *testing.T) {
+	source := `if condition: "yes" else: "no"`
+
+	expected := ast.Scope{
+		Expressions: []ast.Expression{
+			&ast.Conditional{
+				Condition:   ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("condition"))),
+				Consequence: ast.ScopeExpressions(ast.NewString("yes")),
+				Alternative: ast.ScopeExpressions(ast.NewString("no")),
+			},
+		},
+	}
+
+	parseAndCompare(t, source, &expected)
+}
+
+func TestConditionalScopes(t *testing.T) {
+	source := `if condition { "yes" } else { "no" }`
+
+	expected := ast.Scope{
+		Expressions: []ast.Expression{
+			&ast.Conditional{
+				Condition:   ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("condition"))),
+				Consequence: ast.ScopeExpressions(ast.NewString("yes")),
+				Alternative: ast.ScopeExpressions(ast.NewString("no")),
+			},
 		},
 	}
 
@@ -124,35 +162,14 @@ func TestExpressionInvocation(t *testing.T) {
 
 func TestDefinitionWithSingleExpression(t *testing.T) {
 	source := `
-	name: "Tojuro"
+	let name "Tojuro"
 	`
 
 	expected := ast.Scope{
 		Definitions: []*ast.Definition{
 			{
 				Identifier: ast.Identifier("name"),
-				Expression: ast.NewStringLiteral("Tojuro"),
-			},
-		},
-	}
-
-	parseAndCompare(t, source, &expected)
-}
-
-func TestDefinitionWithScope(t *testing.T) {
-	source := `
-	age { 24 }
-	`
-
-	expected := ast.Scope{
-		Definitions: []*ast.Definition{
-			{
-				Identifier: ast.Identifier("age"),
-				Expression: &ast.Scope{
-					Expressions: []ast.Expression{
-						ast.NewIntegerLiteral(24),
-					},
-				},
+				Expression: ast.NewString("Tojuro"),
 			},
 		},
 	}
@@ -162,14 +179,14 @@ func TestDefinitionWithScope(t *testing.T) {
 
 func TestFunctionDefinitionWithSingleExpression(t *testing.T) {
 	source := `
-	fn add_two x -> (add x 2)
+	fn add_two x: (add x 2)
 	`
 
 	expected := ast.Scope{
 		Definitions: []*ast.Definition{
 			{
 				Identifier: ast.Identifier("add_two"),
-				Expression: &ast.FunctionLiteral{
+				Expression: &ast.Function{
 					Parameters: []*ast.Identifier{
 						ast.NewIdentifier("x"),
 					},
@@ -177,7 +194,7 @@ func TestFunctionDefinitionWithSingleExpression(t *testing.T) {
 						ast.NewApplication(
 							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("add"))),
 							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("x"))),
-							ast.NewIntegerLiteral(2),
+							ast.NewInteger(2),
 						),
 					),
 				},
@@ -197,7 +214,7 @@ func TestFunctionDefinitionWithScope(t *testing.T) {
 		Definitions: []*ast.Definition{
 			{
 				Identifier: ast.Identifier("add_three"),
-				Expression: &ast.FunctionLiteral{
+				Expression: &ast.Function{
 					Parameters: []*ast.Identifier{
 						ast.NewIdentifier("x"),
 					},
@@ -205,7 +222,7 @@ func TestFunctionDefinitionWithScope(t *testing.T) {
 						ast.NewApplication(
 							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("add"))),
 							ast.NewSelector(ast.NewIdentifierSelector(ast.NewIdentifier("x"))),
-							ast.NewIntegerLiteral(3),
+							ast.NewInteger(3),
 						),
 					),
 				},

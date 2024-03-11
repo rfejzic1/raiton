@@ -1,25 +1,26 @@
 package ast
 
-type Visitor interface {
-	VisitScope(n *Scope) error
-	VisitDefinition(n *Definition) error
-	VisitIdentifier(n *Identifier) error
-	VisitSelector(n *Selector) error
-	VisitSelectorItem(n *SelectorItem) error
-	VisitApplication(n *Application) error
-	VisitFunction(n *FunctionLiteral) error
-	VisitRecord(n *RecordLiteral) error
-	VisitArray(n *ArrayLiteral) error
-	VisitSlice(n *SliceLiteral) error
-	VisitInteger(n *IntegerLiteral) error
-	VisitFloat(n *FloatLiteral) error
-	VisitString(n *StringLiteral) error
-	VisitCharacter(n *CharacterLiteral) error
-	VisitBoolean(n *BooleanLiteral) error
-}
+const (
+	SCOPE         = "scope"
+	DEFINITION    = "definition"
+	APPLICATION   = "application"
+	IDENTIFIER    = "identifier"
+	SELECTOR      = "selector"
+	SELECTOR_ITEM = "selector_item"
+	FUNCTION      = "function"
+	CONDITIONAL   = "conditional"
+	RECORD        = "record"
+	ARRAY         = "array"
+	LIST          = "list"
+	INTEGER       = "integer"
+	FLOAT         = "float"
+	STRING        = "string"
+	KEYWORD       = "keyword"
+	BOOLEAN       = "boolean"
+)
 
 type Node interface {
-	Accept(visitor Visitor) error
+	Type() string
 }
 
 type Scope struct {
@@ -27,15 +28,8 @@ type Scope struct {
 	Expressions []Expression
 }
 
-func ScopeExpressions(expressions ...Expression) *Scope {
-	return &Scope{
-		Definitions: []*Definition{},
-		Expressions: expressions,
-	}
-}
-
-func (s *Scope) Accept(visitor Visitor) error {
-	return visitor.VisitScope(s)
+func (n *Scope) Type() string {
+	return SCOPE
 }
 
 type Definition struct {
@@ -43,8 +37,8 @@ type Definition struct {
 	Expression Expression
 }
 
-func (d *Definition) Accept(visitor Visitor) error {
-	return visitor.VisitDefinition(d)
+func (n *Definition) Type() string {
+	return DEFINITION
 }
 
 // *** Expressions ***
@@ -55,162 +49,105 @@ type Expression interface {
 
 type Identifier string
 
-func NewIdentifier(value string) *Identifier {
-	ident := Identifier(value)
-	return &ident
-}
-
-func (i *Identifier) Accept(visitor Visitor) error {
-	return visitor.VisitIdentifier(i)
+func (n *Identifier) Type() string {
+	return IDENTIFIER
 }
 
 type Selector struct {
 	Items []*SelectorItem
 }
 
+func (n *Selector) Type() string {
+	return SELECTOR
+}
+
 type SelectorItem struct {
 	Identifier *Identifier
-	Index      *IntegerLiteral
+	Index      *Integer
 }
 
-func NewIdentifierSelector(ident *Identifier) *SelectorItem {
-	return &SelectorItem{
-		Identifier: ident,
-	}
-}
-
-func (i *SelectorItem) Accept(visitor Visitor) error {
-	return visitor.VisitSelectorItem(i)
-}
-
-func NewIndexSelector(num *IntegerLiteral) *SelectorItem {
-	return &SelectorItem{
-		Index: num,
-	}
-}
-
-func NewSelector(identifiers ...*SelectorItem) *Selector {
-	return &Selector{
-		Items: identifiers,
-	}
-}
-
-func (f *Selector) Accept(visitor Visitor) error {
-	return visitor.VisitSelector(f)
+func (n *SelectorItem) Type() string {
+	return SELECTOR_ITEM
 }
 
 type Application struct {
 	Arguments []Expression
 }
 
-func NewApplication(arguments ...Expression) *Application {
-	return &Application{
-		Arguments: arguments,
-	}
+func (n *Application) Type() string {
+	return APPLICATION
 }
 
-func (i *Application) Accept(visitor Visitor) error {
-	return visitor.VisitApplication(i)
-}
-
-type FunctionLiteral struct {
+type Function struct {
 	Parameters []*Identifier
 	Body       *Scope
 }
 
-func (f *FunctionLiteral) Accept(visitor Visitor) error {
-	return visitor.VisitFunction(f)
+func (n *Function) Type() string {
+	return FUNCTION
 }
 
-type RecordLiteral struct {
+type Conditional struct {
+	Condition   Expression
+	Consequence *Scope
+	Alternative *Scope
+}
+
+func (n *Conditional) Type() string {
+	return CONDITIONAL
+}
+
+type Record struct {
 	Fields map[Identifier]Expression
 }
 
-func (r *RecordLiteral) Accept(visitor Visitor) error {
-	return visitor.VisitRecord(r)
+func (n *Record) Type() string {
+	return RECORD
 }
 
-type ArrayLiteral struct {
-	Size     uint64
+type Array struct {
+	Size     *uint64
 	Elements []Expression
 }
 
-func NewArrayLiteral(size uint64, elements ...Expression) *ArrayLiteral {
-	return &ArrayLiteral{
-		Size:     size,
-		Elements: elements,
-	}
+func (n *Array) Type() string {
+	return ARRAY
 }
 
-func (a *ArrayLiteral) Accept(visitor Visitor) error {
-	return visitor.VisitArray(a)
-}
-
-type SliceLiteral struct {
+type List struct {
 	Elements []Expression
 }
 
-func NewSliceLiteral(elements ...Expression) *SliceLiteral {
-	return &SliceLiteral{
-		Elements: elements,
-	}
+func (n *List) Type() string {
+	return LIST
 }
 
-func (s *SliceLiteral) Accept(visitor Visitor) error {
-	return visitor.VisitSlice(s)
+type Integer int64
+
+func (n *Integer) Type() string {
+	return INTEGER
 }
 
-type IntegerLiteral int64
+type Float float64
 
-func NewIntegerLiteral(value int64) *IntegerLiteral {
-	num := IntegerLiteral(value)
-	return &num
+func (n *Float) Type() string {
+	return FLOAT
 }
 
-func (n *IntegerLiteral) Accept(visitor Visitor) error {
-	return visitor.VisitInteger(n)
+type String string
+
+func (n *String) Type() string {
+	return STRING
 }
 
-type FloatLiteral float64
+type Keyword string
 
-func NewFloatLiteral(value float64) *FloatLiteral {
-	num := FloatLiteral(value)
-	return &num
+func (n *Keyword) Type() string {
+	return KEYWORD
 }
 
-func (n *FloatLiteral) Accept(visitor Visitor) error {
-	return visitor.VisitFloat(n)
-}
+type Boolean string
 
-type StringLiteral string
-
-func NewStringLiteral(value string) *StringLiteral {
-	string := StringLiteral(value)
-	return &string
-}
-
-func (s *StringLiteral) Accept(visitor Visitor) error {
-	return visitor.VisitString(s)
-}
-
-type CharacterLiteral string
-
-func NewCharacterLiteral(value string) *CharacterLiteral {
-	char := CharacterLiteral(value)
-	return &char
-}
-
-func (c *CharacterLiteral) Accept(visitor Visitor) error {
-	return visitor.VisitCharacter(c)
-}
-
-type BooleanLiteral string
-
-func NewBooleanLiteral(value string) *BooleanLiteral {
-	bool := BooleanLiteral(value)
-	return &bool
-}
-
-func (b *BooleanLiteral) Accept(visitor Visitor) error {
-	return visitor.VisitBoolean(b)
+func (n *Boolean) Type() string {
+	return BOOLEAN
 }

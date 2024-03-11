@@ -25,7 +25,10 @@ func (t *Token) Print(w io.Writer) {
 var KEYWORDS = map[string]TokenType{
 	"true":  BOOLEAN,
 	"false": BOOLEAN,
+	"let":   LET,
 	"fn":    FUNCTION,
+	"if":    IF,
+	"else":  ELSE,
 }
 
 var SYMBOLS = map[string]TokenType{
@@ -41,15 +44,18 @@ var SYMBOLS = map[string]TokenType{
 	"\\": BACKSLASH,
 	"-":  MINUS,
 	".":  DOT,
-	"->": ARROW,
 }
 
 const (
 	IDENTIFIER = "identifier"
 	STRING     = "string"
+	KEYWORD    = "keyword"
 	NUMBER     = "number"
 	BOOLEAN    = "boolean"
+	LET        = "let"
 	FUNCTION   = "function"
+	IF         = "if"
+	ELSE       = "else"
 
 	OPEN_PAREN     = "left_paren"
 	CLOSED_PAREN   = "right_paren"
@@ -64,7 +70,6 @@ const (
 	BACKSLASH    = "backslash"
 	MINUS        = "minus"
 	DOT          = "dot"
-	ARROW        = "arrow"
 
 	EOF     = "eof"
 	ILLEGAL = "illegal"

@@ -15,17 +15,25 @@ type Object interface {
 }
 
 const (
+	UNIT      = "unit"
 	BOOLEAN   = "boolean"
 	CHARACTER = "character"
 	INTEGER   = "integer"
 	FLOAT     = "float"
 	STRING    = "string"
+	KEYWORD   = "keyword"
 	ARRAY     = "array"
-	SLICE     = "slice"
+	LIST      = "list"
 	RECORD    = "record"
 	FUNCTION  = "function"
 	BUILTIN   = "builtin"
 )
+
+type Unit struct{}
+
+func (u *Unit) Inspect() string { return "()" }
+
+func (u *Unit) Type() ObjectType { return UNIT }
 
 type Boolean struct {
 	Value bool
@@ -36,8 +44,9 @@ func (b *Boolean) Inspect() string { return fmt.Sprintf("%t", b.Value) }
 func (b *Boolean) Type() ObjectType { return BOOLEAN }
 
 var (
-	TRUE  = &Boolean{Value: true}
-	FALSE = &Boolean{Value: false}
+	THE_UNIT = &Unit{}
+	TRUE     = &Boolean{Value: true}
+	FALSE    = &Boolean{Value: false}
 )
 
 func BoxBoolean(value bool) *Boolean {
@@ -79,6 +88,14 @@ func (s *String) Inspect() string { return fmt.Sprintf(`"%s"`, s.Value) }
 
 func (s *String) Type() ObjectType { return STRING }
 
+type Keyword struct {
+	Value string
+}
+
+func (k *Keyword) Inspect() string { return string(k.Value) }
+
+func (k *Keyword) Type() ObjectType { return KEYWORD }
+
 type Array struct {
 	Value []Object
 	Size  uint64
@@ -96,21 +113,37 @@ func (a *Array) Inspect() string {
 
 func (a *Array) Type() ObjectType { return ARRAY }
 
-type Slice struct {
-	Value *Array
+type List struct {
+	Size uint64
+	Head *ListNode
 }
 
-func (s *Slice) Inspect() string {
-	strs := []string{}
+type ListNode struct {
+	Value Object
+	Next  *ListNode
+}
 
-	for _, o := range s.Value.Value {
-		strs = append(strs, o.Inspect())
+func (l *List) Inspect() string {
+	var s strings.Builder
+
+	s.WriteByte('[')
+
+	for head := l.Head; head != nil; head = head.Next {
+		if head != nil {
+			s.WriteString(head.Value.Inspect())
+		}
+
+		if head.Next != nil {
+			s.WriteRune(' ')
+		}
 	}
 
-	return fmt.Sprintf("[%s]", strings.Join(strs, " "))
+	s.WriteRune(']')
+
+	return s.String()
 }
 
-func (s *Slice) Type() ObjectType { return SLICE }
+func (s *List) Type() ObjectType { return LIST }
 
 type Record struct {
 	Value map[string]Object
@@ -157,13 +190,13 @@ func (f *Function) Inspect() string {
 
 func (f *Function) Type() ObjectType { return FUNCTION }
 
-type BuiltinFunction func(v ast.Visitor, args ...Object) (Object, error)
+type BuiltinFunction func(args ...Object) (Object, error)
 
 type Builtin struct {
 	Fn BuiltinFunction
 }
 
-func MakeBuiltin(fn BuiltinFunction) *Builtin {
+func NewBuiltin(fn BuiltinFunction) *Builtin {
 	return &Builtin{
 		Fn: fn,
 	}

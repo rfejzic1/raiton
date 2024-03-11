@@ -16,6 +16,16 @@ func NewEnclosedEnvironment(env *Environment) *Environment {
 	}
 }
 
+func CloneEnvironment(env *Environment) *Environment {
+	clone := NewEnclosedEnvironment(env.Enclosing())
+
+	for name, value := range env.symbols {
+		clone.Define(name, value)
+	}
+
+	return clone
+}
+
 func (e *Environment) Define(name string, value Object) Object {
 	e.symbols[name] = value
 	return value
